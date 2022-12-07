@@ -77,22 +77,6 @@
  */
     uint8_t ucASCIIToHex( char cChar );
 
-/* @brief Converts a hex value to a readable hex character, e.g. 14 becomes 'e'.
- */
-    static char cHexToChar( unsigned short usValue );
-
-/** @brief Converts a hex value to a readable hex character, *
- *         e.g. 14 becomes 'e'.static char cHexToChar( unsigned short usValue );
- */
-    static socklen_t uxHexPrintShort( char * pcBuffer,
-                                      size_t uxBufferSize,
-                                      uint16_t usValue );
-
-/** @brief Scan the binary IPv6 address and find the longest train of consecutive zero's.
- *         The result of this search will be stored in 'xZeroStart' and 'xZeroLength'.
- */
-    static void prv_ntop6_search_zeros( struct sNTOP6_Set * pxSet );
-
 /*
  * Convert a string like 'fe80::8d11:cd9b:8b66:4a80'
  * to a 16-byte IPv6 address
