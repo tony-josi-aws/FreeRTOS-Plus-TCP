@@ -41,6 +41,11 @@
 /* FreeRTOS+TCP includes. */
 #include "FreeRTOS_IP.h"
 
+const struct xIPv6_Address in6addr_any = {
+    0
+};
+const struct xIPv6_Address in6addr_loopback = { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }
+};
 
 
 BaseType_t xIsIPv6Multicast( const IPv6_Address_t * pxIPAddress )

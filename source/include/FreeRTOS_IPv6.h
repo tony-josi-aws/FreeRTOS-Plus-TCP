@@ -89,11 +89,6 @@
 #define ipMULTICAST_MAC_ADDRESS_IPv6_1    0x33U
 
 
-const struct xIPv6_Address in6addr_any = {
-    0
-};
-const struct xIPv6_Address in6addr_loopback = { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 }
-};
 
 
 /* A forward declaration of 'struct xNetworkEndPoint' and 'xNetworkInterface'.
