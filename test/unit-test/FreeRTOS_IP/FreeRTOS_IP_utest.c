@@ -160,6 +160,7 @@ void test_FreeRTOS_GetIPTaskHandle( void )
 void test_vIPNetworkUpCalls( void )
 {
     NetworkEndPoint_t xEndPoint;
+    xEndPoint.bits.bEndPointUp = pdFALSE;
     xNetworkUp = pdFALSE;
 
     vApplicationIPNetworkEventHook_Expect( eNetworkUp, &xEndPoint );
@@ -168,7 +169,7 @@ void test_vIPNetworkUpCalls( void )
 
     vIPNetworkUpCalls(&xEndPoint);
 
-    TEST_ASSERT_EQUAL( pdTRUE, xNetworkUp );
+    TEST_ASSERT_EQUAL( pdTRUE, xEndPoint.bits.bEndPointUp );
 }
 
 void test_FreeRTOS_NetworkDown_SendToIPTaskSuccessful( void )
