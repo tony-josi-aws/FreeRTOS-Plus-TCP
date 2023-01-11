@@ -7,6 +7,8 @@
 #include "FreeRTOS_IP_Private.h"
 #include "FreeRTOS_ARP.h"
 
+struct xNetworkEndPoint xEndPoint;
+
 /*We assume that the pxGetNetworkBufferWithDescriptor function is implemented correctly and returns a valid data structure. */
 /*This is the mock to mimic the correct expected behavior. If this allocation fails, this might invalidate the proof. */
 NetworkBufferDescriptor_t * pxGetNetworkBufferWithDescriptor( size_t xRequestedSizeBytes,
@@ -25,5 +27,8 @@ NetworkBufferDescriptor_t * pxGetNetworkBufferWithDescriptor( size_t xRequestedS
 
 void harness()
 {
+    pxNetworkEndPoints = &xEndPoint;
+    __CPROVER_assume( pxNetworkEndPoints != NULL );
+
     vARPAgeCache();
 }
