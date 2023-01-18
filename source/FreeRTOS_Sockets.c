@@ -50,6 +50,9 @@
 #include "FreeRTOS_DNS.h"
 #include "NetworkBufferManagement.h"
 
+#include "FreeRTOS_Net_Stat.h"
+#include "FreeRTOS_Time.h"
+
 /* The ItemValue of the sockets xBoundSocketListItem member holds the socket's
  * port number. */
 /** @brief Set the port number for the socket in the xBoundSocketListItem. */
@@ -3685,12 +3688,20 @@ void vSocketWakeUpUser( FreeRTOS_Socket_t * pxSocket )
         TimeOut_t xTimeOut;
         BaseType_t xCloseAfterSend;
         const uint8_t * pucSource = ( const uint8_t * ) pvBuffer;
+        MeasuredCycleCount_t TxCycleCountData;
 
         /* Prevent compiler warnings about unused parameters.  The parameter
          * may be used in future versions. */
         ( void ) xFlags;
 
         xByteCount = ( BaseType_t ) prvTCPSendCheck( pxSocket, uxDataLength );
+
+        if( request_stat == 1 )
+        {
+            vTcpPacketSendCount();
+            vTcpDataSendCount( uxDataLength );
+            vMeasureCycleCountStart( &TxCycleCountData );
+        }
 
         if( xByteCount > 0 )
         {
@@ -3846,6 +3857,15 @@ void vSocketWakeUpUser( FreeRTOS_Socket_t * pxSocket )
 
                     xByteCount = ( BaseType_t ) -pdFREERTOS_ERRNO_ENOSPC;
                 }
+            }
+        }
+
+        if( xByteCount <= 0 )
+        {
+            if( request_stat == 1 )
+            {
+                vTcpTxPacketLossCount();
+                vGetRxLatency( uiMeasureCycleCountStop( &TxCycleCountData ) );
             }
         }
 

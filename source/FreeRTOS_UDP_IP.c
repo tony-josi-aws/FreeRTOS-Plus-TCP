@@ -55,6 +55,8 @@
 #include "NetworkInterface.h"
 #include "NetworkBufferManagement.h"
 
+#include "FreeRTOS_Net_Stat.h"
+
 #if ( ipconfigUSE_DNS == 1 )
     #include "FreeRTOS_DNS.h"
 #endif
@@ -266,7 +268,6 @@ void vProcessGeneratedUDPPacket( NetworkBufferDescriptor_t * const pxNetworkBuff
     {
         /* The network driver is responsible for freeing the network buffer
          * after the packet has been sent. */
-
         #if ( ipconfigETHERNET_MINIMUM_PACKET_BYTES > 0 )
             {
                 if( pxNetworkBuffer->xDataLength < ( size_t ) ipconfigETHERNET_MINIMUM_PACKET_BYTES )
@@ -282,11 +283,23 @@ void vProcessGeneratedUDPPacket( NetworkBufferDescriptor_t * const pxNetworkBuff
                 }
             }
         #endif /* if( ipconfigETHERNET_MINIMUM_PACKET_BYTES > 0 ) */
+
+        if( request_stat == 1 )
+        {
+            vUdpPacketSendCount();
+            vUdpDataSendCount( pxNetworkBuffer->xDataLength );
+        }
+
         iptraceNETWORK_INTERFACE_OUTPUT( pxNetworkBuffer->xDataLength, pxNetworkBuffer->pucEthernetBuffer );
         ( void ) xNetworkInterfaceOutput( pxNetworkBuffer, pdTRUE );
     }
     else
     {
+        if( request_stat == 1 )
+        {
+            vUdpTxPacketLossCount();
+        }
+
         /* The packet can't be sent (DHCP not completed?).  Just drop the
          * packet. */
         vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );

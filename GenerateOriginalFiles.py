@@ -50,6 +50,8 @@ FreeRTOS_TCP_Includes = [ 'FreeRTOS_IP.h',
                           'FreeRTOS_TCP_WIN.h',
                           'FreeRTOS_UDP_IP.h',
                           'FreeRTOS_errno_TCP.h',
+			   'FreeRTOS_Net_Stat.h',
+                          'FreeRTOS_Time.h',
                           'IPTraceMacroDefaults.h',
                           'NetworkInterface.h',
                           'NetworkBufferManagement.h' ]

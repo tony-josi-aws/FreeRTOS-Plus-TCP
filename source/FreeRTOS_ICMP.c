@@ -53,6 +53,8 @@
 #include "NetworkBufferManagement.h"
 #include "FreeRTOS_DNS.h"
 
+#include "FreeRTOS_Net_Stat.h"
+
 /*
  * Turns around an incoming ping request to convert it into a ping reply.
  */
@@ -102,7 +104,18 @@
                 case ipICMP_ECHO_REQUEST:
                     #if ( ipconfigREPLY_TO_INCOMING_PINGS == 1 )
                         {
+                            if( request_stat == 1 )
+                            {
+                                vIcmpPacketRecvCount();
+                                vIcmpDataRecvCount( pxNetworkBuffer->xDataLength );
+                            }
+
                             eReturn = prvProcessICMPEchoRequest( pxICMPPacket, pxNetworkBuffer );
+
+                            if( eReturn == eReleaseBuffer )
+                            {
+                                vIcmpRxPacketLossCount();
+                            }
                         }
                     #endif /* ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) */
                     break;
@@ -110,7 +123,18 @@
                 case ipICMP_ECHO_REPLY:
                     #if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
                         {
+                            if( request_stat == 1 )
+                            {
+                                vIcmpPacketSendCount();
+                                vIcmpDataSendCount( pxNetworkBuffer->xDataLength );
+                            }
+
                             prvProcessICMPEchoReply( pxICMPPacket );
+
+                            if( eReturn == eReleaseBuffer )
+                            {
+                                vIcmpTxPacketLossCount();
+                            }
                         }
                     #endif /* ipconfigSUPPORT_OUTGOING_PINGS */
                     break;

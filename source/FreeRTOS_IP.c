@@ -55,6 +55,9 @@
 #include "NetworkBufferManagement.h"
 #include "FreeRTOS_DNS.h"
 
+#include "FreeRTOS_Net_Stat.h"
+#include "FreeRTOS_Time.h"
+
 /* IPv4 multi-cast addresses range from 224.0.0.0.0 to 240.0.0.0. */
 #define ipFIRST_MULTI_CAST_IPv4             0xE0000000U /**< Lower bound of the IPv4 multicast address. */
 #define ipLAST_MULTI_CAST_IPv4              0xF0000000U /**< Higher bound of the IPv4 multicast address. */
@@ -279,6 +282,7 @@ static void prvProcessIPEventsAndTimers( void )
     TickType_t xNextIPSleep;
     FreeRTOS_Socket_t * pxSocket;
     struct freertos_sockaddr xAddress;
+    MeasuredCycleCount_t RxCycleCountData, TxCycleCountData;
 
     ipconfigWATCHDOG_TIMER();
 
@@ -325,10 +329,21 @@ static void prvProcessIPEventsAndTimers( void )
 
         case eNetworkRxEvent:
 
+            if( request_stat == 1 )
+            {
+                vMeasureCycleCountStart( &RxCycleCountData );
+            }
+
             /* The network hardware driver has received a new packet.  A
              * pointer to the received buffer is located in the pvData member
              * of the received event structure. */
             prvHandleEthernetPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
+
+            if( request_stat == 1 )
+            {
+                vGetRxLatency( uiMeasureCycleCountStop( &RxCycleCountData ) );
+            }
+
             break;
 
         case eNetworkTxEvent:
@@ -380,10 +395,21 @@ static void prvProcessIPEventsAndTimers( void )
 
         case eStackTxEvent:
 
+            if( request_stat == 1 )
+            {
+                vMeasureCycleCountStart( &TxCycleCountData );
+            }
+
             /* The network stack has generated a packet to send.  A
              * pointer to the generated buffer is located in the pvData
              * member of the received event structure. */
             vProcessGeneratedUDPPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
+
+            if( request_stat == 1 )
+            {
+                vGetRxLatency( uiMeasureCycleCountStop( &RxCycleCountData ) );
+            }
+
             break;
 
         case eDHCPEvent:
@@ -1725,6 +1751,12 @@ static eFrameProcessingResult_t prvProcessIPPacket( IPPacket_t * pxIPPacket,
                                 * these values. */
                                usLength = FreeRTOS_ntohs( pxUDPPacket->xUDPHeader.usLength );
 
+                               if( request_stat == 1 )
+                               {
+                                   vUdpPacketRecvCount();
+                                   vUdpDataRecvCount( pxNetworkBuffer->xDataLength );
+                               }
+
                                if( ( pxNetworkBuffer->xDataLength < sizeof( UDPPacket_t ) ) ||
                                    ( ( ( size_t ) usLength ) < sizeof( UDPHeader_t ) ) )
                                {
@@ -1780,15 +1812,30 @@ static eFrameProcessingResult_t prvProcessIPPacket( IPPacket_t * pxIPPacket,
                                        }
                                    }
                                }
+
+                               if( eReturn == eReleaseBuffer )
+                               {
+                                   vUdpRxPacketLossCount();
+                               }
                            }
                            break;
 
                             #if ipconfigUSE_TCP == 1
                                 case ipPROTOCOL_TCP:
 
+                                    if( request_stat == 1 )
+                                    {
+                                        vTcpPacketRecvCount();
+                                        vTcpDataRecvCount( pxNetworkBuffer->xDataLength );
+                                    }
+
                                     if( xProcessReceivedTCPPacket( pxNetworkBuffer ) == pdPASS )
                                     {
                                         eReturn = eFrameConsumed;
+                                    }
+                                    else
+                                    {
+                                        vTcpRxPacketLossCount();
                                     }
 
                                     /* Setting this variable will cause xTCPTimerCheck()
