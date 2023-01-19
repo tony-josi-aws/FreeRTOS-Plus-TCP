@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 
-uint32_t request_stat;
+extern uint32_t request_stat;
 
 typedef enum
 {
