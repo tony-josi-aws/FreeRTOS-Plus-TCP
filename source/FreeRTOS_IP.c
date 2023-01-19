@@ -407,7 +407,7 @@ static void prvProcessIPEventsAndTimers( void )
 
             if( request_stat == 1 )
             {
-                vGetRxLatency( uiMeasureCycleCountStop( &RxCycleCountData ) );
+                vGetTxLatency( uiMeasureCycleCountStop( &RxCycleCountData ) );
             }
 
             break;
