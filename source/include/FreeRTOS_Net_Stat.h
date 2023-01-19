@@ -136,9 +136,15 @@ void vIcmpTxPacketLossCount();
 void vIcmpDataRecvCount( size_t bytes );
 void vIcmpDataSendCount( size_t bytes );
 
+/* Functions to collect performance statistics */
 
 void vGetRxLatency( uint32_t rtt );
 void vGetTxLatency( uint32_t rtt );
+
+/* Functions to send statistics */
+
+eErrorType_t vGetNetStat( eState_t state,
+                          allstat * result );
 
 /* *INDENT-OFF* */
 #ifdef __cplusplus

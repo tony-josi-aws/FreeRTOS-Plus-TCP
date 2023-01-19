@@ -38,13 +38,14 @@
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
 #include "FreeRTOS_Net_Stat.h"
+#include "FreeRTOS_Time.h"
 
 /* Count values for number of averaged latency */
 static uint32_t txCount;
 static uint32_t rxCount;
 
-/* request_stat = 1 mean start collecting logs
- * request_stat = 0 means do not collect logs.  */
+/* request_stat = 1 indicate start collecting logs
+ * request_stat = 0 indicates stop collecting logs.  */
 uint32_t request_stat;
 
 /* Protocol and performance statistics */

@@ -70,8 +70,6 @@
 
 void vMeasureCycleCountInit( void )
 {
-    uint32_t i;
-
     if( ARM_REG_DWT_CTRL != 0 )
     {
         /* See if DWT is available */
@@ -91,8 +89,6 @@ void vMeasureCycleCountInit( void )
 
 void vMeasureCycleCountDeinit( void )
 {
-    uint32_t i;
-
     ARM_REG_DWT_CYCCNT = 0;                 /* Clear Cycle Count */
     ARM_REG_DWT_CTRL &= ~DWT_CYCCNTENA_BIT; /* Clear bit 0 */
 }
@@ -118,7 +114,6 @@ void vMeasureCycleCountStart( MeasuredCycleCount_t * pMeasuredCycleCountData )
 uint32_t uiMeasureCycleCountStop( MeasuredCycleCount_t * pMeasuredCycleCountData )
 {
     uint32_t uiCycleCount = 0;
-    MeasuredCycleCount_t * pTable;
 
     pMeasuredCycleCountData->uiEnd = ARM_REG_DWT_CYCCNT;
     uiCycleCount = pMeasuredCycleCountData->uiEnd - pMeasuredCycleCountData->uiStart;
