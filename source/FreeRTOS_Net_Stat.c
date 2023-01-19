@@ -46,7 +46,7 @@ static uint32_t rxCount;
 
 /* request_stat = 1 indicate start collecting logs
  * request_stat = 0 indicates stop collecting logs.  */
-uint32_t request_stat;
+uint32_t request_stat = 1;
 
 /* Protocol and performance statistics */
 static udp udp_info;
@@ -81,8 +81,6 @@ eErrorType_t vGetNetStat( eState_t state,
         /* Incorrect Result buffer */
         return eIncorrectBuffer;
     }
-
-    request_stat = 0;
 
     if( state == eStartStat )
     {
