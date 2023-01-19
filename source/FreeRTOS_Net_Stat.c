@@ -52,8 +52,8 @@ uint32_t request_stat;
 static udp udp_info;
 static tcp tcp_info;
 static icmp icmp_info;
-static uint64_t rxLatency_info;
-static uint64_t txLatency_info;
+static uint32_t rxLatency_info;
+static uint32_t txLatency_info;
 
 /**
  * @brief Print a summary of all sockets and their connections.

@@ -3865,8 +3865,12 @@ void vSocketWakeUpUser( FreeRTOS_Socket_t * pxSocket )
             if( request_stat == 1 )
             {
                 vTcpTxPacketLossCount();
-                vGetTxLatency( uiMeasureCycleCountStop( &TxCycleCountData ) );
             }
+        }
+
+        if( request_stat == 1 )
+        {
+            vGetTxLatency( uiMeasureCycleCountStop( &TxCycleCountData ) );
         }
 
         return xByteCount;

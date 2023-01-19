@@ -86,8 +86,6 @@ typedef struct network_stats
 typedef struct TCP_stats
 {
     stats stat;
-    uint32_t out_ack;
-    uint32_t in_ack;
 } tcp;
 
 typedef struct ICMP_stats
@@ -105,8 +103,8 @@ typedef struct all_stats
     tcp tcp_stat;
     udp udp_stat;
     icmp icmp_stat;
-    uint64_t rx_latency;
-    uint64_t tx_latency;
+    uint32_t rx_latency;
+    uint32_t tx_latency;
 } allstat;
 
 /* Functions to collect UDP statistics */
