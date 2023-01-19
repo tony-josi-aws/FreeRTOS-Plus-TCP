@@ -407,7 +407,7 @@ static void prvProcessIPEventsAndTimers( void )
 
             if( request_stat == 1 )
             {
-                vGetTxLatency( uiMeasureCycleCountStop( &RxCycleCountData ) );
+                vGetTxLatency( uiMeasureCycleCountStop( &TxCycleCountData ) );
             }
 
             break;
@@ -1025,6 +1025,13 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
         uint8_t * pucChar;
         size_t uxTotalLength;
         IPStackEvent_t xStackTxEvent = { eStackTxEvent, NULL };
+        MeasuredCycleCount_t TxCycleCountData;
+
+        if( request_stat == 1 )
+        {
+            vIcmpPacketSendCount();
+            vIcmpDataSendCount( uxNumberOfBytesToSend );
+        }
 
         uxTotalLength = uxNumberOfBytesToSend + sizeof( ICMPPacket_t );
         BaseType_t xEnoughSpace;
@@ -1040,6 +1047,11 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
 
         if( ( uxGetNumberOfFreeNetworkBuffers() >= 4U ) && ( uxNumberOfBytesToSend >= 1U ) && ( xEnoughSpace != pdFALSE ) )
         {
+            if( request_stat == 1 )
+            {
+                vMeasureCycleCountStart( &TxCycleCountData );
+            }
+
             pxNetworkBuffer = pxGetNetworkBufferWithDescriptor( uxTotalLength, uxBlockTimeTicks );
 
             if( pxNetworkBuffer != NULL )
@@ -1078,17 +1090,31 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer )
                 {
                     vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
                     iptraceSTACK_TX_EVENT_LOST( ipSTACK_TX_EVENT );
+
+                    if( request_stat == 1 )
+                    {
+                        vIcmpTxPacketLossCount();
+                    }
                 }
                 else
                 {
                     xReturn = ( BaseType_t ) usSequenceNumber;
                 }
             }
+
+            if( request_stat == 1 )
+            {
+                vGetTxLatency( uiMeasureCycleCountStop( &TxCycleCountData ) );
+            }
         }
         else
         {
             /* The requested number of bytes will not fit in the available space
              * in the network buffer. */
+            if( request_stat == 1 )
+            {
+                vIcmpTxPacketLossCount();
+            }
         }
 
         return xReturn;
@@ -1726,7 +1752,18 @@ static eFrameProcessingResult_t prvProcessIPPacket( IPPacket_t * pxIPPacket,
                                 {
                                     if( pxIPHeader->ulDestinationIPAddress == *ipLOCAL_IP_ADDRESS_POINTER )
                                     {
+                                        if( request_stat == 1 )
+                                        {
+                                            vIcmpPacketRecvCount();
+                                            vIcmpDataRecvCount( pxNetworkBuffer->xDataLength );
+                                        }
+
                                         eReturn = ProcessICMPPacket( pxNetworkBuffer );
+
+                                        if( eReturn == eReleaseBuffer )
+                                        {
+                                            vIcmpRxPacketLossCount();
+                                        }
                                     }
                                 }
                             #endif /* ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) || ( ipconfigSUPPORT_OUTGOING_PINGS == 1 ) */
