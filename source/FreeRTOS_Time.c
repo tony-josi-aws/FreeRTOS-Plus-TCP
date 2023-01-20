@@ -114,8 +114,11 @@ void vMeasureCycleCountStart( MeasuredCycleCount_t * pMeasuredCycleCountData )
 uint32_t uiMeasureCycleCountStop( MeasuredCycleCount_t * pMeasuredCycleCountData )
 {
     uint32_t uiCycleCount = 0;
+    uint32_t timeInMicroSec;
 
     pMeasuredCycleCountData->uiEnd = ARM_REG_DWT_CYCCNT;
     uiCycleCount = pMeasuredCycleCountData->uiEnd - pMeasuredCycleCountData->uiStart;
-    return uiCycleCount;
+    timeInMicroSec = GET_TIME_MICROSEC_CYCLE_COUNT( uiCycleCount );
+
+    return timeInMicroSec;
 }

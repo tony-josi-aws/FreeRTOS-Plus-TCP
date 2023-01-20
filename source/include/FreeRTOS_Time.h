@@ -47,10 +47,10 @@
 #define MEASURED_CYCLE_CNT_MAX_NUM    10
 
 /* To be defined as per clock speed set */
-#define CLOCK_SPEED_HTZ               ( 68000000L )
+#define CLOCK_SPEED_HTZ               ( 64000000L )
 
-#define GET_TIME_MICROSEC_CYCLE_COUNT( cycles )    ( cycles * 1000000L ) / CLOCK_SPEED_HTZ )
-#define GET_TIME_NANOSEC_CYCLE_COUNT( cycles )     ( cycles * 1000000000L ) / CLOCK_SPEED_HTZ )
+#define GET_TIME_MICROSEC_CYCLE_COUNT( cycles )    ( ( cycles * 1000000L ) / CLOCK_SPEED_HTZ )
+#define GET_TIME_NANOSEC_CYCLE_COUNT( cycles )     ( ( cycles * 1000000000L ) / CLOCK_SPEED_HTZ )
 
 /*
  ********************************************************************************
