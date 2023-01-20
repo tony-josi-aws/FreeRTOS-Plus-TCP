@@ -103,8 +103,8 @@ typedef struct all_stats
     tcp tcp_stat;
     udp udp_stat;
     icmp icmp_stat;
-    uint32_t rx_latency;
-    uint32_t tx_latency;
+    uint64_t rx_latency;
+    uint64_t tx_latency;
 } allstat;
 
 /* Functions to collect UDP statistics */
@@ -136,8 +136,8 @@ void vIcmpDataSendCount( size_t bytes );
 
 /* Functions to collect performance statistics */
 
-void vGetRxLatency( uint32_t rtt );
-void vGetTxLatency( uint32_t rtt );
+void vGetRxLatency( uint64_t rtt );
+void vGetTxLatency( uint64_t rtt );
 
 /* Functions to send statistics */
 

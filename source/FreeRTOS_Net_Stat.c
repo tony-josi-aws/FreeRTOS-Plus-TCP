@@ -41,8 +41,8 @@
 #include "FreeRTOS_Time.h"
 
 /* Count values for number of averaged latency */
-static uint32_t txCount;
-static uint32_t rxCount;
+static uint64_t txCount;
+static uint64_t rxCount;
 
 /* request_stat = 1 indicate start collecting logs
  * request_stat = 0 indicates stop collecting logs.  */
@@ -52,8 +52,8 @@ uint32_t request_stat = 1;
 static udp udp_info;
 static tcp tcp_info;
 static icmp icmp_info;
-static uint32_t rxLatency_info;
-static uint32_t txLatency_info;
+static uint64_t rxLatency_info;
+static uint64_t txLatency_info;
 
 /**
  * @brief Print a summary of all sockets and their connections.
@@ -210,15 +210,15 @@ void vIcmpDataSendCount( size_t bytes )
 
 /* Functions to collect Performance stat*/
 
-void vGetRxLatency( uint32_t rtt )
+void vGetRxLatency( uint64_t rtt )
 {
-    rxLatency_info = ( ( rxLatency_info * rxCount ) + ( rtt ) ) / ( rxCount + 1 );
+    rxLatency_info = ( ( ( rxLatency_info * rxCount ) + ( rtt ) ) * 100 ) / ( rxCount + 1 );
     rxCount++;
 }
 
-void vGetTxLatency( uint32_t rtt )
+void vGetTxLatency( uint64_t rtt )
 {
-    txLatency_info = ( ( txLatency_info * txCount ) + ( rtt ) ) / ( txCount + 1 );
+    txLatency_info = ( ( ( txLatency_info * txCount ) + ( rtt ) ) * 100 ) / ( txCount + 1 );
     txCount++;
 }
 /*-----------------------------------------------------------*/
