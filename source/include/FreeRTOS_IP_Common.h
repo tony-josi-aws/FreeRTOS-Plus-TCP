@@ -43,7 +43,7 @@ typedef struct xIPv6_Address IPv6_Address_t;
 
 typedef union IP_Address
 {
-    uint32_t xIP_IPv4;       /**< IPv4 address */
+    uint32_t ulIP_IPv4;       /**< IPv4 address */
     IPv6_Address_t xIP_IPv6; /**< IPv6 address */
 } IP_Address_t;
 
