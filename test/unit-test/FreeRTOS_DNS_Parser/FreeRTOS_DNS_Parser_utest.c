@@ -494,6 +494,7 @@ void test_prepareReplyDNSMessage_success( void )
     FreeRTOS_FindEndPointOnNetMask_ExpectAndReturn( xIPPacket->xIPHeader.ulSourceIPAddress, 6, &xEndPoint );
     usGenerateChecksum_ExpectAnyArgsAndReturn( 555 );
     usGenerateProtocolChecksum_ExpectAnyArgsAndReturn( 444 );
+    vReturnEthernetFrame_Expect( &pxNetworkBuffer, pdFALSE );
 
     prepareReplyDNSMessage( &pxNetworkBuffer,
                             lNetLength );
@@ -655,6 +656,7 @@ void test_DNS_TreatNBNS_success_nbns_non_fixed_size_buffer( void )
     FreeRTOS_FindEndPointOnNetMask_ExpectAnyArgsAndReturn( &xEndPoint );
     usGenerateChecksum_ExpectAnyArgsAndReturn( 4 );
     usGenerateProtocolChecksum_ExpectAnyArgsAndReturn( 4 );
+    vReturnEthernetFrame_ExpectAnyArgs();
     vReturnEthernetFrame_Expect( &pxNetworkBuffer_dup, pdFALSE ); /* goal */
     vReleaseNetworkBufferAndDescriptor_ExpectAnyArgs();
 
@@ -699,6 +701,7 @@ void test_DNS_TreatNBNS_success_nbns_non_fixed_size_buffer2( void )
     FreeRTOS_FindEndPointOnNetMask_ExpectAnyArgsAndReturn( &xEndPoint );
     usGenerateChecksum_ExpectAnyArgsAndReturn( 4 );
     usGenerateProtocolChecksum_ExpectAnyArgsAndReturn( 4 );
+    vReturnEthernetFrame_ExpectAnyArgs();
     vReturnEthernetFrame_Expect( &pxNetworkBuffer_dup, pdFALSE ); /* goal */
     vReleaseNetworkBufferAndDescriptor_ExpectAnyArgs();
 
@@ -1135,7 +1138,7 @@ void test_DNS_ParseDNSReply_ansswer_lmmnr_reply_xBufferAllocFixesize( void )
     uxIPHeaderSizePacket_ExpectAnyArgsAndReturn( ipSIZE_OF_IPv4_HEADER );
     usGenerateChecksum_ExpectAnyArgsAndReturn( 1234 );
     usGenerateProtocolChecksum_ExpectAnyArgsAndReturn( 123 );
-
+    vReturnEthernetFrame_ExpectAnyArgs();
     vReturnEthernetFrame_ExpectAnyArgs();
 
     ret = DNS_ParseDNSReply( pucUDPPayloadBuffer,
@@ -1218,7 +1221,7 @@ void test_DNS_ParseDNSReply_ansswer_lmmnr_reply( void )
 
     usGenerateChecksum_ExpectAnyArgsAndReturn( 1234 );
     usGenerateProtocolChecksum_ExpectAnyArgsAndReturn( 123 );
-
+    vReturnEthernetFrame_ExpectAnyArgs();
     vReturnEthernetFrame_Expect( &pxNewBuffer, pdFALSE );
     vReleaseNetworkBufferAndDescriptor_ExpectAnyArgs();
 
