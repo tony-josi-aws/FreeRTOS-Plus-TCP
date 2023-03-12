@@ -10,6 +10,11 @@ set_property( GLOBAL PROPERTY USE_FOLDERS ON )
 set( CMAKE_C_STANDARD 90 )
 set( CMAKE_C_STANDARD_REQUIRED ON )
 
+# Set CXX compile flags
+include(cmake/std_compiler_warnings.cmake)
+add_library(project_warnings_interface INTERFACE)
+set_compiler_warnings(project_warnings_interface)
+
 # Do not allow in-source build.
 if( ${PROJECT_SOURCE_DIR} STREQUAL ${PROJECT_BINARY_DIR} )
     message( FATAL_ERROR "In-source build is not allowed. Please build in a separate directory, such as ${PROJECT_SOURCE_DIR}/build." )
@@ -85,5 +90,5 @@ if (WIN32)
 else()
     # Link pthread which is needed for POSIX port.
     find_package( Threads REQUIRED )
-    target_link_libraries( project Threads::Threads )
+    target_link_libraries( project project_warnings_interface Threads::Threads )
 endif()
