@@ -314,7 +314,30 @@ BaseType_t xGetExtensionOrder( uint8_t ucProtocol,
 
 /*-----------------------------------------------------------*/
 
+static BaseType_t xVerifyIPv6ExtensionHeaderOptions(const uint8_t * pucSource,
+                                                    size_t uxHopSize, size_t uxOptStartIdx)
+{
+    BaseType_t xReturn = 0;
+    size_t uxIndex = 0;
+    size_t uxCurrentOptSize = 0;
+    
+    while( uxIndex < uxHopSize - 2 ) 
+    {
+        uxCurrentOptSize = pucSource[ uxOptStartIdx + uxIndex + 1 ] + 2;
 
+        if( ( uxIndex + uxCurrentOptSize ) == ( uxHopSize - 2 ) )
+        {
+            xReturn = 1;
+            break;
+        }
+
+        uxIndex += uxCurrentOptSize;
+
+    }
+
+    return xReturn;
+
+}
 
 /**
  * @brief Handle the IPv6 extension headers.
@@ -356,7 +379,8 @@ eFrameProcessingResult_t eHandleIPv6ExtensionHeaders( NetworkBufferDescriptor_t 
         /* And multiply by 8 and add the minimum size of 8. */
         uxHopSize = ( uxHopSize * 8U ) + 8U;
 
-        if( ( uxIndex + uxHopSize ) >= uxMaxLength )
+        if( ( ( uxIndex + uxHopSize ) >= uxMaxLength ) ||
+              ( xVerifyIPv6ExtensionHeaderOptions( pucSource, uxHopSize, uxIndex + 1U ) != 1 ) )
         {
             uxIndex = uxMaxLength;
             break;
