@@ -67,6 +67,12 @@
 #define ipIPv6_EXT_HEADER_FRAGMENT_HEADER        44U
 #define ipIPv6_EXT_HEADER_AUTHEN_HEADER          51U
 #define ipIPv6_EXT_HEADER_SECURE_PAYLOAD         50U
+
+#define ipIPv6_PAD1_OPTION                       0U 
+#define ipIPv6_PADN_OPTION                       1U
+#define ipIPv6_ROUTER_ALERT_OPTION               5U
+#define ipIPv6_JUMBO_OPTION                      194U
+
 /* Destination options may follow here in case there are no routing options. */
 #define ipIPv6_EXT_HEADER_MOBILITY_HEADER        135U
 

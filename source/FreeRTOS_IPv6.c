@@ -315,19 +315,32 @@ BaseType_t xGetExtensionOrder( uint8_t ucProtocol,
 /*-----------------------------------------------------------*/
 
 static BaseType_t xVerifyIPv6ExtensionHeaderOptions(const uint8_t * pucSource,
-                                                    size_t uxHopSize, size_t uxOptStartIdx)
+                                                    size_t uxOptSize, size_t uxOptStartIdx)
 {
-    BaseType_t xReturn = 0;
+    BaseType_t xReturn = pdFAIL;
     size_t uxIndex = 0;
     size_t uxCurrentOptSize = 0;
+    IPOptionHeader_IPv6_t * pxCurrentOptHdr;
     
-    while( uxIndex < uxHopSize - 2 ) 
+    while( uxIndex < uxOptSize - 2 ) 
     {
-        uxCurrentOptSize = pucSource[ uxOptStartIdx + uxIndex + 1 ] + 2;
-
-        if( ( uxIndex + uxCurrentOptSize ) == ( uxHopSize - 2 ) )
+        pxCurrentOptHdr = ( IPOptionHeader_IPv6_t * ) ( pucSource + uxOptStartIdx + uxIndex );
+        
+        switch( pxCurrentOptHdr->ucOptionType )
         {
-            xReturn = 1;
+        case ipIPv6_PAD1_OPTION:
+            /* ipIPv6_PAD1_OPTION does not have length and value field */
+            uxCurrentOptSize = 1;
+            break;
+        
+        default:
+            uxCurrentOptSize = pxCurrentOptHdr->ucOptionLength + 2; /* +2: Account for option type and length field size */
+            break;
+        }
+
+        if( ( uxIndex + uxCurrentOptSize ) == ( uxOptSize - 2 ) ) /* -2: Account for ext header type and length field size */
+        {
+            xReturn = pdPASS;
             break;
         }
 
@@ -380,7 +393,7 @@ eFrameProcessingResult_t eHandleIPv6ExtensionHeaders( NetworkBufferDescriptor_t 
         uxHopSize = ( uxHopSize * 8U ) + 8U;
 
         if( ( ( uxIndex + uxHopSize ) >= uxMaxLength ) ||
-              ( xVerifyIPv6ExtensionHeaderOptions( pucSource, uxHopSize, uxIndex + 1U ) != 1 ) )
+              ( xVerifyIPv6ExtensionHeaderOptions( pucSource, uxHopSize, uxIndex + 1U ) != pdPASS ) )
         {
             uxIndex = uxMaxLength;
             break;
