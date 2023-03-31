@@ -56,6 +56,10 @@
 #include "FreeRTOS_Routing.h"
 #include "FreeRTOS_ND.h"
 
+/* __IPV6__ Build separation Test */
+#undef ipconfigUSE_IPv6
+#define ipconfigUSE_IPv6    ( 0 )
+
 
 /** @brief When the age of an entry in the ARP table reaches this value (it counts down
  * to zero, so this is an old entry) an ARP request will be sent to see if the
@@ -495,6 +499,7 @@ BaseType_t xCheckRequiresARPResolution( NetworkBufferDescriptor_t * pxNetworkBuf
 {
     BaseType_t xNeedsARPResolution = pdFALSE;
 
+#ifdef ipconfigUSE_IPv6
     if( uxIPHeaderSizePacket( ( const NetworkBufferDescriptor_t * ) pxNetworkBuffer ) == ipSIZE_OF_IPv6_HEADER )
     {
         /* MISRA Ref 11.3.1 [Misaligned access] */
@@ -543,6 +548,7 @@ BaseType_t xCheckRequiresARPResolution( NetworkBufferDescriptor_t * pxNetworkBuf
         }
     }
     else
+#endif
     {
         /* MISRA Ref 11.3.1 [Misaligned access] */
         /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
