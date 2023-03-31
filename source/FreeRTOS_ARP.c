@@ -499,7 +499,7 @@ BaseType_t xCheckRequiresARPResolution( NetworkBufferDescriptor_t * pxNetworkBuf
 {
     BaseType_t xNeedsARPResolution = pdFALSE;
 
-#ifdef ipconfigUSE_IPv6
+#if ( ipconfigUSE_IPv6 != 0 )
     if( uxIPHeaderSizePacket( ( const NetworkBufferDescriptor_t * ) pxNetworkBuffer ) == ipSIZE_OF_IPv6_HEADER )
     {
         /* MISRA Ref 11.3.1 [Misaligned access] */
@@ -548,7 +548,7 @@ BaseType_t xCheckRequiresARPResolution( NetworkBufferDescriptor_t * pxNetworkBuf
         }
     }
     else
-#endif
+#endif /* ipconfigUSE_IPv6 */
     {
         /* MISRA Ref 11.3.1 [Misaligned access] */
         /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
