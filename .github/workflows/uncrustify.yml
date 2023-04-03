@@ -17,6 +17,7 @@ jobs:
         run: echo "$GITHUB_CONTEXT"
       - name: Install Git
         run: |
+          add-apt-repository ppa:git-core/ppa
           apt-get update && apt-get --assume-yes install git
           git --version
       - name: get pullrequest url
