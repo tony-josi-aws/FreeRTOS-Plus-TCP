@@ -15,6 +15,10 @@ jobs:
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: echo "$GITHUB_CONTEXT"
+      - name: Install Git
+        run: |
+          apt-get update && apt-get --assume-yes install git
+          git --version
       - name: get pullrequest url
         run: |
           echo ${{ github.event.issue.pull_request.url }}
@@ -34,8 +38,8 @@ jobs:
         with:
            repository: ${{ steps.upstreamrepo.outputs.RemoteRepo }}
            ref: ${{ steps.upstreambranch.outputs.branchname }}
-      - name: Install Uncrustify and Git
-        run: apt-get update && apt-get --assume-yes install uncrustify git
+      - name: Install Uncrustify
+        run: apt-get update && apt-get --assume-yes install uncrustify
       - name: Run Uncrustify
         run: |
           uncrustify --version
