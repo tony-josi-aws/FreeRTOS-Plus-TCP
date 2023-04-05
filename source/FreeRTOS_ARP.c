@@ -495,54 +495,56 @@ BaseType_t xCheckRequiresARPResolution( NetworkBufferDescriptor_t * pxNetworkBuf
 {
     BaseType_t xNeedsARPResolution = pdFALSE;
 
-    if( uxIPHeaderSizePacket( ( const NetworkBufferDescriptor_t * ) pxNetworkBuffer ) == ipSIZE_OF_IPv6_HEADER )
-    {
-        /* MISRA Ref 11.3.1 [Misaligned access] */
-        /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
-        /* coverity[misra_c_2012_rule_11_3_violation] */
-        IPPacket_IPv6_t * pxIPPacket = ( ( IPPacket_IPv6_t * ) pxNetworkBuffer->pucEthernetBuffer );
-        IPHeader_IPv6_t * pxIPHeader = &( pxIPPacket->xIPHeader );
-        IPv6_Address_t * pxIPAddress = &( pxIPHeader->xSourceAddress );
-        uint8_t ucNextHeader = pxIPHeader->ucNextHeader;
-
-        if( ( ucNextHeader == ipPROTOCOL_TCP ) ||
-            ( ucNextHeader == ipPROTOCOL_UDP ) )
+    #if ( ipconfigUSE_IPv6 != 0 )
+        if( uxIPHeaderSizePacket( ( const NetworkBufferDescriptor_t * ) pxNetworkBuffer ) == ipSIZE_OF_IPv6_HEADER )
         {
-            IPv6_Type_t eType = xIPv6_GetIPType( ( const IPv6_Address_t * ) pxIPAddress );
-            FreeRTOS_printf( ( "xCheckRequiresARPResolution: %pip type %s\n", pxIPAddress->ucBytes, ( eType == eIPv6_Global ) ? "Global" : ( eType == eIPv6_LinkLocal ) ? "LinkLocal" : "other" ) );
+            /* MISRA Ref 11.3.1 [Misaligned access] */
+            /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+            /* coverity[misra_c_2012_rule_11_3_violation] */
+            IPPacket_IPv6_t * pxIPPacket = ( ( IPPacket_IPv6_t * ) pxNetworkBuffer->pucEthernetBuffer );
+            IPHeader_IPv6_t * pxIPHeader = &( pxIPPacket->xIPHeader );
+            IPv6_Address_t * pxIPAddress = &( pxIPHeader->xSourceAddress );
+            uint8_t ucNextHeader = pxIPHeader->ucNextHeader;
 
-            if( eType == eIPv6_LinkLocal )
+            if( ( ucNextHeader == ipPROTOCOL_TCP ) ||
+                ( ucNextHeader == ipPROTOCOL_UDP ) )
             {
-                MACAddress_t xMACAddress;
-                NetworkEndPoint_t * pxEndPoint;
-                eARPLookupResult_t eResult;
-                char pcName[ 80 ];
+                IPv6_Type_t eType = xIPv6_GetIPType( ( const IPv6_Address_t * ) pxIPAddress );
+                FreeRTOS_printf( ( "xCheckRequiresARPResolution: %pip type %s\n", pxIPAddress->ucBytes, ( eType == eIPv6_Global ) ? "Global" : ( eType == eIPv6_LinkLocal ) ? "LinkLocal" : "other" ) );
 
-                ( void ) memset( &( pcName ), 0, sizeof( pcName ) );
-                eResult = eNDGetCacheEntry( pxIPAddress, &xMACAddress, &pxEndPoint );
-                FreeRTOS_printf( ( "xCheckRequiresARPResolution: eResult %s with EP %s\n", ( eResult == eARPCacheMiss ) ? "Miss" : ( eResult == eARPCacheHit ) ? "Hit" : "Error", pcEndpointName( pxEndPoint, pcName, sizeof pcName ) ) );
-
-                if( eResult == eARPCacheMiss )
+                if( eType == eIPv6_LinkLocal )
                 {
-                    NetworkBufferDescriptor_t * pxTempBuffer;
-                    size_t uxNeededSize;
+                    MACAddress_t xMACAddress;
+                    NetworkEndPoint_t * pxEndPoint;
+                    eARPLookupResult_t eResult;
+                    char pcName[ 80 ];
 
-                    uxNeededSize = ipSIZE_OF_ETH_HEADER + ipSIZE_OF_IPv6_HEADER + sizeof( ICMPRouterSolicitation_IPv6_t );
-                    pxTempBuffer = pxGetNetworkBufferWithDescriptor( BUFFER_FROM_WHERE_CALL( 199 ) uxNeededSize, 0U );
+                    ( void ) memset( &( pcName ), 0, sizeof( pcName ) );
+                    eResult = eNDGetCacheEntry( pxIPAddress, &xMACAddress, &pxEndPoint );
+                    FreeRTOS_printf( ( "xCheckRequiresARPResolution: eResult %s with EP %s\n", ( eResult == eARPCacheMiss ) ? "Miss" : ( eResult == eARPCacheHit ) ? "Hit" : "Error", pcEndpointName( pxEndPoint, pcName, sizeof pcName ) ) );
 
-                    if( pxTempBuffer != NULL )
+                    if( eResult == eARPCacheMiss )
                     {
-                        pxTempBuffer->pxEndPoint = pxNetworkBuffer->pxEndPoint;
-                        pxTempBuffer->pxInterface = pxNetworkBuffer->pxInterface;
-                        vNDSendNeighbourSolicitation( pxNetworkBuffer, pxIPAddress );
-                    }
+                        NetworkBufferDescriptor_t * pxTempBuffer;
+                        size_t uxNeededSize;
 
-                    xNeedsARPResolution = pdTRUE;
+                        uxNeededSize = ipSIZE_OF_ETH_HEADER + ipSIZE_OF_IPv6_HEADER + sizeof( ICMPRouterSolicitation_IPv6_t );
+                        pxTempBuffer = pxGetNetworkBufferWithDescriptor( BUFFER_FROM_WHERE_CALL( 199 ) uxNeededSize, 0U );
+
+                        if( pxTempBuffer != NULL )
+                        {
+                            pxTempBuffer->pxEndPoint = pxNetworkBuffer->pxEndPoint;
+                            pxTempBuffer->pxInterface = pxNetworkBuffer->pxInterface;
+                            vNDSendNeighbourSolicitation( pxNetworkBuffer, pxIPAddress );
+                        }
+
+                        xNeedsARPResolution = pdTRUE;
+                    }
                 }
             }
         }
-    }
-    else
+        else
+    #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
     {
         /* MISRA Ref 11.3.1 [Misaligned access] */
         /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
@@ -1133,11 +1135,13 @@ void vARPAgeCache( void )
         {
             if( ( pxEndPoint->bits.bEndPointUp != pdFALSE_UNSIGNED ) && ( pxEndPoint->ipv4_settings.ulIPAddress != 0U ) )
             {
-                if( pxEndPoint->bits.bIPv6 != pdFALSE_UNSIGNED )
-                {
-                    FreeRTOS_OutputAdvertiseIPv6( pxEndPoint );
-                }
-                else
+                #if ( ipconfigUSE_IPv6 != 0 )
+                    if( pxEndPoint->bits.bIPv6 != pdFALSE_UNSIGNED )
+                    {
+                        FreeRTOS_OutputAdvertiseIPv6( pxEndPoint );
+                    }
+                    else
+                #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
                 {
                     if( pxEndPoint->ipv4_settings.ulIPAddress != 0U )
                     {
