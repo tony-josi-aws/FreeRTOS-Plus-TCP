@@ -978,10 +978,12 @@
                         break;
                     }
                 }
-                else
-                {
-                    /* do nothing, coverity happy */
-                }
+                #if ( ipconfigUSE_IPv6 != 0 )
+                    else
+                    {
+                        /* do nothing, coverity happy */
+                    }
+                #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
             }
         }
 
@@ -1074,23 +1076,29 @@
         UBaseType_t uxHostType;
 
         /* Calculate the size of the headers. */
-        if( pxAddress->sin_family == ( uint8_t ) FREERTOS_AF_INET6 )
+        #if ( ipconfigUSE_IPv6 != 0 )
+            if( pxAddress->sin_family == ( uint8_t ) FREERTOS_AF_INET6 )
+            {
+                uxHeaderBytes = ipSIZE_OF_ETH_HEADER + ipSIZE_OF_IPv6_HEADER + ipSIZE_OF_UDP_HEADER;
+            }
+            else
+        #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
         {
-            uxHeaderBytes = ipSIZE_OF_ETH_HEADER + ipSIZE_OF_IPv6_HEADER + ipSIZE_OF_UDP_HEADER;
-        }
-        else
-        {
+            configASSERT( pxAddress->sin_family != ( uint8_t ) FREERTOS_AF_INET6 );
             uxHeaderBytes = ipSIZE_OF_ETH_HEADER + ipSIZE_OF_IPv4_HEADER + ipSIZE_OF_UDP_HEADER;
         }
 
-        if( xFamily == FREERTOS_AF_INET6 )
+        #if ( ipconfigUSE_IPv6 != 0 )
+            if( xFamily == FREERTOS_AF_INET6 )
+            {
+                /* Note that 'dnsTYPE_ANY_HOST' could be used here as well,
+                * but for testing, we want an IPv6 address. */
+                uxHostType = dnsTYPE_AAAA_HOST;
+            }
+            else
+        #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
         {
-            /* Note that 'dnsTYPE_ANY_HOST' could be used here as well,
-             * but for testing, we want an IPv6 address. */
-            uxHostType = dnsTYPE_AAAA_HOST;
-        }
-        else
-        {
+            configASSERT( xFamily == FREERTOS_AF_INET6 )
             uxHostType = dnsTYPE_A_HOST;
         }
 
@@ -1118,11 +1126,13 @@
 
             /* Later when translating form UDP payload to a Network Buffer,
              * it is important to know whether this is an IPv4 packet. */
-            if( pxAddress->sin_family == ( uint8_t ) FREERTOS_AF_INET6 )
-            {
-                xDNSBuf.pucPayloadBuffer[ -xIndex ] = ( uint8_t ) ipTYPE_IPv6;
-            }
-            else
+            #if ( ipconfigUSE_IPv6 != 0 )
+                if( pxAddress->sin_family == ( uint8_t ) FREERTOS_AF_INET6 )
+                {
+                    xDNSBuf.pucPayloadBuffer[ -xIndex ] = ( uint8_t ) ipTYPE_IPv6;
+                }
+                else
+            #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
             {
                 xDNSBuf.pucPayloadBuffer[ -xIndex ] = ( uint8_t ) ipTYPE_IPv4;
             }
@@ -1186,10 +1196,12 @@
         /* Make sure all fields of the 'sockaddr' are cleared. */
         ( void ) memset( ( void * ) &xAddress, 0, sizeof( xAddress ) );
 
-        if( xFamily == ( BaseType_t ) FREERTOS_AF_INET6 )
-        {
-            xDNS_IP_Preference = xPreferenceIPv6;
-        }
+        #if ( ipconfigUSE_IPv6 != 0 )
+            if( xFamily == ( BaseType_t ) FREERTOS_AF_INET6 )
+            {
+                xDNS_IP_Preference = xPreferenceIPv6;
+            }
+        #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
 
         pxEndPoint = prvFillSockAddress( &xAddress, pcHostName );
 
