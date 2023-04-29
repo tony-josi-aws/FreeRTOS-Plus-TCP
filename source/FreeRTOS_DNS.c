@@ -756,6 +756,7 @@
     #endif /* ( ipconfigUSE_IPv6 != 0 ) */
 /*-----------------------------------------------------------*/
 
+#if ( ipconfigUSE_IPv4 != 0 )
 /**
  * @brief Increment the field 'ucDNSIndex', which is an index in the array
  *        of DNS addresses.
@@ -787,6 +788,7 @@
         pxEndPoint->ipv4_settings.ucDNSIndex = ucIndex;
     }
 /*-----------------------------------------------------------*/
+#endif /* #if ( ipconfigUSE_IPv4 != 0 ) */
 
 /*!
  * @brief create a payload buffer and return it through the parameter
@@ -1254,10 +1256,12 @@
         /* Make sure all fields of the 'sockaddr' are cleared. */
         ( void ) memset( ( void * ) &xAddress, 0, sizeof( xAddress ) );
 
-        if( xFamily == ( BaseType_t ) FREERTOS_AF_INET6 )
-        {
-            xDNS_IP_Preference = xPreferenceIPv6;
-        }
+        #if ( ipconfigUSE_IPv6 != 0 )
+            if( xFamily == ( BaseType_t ) FREERTOS_AF_INET6 )
+            {
+                xDNS_IP_Preference = xPreferenceIPv6;
+            }
+        #endif /* ( ipconfigUSE_IPv6 != 0 ) */
 
         pxEndPoint = prvFillSockAddress( &xAddress, pcHostName );
 
