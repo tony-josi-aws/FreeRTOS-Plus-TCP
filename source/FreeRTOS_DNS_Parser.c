@@ -70,11 +70,14 @@
                 }
                 else
             #endif /* ( ipconfigUSE_IPv6 != 0 ) */
+
+            #if ( ipconfigUSE_IPv4 != 0 )
             {
                 IPPacket_t * xIPPacket = ( ( IPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
 
                 pxEndPoint = FreeRTOS_FindEndPointOnNetMask( xIPPacket->xIPHeader.ulSourceIPAddress, 6 );
             }
+            #endif /* ( ipconfigUSE_IPv4 != 0 ) */
 
             if( pxEndPoint != NULL )
             {
@@ -512,9 +515,15 @@
                                         }
                                         else
                                     #endif /* ( ipconfigUSE_IPv6 != 0 ) */
-                                    {
-                                        uxExtraLength = sizeof( LLMNRAnswer_t );
-                                    }
+                                    #if ( ipconfigUSE_IPv4 != 0 )
+                                        {
+                                            uxExtraLength = sizeof( LLMNRAnswer_t );
+                                        }
+                                    #else /* ( ipconfigUSE_IPv4 != 0 ) */
+                                        {
+                                            /* do nothing, coverity happy */
+                                        }
+                                    #endif /* ( ipconfigUSE_IPv4 != 0 ) */
 
                                     /* Set the size of the outgoing packet. */
                                     pxNetworkBuffer->xDataLength = uxDataLength;
