@@ -105,7 +105,6 @@
 
 /*-----------------------------------------------------------*/
 
-#if ( ipconfigUSE_IPv4 != 0 )
 /**
  * @brief perform a dns lookup in the local cache
  * @param pcHostName the lookup name
@@ -127,10 +126,8 @@
 
         return xIPv46_Address.ulIPAddress;
     }
-#endif /* if ( ipconfigUSE_IPv4 != 0 ) */
 /*-----------------------------------------------------------*/
 
-#if ( ipconfigUSE_IPv6 != 0 )
 /**
  * @brief Perform a dns lookup in the local cache (IPv6)
  * @param pcHostName The lookup name
@@ -160,7 +157,6 @@
 
         return ulReturn;
     }
-#endif /* if ( ipconfigUSE_IPv6 != 0 ) */
 /*-----------------------------------------------------------*/
 
 /**
@@ -204,13 +200,13 @@
 /**
  * @brief process a DNS Cache request (get, update, or insert)
  *
- * @param[in] pcName: the name of the host
- * @param[in,out] pxIP: when doing a lookup, will be set, when doing an update,
+ * @param[in] pcName the name of the host
+ * @param[in,out] pxIP when doing a lookup, will be set, when doing an update,
  *                       will be read.
- * @param[in] ulTTL: Time To Live (in seconds)
- * @param[in] xLookUp: pdTRUE if a look-up is expected, pdFALSE, when the DNS cache must
+ * @param[in] ulTTL Time To Live (in seconds)
+ * @param[in] xLookUp pdTRUE if a look-up is expected, pdFALSE, when the DNS cache must
  *                     be updated.
- * @param[in,out] ppxAddressInfo: A pointer to a pointer where the find results
+ * @param[in,out] ppxAddressInfo A pointer to a pointer where the find results
  *                                will be stored.
  * @return whether the operation was successful
  * @post the global structure \a xDNSCache might be modified
@@ -235,7 +231,7 @@
             pxIP->ulIPAddress = 0U;
         }
 
-        ulCurrentTimeSeconds = ( xCurrentTickCount / portTICK_PERIOD_MS ) / 1000U;
+        ulCurrentTimeSeconds = ( uint32_t ) ( ( xCurrentTickCount / portTICK_PERIOD_MS ) / 1000U );
         xResult = prvFindEntryIndex( pcName, pxIP, &uxIndex );
 
         if( xResult == pdTRUE )
@@ -282,22 +278,18 @@
                 IP_Address_t xAddress;
                 BaseType_t xFamily = FREERTOS_AF_INET;
 
-                switch(  pxIP->xIs_IPv6 )
+                if( pxIP->xIs_IPv6 != 0U )
                 {
-#if ( ipconfigUSE_IPv6 != 0 )
-                    case pdTRUE:
-                        ( void ) memcpy( xAddress.xIP_IPv6.ucBytes, pxIP->xAddress_IPv6.ucBytes, ipSIZE_OF_IPv6_ADDRESS );
+                    ( void ) memcpy( xAddress.xIP_IPv6.ucBytes, pxIP->xAddress_IPv6.ucBytes, ipSIZE_OF_IPv6_ADDRESS );
+
+                    if( pxIP->xIs_IPv6 != 0U )
+                    {
                         xFamily = FREERTOS_AF_INET6;
-                        break;
-#endif /* if ( ipconfigUSE_IPv6 != 0 ) */
-#if ( ipconfigUSE_IPv4 != 0 )
-                    case pdFALSE:
-                        xAddress.ulIP_IPv4 = pxIP->ulIPAddress;
-                        xFamily = FREERTOS_AF_INET4;
-                        break;
-#endif /* if ( ipconfigUSE_IPv4 != 0 ) */
-                    default:
-                        break;
+                    }
+                }
+                else
+                {
+                    xAddress.ulIP_IPv4 = pxIP->ulIPAddress;
                 }
 
                 ( void ) FreeRTOS_inet_ntop( xFamily,
@@ -355,7 +347,7 @@
 
 /**
  * @brief get entry at \p index from the cache
- * @param[in]  uxIndex : index in the cache
+ * @param[in]  uxIndex index in the cache
  * @param[out] pxIP fill it with the result
  * @param[in]  ulCurrentTimeSeconds current time
  * @param[out] ppxAddressInfo Target to store the DNS entries.
@@ -415,7 +407,7 @@
 
 /**
  * @brief update entry at \p index in the cache
- * @param[in] uxIndex : index in the cache
+ * @param[in] uxIndex index in the cache
  * @param[in] ulTTL time to live (in seconds)
  * @param[in] pxIP ip to update the cache with
  * @param[in] ulCurrentTimeSeconds current time
@@ -490,8 +482,8 @@
 
 /**
  * @brief Copy DNS cache entries at uxIndex to a linked struct addrinfo.
- * @param[in] uxIndex: The index from where entries must be copied.
- * @param[out] ppxAddressInfo: Target to store the DNS entries.
+ * @param[in] uxIndex The index from where entries must be copied.
+ * @param[out] ppxAddressInfo Target to store the DNS entries.
  */
         static void prvReadDNSCache( BaseType_t uxIndex,
                                      struct freertos_addrinfo ** ppxAddressInfo )
@@ -516,21 +508,15 @@
             {
                 pxAddresses = &( xDNSCache[ uxIndex ].xAddresses[ uxIPAddressIndex ] );
 
-                switch( pxAddresses->xIs_IPv6 )
+                if( pxAddresses->xIs_IPv6 != pdFALSE )
                 {
-                #if ( ipconfigUSE_IPv6 != 0 )
-                    case pdTRUE:
-                        pxNewAddress = pxNew_AddrInfo( xDNSCache[ uxIndex ].pcName, FREERTOS_AF_INET6, pxAddresses->xAddress_IPv6.ucBytes );
-                        break;
-                #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
-                #if ( ipconfigUSE_IPv4 != 0 )
-                    case pdFALSE:
-                        const uint8_t * ucBytes = ( const uint8_t * ) &( pxAddresses->ulIPAddress );
-                        pxNewAddress = pxNew_AddrInfo( xDNSCache[ uxIndex ].pcName, FREERTOS_AF_INET4, ucBytes );
-                        break;
-                #endif /* if ( ipconfigUSE_IPv4 != 0 ) */
-                    default:
-                        break;
+                    pxNewAddress = pxNew_AddrInfo( xDNSCache[ uxIndex ].pcName, FREERTOS_AF_INET6, pxAddresses->xAddress_IPv6.ucBytes );
+                }
+                else
+                {
+                    const uint8_t * ucBytes = ( const uint8_t * ) &( pxAddresses->ulIPAddress );
+
+                    pxNewAddress = pxNew_AddrInfo( xDNSCache[ uxIndex ].pcName, FREERTOS_AF_INET4, ucBytes );
                 }
 
                 if( pxNewAddress == NULL )
@@ -552,9 +538,9 @@
 
 /**
  * @brief Lookup the given hostname in the DNS cache
- * @param[in] pcHostName: THe host name to lookup
- * @param[in] xFamily: IP type FREERTOS_AF_INET6 / FREERTOS_AF_INET4
- * @param[out] ppxAddressInfo: Target to store the DNS entries.
+ * @param[in] pcHostName THe host name to lookup
+ * @param[in] xFamily IP type FREERTOS_AF_INET6 / FREERTOS_AF_INET4
+ * @param[out] ppxAddressInfo Target to store the DNS entries.
  * @returns This function returns either a valid IPv4 address, or
  *                          in case of an IPv6 lookup, it will return a non-zero.
  */
@@ -565,57 +551,47 @@
             uint32_t ulIPAddress = 0U;
             IPv46_Address_t xIPv46_Address;
 
-            switch( xFamily )
+            if( xFamily == FREERTOS_AF_INET6 )
             {
-                #if ( ipconfigUSE_IPv6 != 0 )
-                case FREERTOS_AF_INET6:
-                    BaseType_t xFound;
+                BaseType_t xFound;
 
-                    xIPv46_Address.xIs_IPv6 = pdTRUE;
-                    xFound = FreeRTOS_ProcessDNSCache( pcHostName, &( xIPv46_Address ), 0, pdTRUE, ppxAddressInfo );
+                xIPv46_Address.xIs_IPv6 = pdTRUE;
+                xFound = FreeRTOS_ProcessDNSCache( pcHostName, &( xIPv46_Address ), 0, pdTRUE, ppxAddressInfo );
 
-                    if( xFound != 0 )
+                if( xFound != 0 )
+                {
+                    if( ( ppxAddressInfo != NULL ) && ( *( ppxAddressInfo ) != NULL ) )
                     {
-                        if( ( ppxAddressInfo != NULL ) && ( *( ppxAddressInfo ) != NULL ) )
-                        {
                         /* This function returns either a valid IPv4 address, or
                          * in case of an IPv6 lookup, it will return a non-zero */
                         ulIPAddress = 1U;
-                        }
                     }
-                    else
-                    {
-                        /* prvGetHostByName will be called to start a DNS lookup. */
-                    }
-                    break;
-                #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
-                #if ( ipconfigUSE_IPv4 != 0 )
-                case FREERTOS_AF_INET4:
-                    BaseType_t xFound;
-
-                    xIPv46_Address.xIs_IPv6 = pdFALSE;
-                    xFound = FreeRTOS_ProcessDNSCache( pcHostName, &( xIPv46_Address ), 0, pdTRUE, ppxAddressInfo );
-
-                    if( xFound != 0 )
-                    {
-                        if( ( ppxAddressInfo != NULL ) && ( *( ppxAddressInfo ) != NULL ) )
-                        {
-                            const struct freertos_sockaddr * sockaddr = ( *( ppxAddressInfo ) )->ai_addr;
-
-                            ulIPAddress = sockaddr->sin_address.ulIP_IPv4;
-                        }
-                    }
-                    else
-                    {
-                        /* prvGetHostByName will be called to start a DNS lookup. */
-                    }
-                    break;
-                #endif /* if ( ipconfigUSE_IPv4 != 0 ) */
-                default:
+                }
+                else
+                {
                     /* prvGetHostByName will be called to start a DNS lookup. */
-                    FreeRTOS_printf( ( "Prepare_CacheLookup: Invalid xFamily %u\n",
-                                           xFamily )  );
-                    break;
+                }
+            }
+            else
+            {
+                BaseType_t xFound;
+
+                xIPv46_Address.xIs_IPv6 = pdFALSE;
+                xFound = FreeRTOS_ProcessDNSCache( pcHostName, &( xIPv46_Address ), 0, pdTRUE, ppxAddressInfo );
+
+                if( xFound != 0 )
+                {
+                    if( ( ppxAddressInfo != NULL ) && ( *( ppxAddressInfo ) != NULL ) )
+                    {
+                        const struct freertos_sockaddr * sockaddr = ( *( ppxAddressInfo ) )->ai_addr;
+
+                        ulIPAddress = sockaddr->sin_address.ulIP_IPv4;
+                    }
+                }
+                else
+                {
+                    /* prvGetHostByName will be called to start a DNS lookup. */
+                }
             }
 
             return ulIPAddress;
@@ -648,31 +624,26 @@
                     for( xSubEntry = 0; xSubEntry < pxRow->ucNumIPAddresses; xSubEntry++ )
                     {
                         char pcAddress[ 40 ] = "";
-                        switch( pxAddresses->xIs_IPv6 )
-                        {
                         #if ( ipconfigUSE_IPv6 != 0 )
-                            case pdTRUE:
 
                             /* The first entry determines the type of row:
                              * either IPv4 or IPv6. */
+                            if( pxRow->xAddresses[ 0 ].xIs_IPv6 != pdFALSE )
+                            {
                                 ( void ) FreeRTOS_inet_ntop( FREERTOS_AF_INET6,
                                                              ( const void * ) pxRow->xAddresses[ xSubEntry ].xAddress_IPv6.ucBytes,
                                                              pcAddress,
                                                              sizeof( pcAddress ) );
-                                break;
+                            }
+                            else
                         #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
-                        #if ( ipconfigUSE_IPv4 != 0 )
-                            case pdFALSE:
-                                ( void ) FreeRTOS_inet_ntop( FREERTOS_AF_INET4,
+                        {
+                            ( void ) FreeRTOS_inet_ntop( FREERTOS_AF_INET4,
                                                          ( const void * ) &( pxRow->xAddresses[ xSubEntry ].ulIPAddress ),
                                                          pcAddress,
                                                          sizeof( pcAddress ) );
-                                break;
-                        #endif /* if ( ipconfigUSE_IPv4 != 0 ) */
-                            default:
-                                break;
-
                         }
+
                         FreeRTOS_printf( ( "      %2u: %s\n",
                                            ( unsigned ) xSubEntry,
                                            pcAddress ) );
