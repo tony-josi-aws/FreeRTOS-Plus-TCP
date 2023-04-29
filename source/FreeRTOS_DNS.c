@@ -159,12 +159,10 @@
         const MACAddress_t xMDNS_MacAdress = { { 0x01, 0x00, 0x5e, 0x00, 0x00, 0xfb } };
     #endif /* ipconfigUSE_MDNS == 1 */
 
-#if ( ipconfigUSE_IPv4 != 0 )
 /** @brief This global variable is being used to indicate to the driver which IP type
  *         is preferred for name service lookup, either IPv6 or IPv4. */
 /* TODO: Fix IPv6 DNS query in Windows Simulator. */
     IPPreference_t xDNS_IP_Preference = xPreferenceIPv4;
-#endif
 
 /*-----------------------------------------------------------*/
 
@@ -517,38 +515,51 @@
             ( void ) xFamily;
 
             /* Check if the hostname given is actually an IP-address. */
-            #if ( ipconfigUSE_IPv6 != 0 )
-                if( xFamily == FREERTOS_AF_INET6 )
-                {
-                    IPv6_Address_t xAddress_IPv6;
-                    BaseType_t xResult;
-
-                    /* ulIPAddress does not represent an IPv4 address here. It becomes non-zero when the look-up succeeds. */
-                    xResult = FreeRTOS_inet_pton6( pcHostName, xAddress_IPv6.ucBytes );
-
-                    if( xResult == 1 )
-                    {
-                        /* This function returns either a valid IPv4 address, or
-                         * in case of an IPv6 lookup, it will return a non-zero */
-                        ulIPAddress = 1U;
-
-                        if( ppxAddressInfo != NULL )
-                        {
-                            *( ppxAddressInfo ) = pxNew_AddrInfo( pcHostName, FREERTOS_AF_INET6, xAddress_IPv6.ucBytes );
-                        }
-                    }
-                }
-                else
-            #endif /* ipconfigUSE_IPv6 */
+            switch(xFamily)
             {
-                ulIPAddress = FreeRTOS_inet_addr( pcHostName );
 
-                if( ( ulIPAddress != 0U ) && ( ppxAddressInfo != NULL ) )
-                {
-                    const uint8_t * ucBytes = ( uint8_t * ) &( ulIPAddress );
+                #if ( ipconfigUSE_IPv4 != 0 )
+                    case FREERTOS_AF_INET:
+                        ulIPAddress = FreeRTOS_inet_addr( pcHostName );
 
-                    *( ppxAddressInfo ) = pxNew_AddrInfo( pcHostName, FREERTOS_AF_INET4, ucBytes );
-                }
+                        if( ( ulIPAddress != 0U ) && ( ppxAddressInfo != NULL ) )
+                        {
+                            const uint8_t * ucBytes = ( uint8_t * ) &( ulIPAddress );
+
+                            *( ppxAddressInfo ) = pxNew_AddrInfo( pcHostName, FREERTOS_AF_INET4, ucBytes );
+                        }
+                        break;
+                #endif /* ( ipconfigUSE_IPv4 != 0 ) */
+
+                #if ( ipconfigUSE_IPv6 != 0 )
+                    case FREERTOS_AF_INET6:
+                        {
+                            IPv6_Address_t xAddress_IPv6;
+                            BaseType_t xResult;
+
+                            /* ulIPAddress does not represent an IPv4 address here. It becomes non-zero when the look-up succeeds. */
+                            xResult = FreeRTOS_inet_pton6( pcHostName, xAddress_IPv6.ucBytes );
+
+                            if( xResult == 1 )
+                            {
+                                /* This function returns either a valid IPv4 address, or
+                                    * in case of an IPv6 lookup, it will return a non-zero */
+                                ulIPAddress = 1U;
+
+                                if( ppxAddressInfo != NULL )
+                                {
+                                    *( ppxAddressInfo ) = pxNew_AddrInfo( pcHostName, FREERTOS_AF_INET6, xAddress_IPv6.ucBytes );
+                                }
+                            }
+                        }
+                        break;
+                #endif /* ( ipconfigUSE_IPv6 != 0 ) */
+                
+                default:
+                    /* MISRA 16.4 Compliance */
+                    FreeRTOS_debug_printf( ( "prvPrepare_ReadIPAddress: Undefined xFamily Type \n" ) );
+                    break;
+
             }
 
             return ulIPAddress;
@@ -876,19 +887,37 @@
                     {
                         /* Looking up a name like "mydevice.local".
                          * Use mDNS addresses. */
-                        pxAddress->sin_address.ulIP_IPv4 = ipMDNS_IP_ADDRESS; /* Is in network byte order. */
+                        
                         pxAddress->sin_port = ipMDNS_PORT;
                         pxAddress->sin_port = FreeRTOS_ntohs( pxAddress->sin_port );
                         xNeed_Endpoint = pdTRUE;
-                        #if ( ipconfigUSE_IPv6 != 0 )
-                            if( xDNS_IP_Preference == xPreferenceIPv6 )
-                            {
-                                memcpy( pxAddress->sin_address.xIP_IPv6.ucBytes,
-                                        ipMDNS_IP_ADDR_IPv6.ucBytes,
-                                        ipSIZE_OF_IPv6_ADDRESS );
-                                pxAddress->sin_family = FREERTOS_AF_INET6;
-                            }
-                        #endif
+
+                        switch(xDNS_IP_Preference)
+                        {
+
+                            #if ( ipconfigUSE_IPv4 != 0 )
+                                case xPreferenceIPv4:
+                                    pxAddress->sin_address.ulIP_IPv4 = ipMDNS_IP_ADDRESS; /* Is in network byte order. */
+                                    /* sin_family is default set to FREERTOS_AF_INET */
+                                    break;
+                            #endif /* ( ipconfigUSE_IPv4 != 0 ) */
+
+                            #if ( ipconfigUSE_IPv6 != 0 )
+                                case xPreferenceIPv6:
+                                    memcpy( pxAddress->sin_address.xIP_IPv6.ucBytes,
+                                            ipMDNS_IP_ADDR_IPv6.ucBytes,
+                                            ipSIZE_OF_IPv6_ADDRESS );
+                                    pxAddress->sin_family = FREERTOS_AF_INET6;
+                                    break;
+                            #endif /* ( ipconfigUSE_IPv6 != 0 ) */
+                            
+                            default:
+                                /* MISRA 16.4 Compliance */
+                                FreeRTOS_debug_printf( ( "prvFillSockAddress: Undefined xDNS_IP_Preference \n" ) );
+                                break;
+
+                        }
+
                     }
                 }
             #endif /* if ( ipconfigUSE_MDNS == 1 ) */
@@ -898,19 +927,35 @@
                     if( bHasDot == pdFALSE )
                     {
                         /* Use LLMNR addressing. */
-                        pxAddress->sin_address.ulIP_IPv4 = ipLLMNR_IP_ADDR; /* Is in network byte order. */
                         pxAddress->sin_port = ipLLMNR_PORT;
                         pxAddress->sin_port = FreeRTOS_ntohs( pxAddress->sin_port );
                         xNeed_Endpoint = pdTRUE;
-                        #if ( ipconfigUSE_IPv6 != 0 )
-                            if( xDNS_IP_Preference == xPreferenceIPv6 )
-                            {
-                                memcpy( pxAddress->sin_address.xIP_IPv6.ucBytes,
-                                        ipLLMNR_IP_ADDR_IPv6.ucBytes,
-                                        ipSIZE_OF_IPv6_ADDRESS );
-                                pxAddress->sin_family = FREERTOS_AF_INET6;
-                            }
-                        #endif
+
+                        switch(xDNS_IP_Preference)
+                        {
+
+                            #if ( ipconfigUSE_IPv4 != 0 )
+                                case xPreferenceIPv4:
+                                    pxAddress->sin_address.ulIP_IPv4 = ipLLMNR_IP_ADDR; /* Is in network byte order. */
+                                    pxAddress->sin_family = FREERTOS_AF_INET;
+                                    break;
+                            #endif /* ( ipconfigUSE_IPv4 != 0 ) */
+
+                            #if ( ipconfigUSE_IPv6 != 0 )
+                                case xPreferenceIPv6:
+                                    memcpy( pxAddress->sin_address.xIP_IPv6.ucBytes,
+                                            ipLLMNR_IP_ADDR_IPv6.ucBytes,
+                                            ipSIZE_OF_IPv6_ADDRESS );
+                                    pxAddress->sin_family = FREERTOS_AF_INET6;
+                                    break;
+                            #endif /* ( ipconfigUSE_IPv6 != 0 ) */
+                            
+                            default:
+                                /* MISRA 16.4 Compliance */
+                                FreeRTOS_debug_printf( ( "prvFillSockAddress: Undefined xDNS_IP_Preference (LLMNR) \n" ) );
+                                break;
+
+                        }
                     }
                 }
             #endif /* if ( ipconfigUSE_LLMNR == 1 ) */
@@ -932,10 +977,12 @@
                             }
                             else
                             {
-                                if( ENDPOINT_IS_IPv4( pxEndPoint ) )
-                                {
-                                    break;
-                                }
+                                #if ( ipconfigUSE_IPv4 != 0 )
+                                    if( ENDPOINT_IS_IPv4( pxEndPoint ) )
+                                    {
+                                        break;
+                                    }
+                                #endif /* if ( ipconfigUSE_IPv4 != 0 ) */
                             }
                         #else /* if ( ipconfigUSE_IPv6 != 0 ) */
                             /* IPv6 is not included, so all end-points are IPv4. */
@@ -952,43 +999,57 @@
                  pxEndPoint != NULL;
                  pxEndPoint = FreeRTOS_NextEndPoint( NULL, pxEndPoint ) )
             {
-                #if ( ipconfigUSE_IPv6 != 0 )
-                    if( ( xDNS_IP_Preference == xPreferenceIPv6 ) && ENDPOINT_IS_IPv6( pxEndPoint ) )
-                    {
-                        uint8_t ucIndex = pxEndPoint->ipv6_settings.ucDNSIndex;
-                        configASSERT( ucIndex < ipconfigENDPOINT_DNS_ADDRESS_COUNT );
-                        const uint8_t * ucBytes = pxEndPoint->ipv6_settings.xDNSServerAddresses[ ucIndex ].ucBytes;
+                switch(xDNS_IP_Preference)
+                {
 
-                        /* Test if the DNS entry is in used. */
-                        if( ( ucBytes[ 0 ] != 0U ) && ( ucBytes[ 1 ] != 0U ) )
-                        {
-                            pxAddress->sin_family = FREERTOS_AF_INET6;
-                            pxAddress->sin_len = ( uint8_t ) sizeof( struct freertos_sockaddr );
-                            ( void ) memcpy( pxAddress->sin_address.xIP_IPv6.ucBytes,
-                                             pxEndPoint->ipv6_settings.xDNSServerAddresses[ ucIndex ].ucBytes,
-                                             ipSIZE_OF_IPv6_ADDRESS );
+                    #if ( ipconfigUSE_IPv4 != 0 )
+                        case xPreferenceIPv4:
+                            if(ENDPOINT_IS_IPv4( pxEndPoint ))
+                            {
+                                uint8_t ucIndex = pxEndPoint->ipv4_settings.ucDNSIndex;
+                                configASSERT( ucIndex < ipconfigENDPOINT_DNS_ADDRESS_COUNT );
+                                uint32_t ulIPAddress = pxEndPoint->ipv4_settings.ulDNSServerAddresses[ ucIndex ];
+
+                                if( ( ulIPAddress != 0U ) && ( ulIPAddress != ipBROADCAST_IP_ADDRESS ) )
+                                {
+                                    pxAddress->sin_family = FREERTOS_AF_INET;
+                                    pxAddress->sin_len = ( uint8_t ) sizeof( struct freertos_sockaddr );
+                                    pxAddress->sin_address.ulIP_IPv4 = ulIPAddress;
+                                    break;
+                                }
+                            }
                             break;
-                        }
-                    }
-                    else if( ( xDNS_IP_Preference == xPreferenceIPv4 ) && ENDPOINT_IS_IPv4( pxEndPoint ) )
-                #endif /* if ( ipconfigUSE_IPv6 != 0 ) */
-                {
-                    uint8_t ucIndex = pxEndPoint->ipv4_settings.ucDNSIndex;
-                    configASSERT( ucIndex < ipconfigENDPOINT_DNS_ADDRESS_COUNT );
-                    uint32_t ulIPAddress = pxEndPoint->ipv4_settings.ulDNSServerAddresses[ ucIndex ];
+                    #endif /* ( ipconfigUSE_IPv4 != 0 ) */
 
-                    if( ( ulIPAddress != 0U ) && ( ulIPAddress != ipBROADCAST_IP_ADDRESS ) )
-                    {
-                        pxAddress->sin_family = FREERTOS_AF_INET;
-                        pxAddress->sin_len = ( uint8_t ) sizeof( struct freertos_sockaddr );
-                        pxAddress->sin_address.ulIP_IPv4 = ulIPAddress;
+                    #if ( ipconfigUSE_IPv6 != 0 )
+                        case xPreferenceIPv6:
+                            if( ENDPOINT_IS_IPv6( pxEndPoint ) )
+                            {
+                                uint8_t ucIndex = pxEndPoint->ipv6_settings.ucDNSIndex;
+                                configASSERT( ucIndex < ipconfigENDPOINT_DNS_ADDRESS_COUNT );
+                                const uint8_t * ucBytes = pxEndPoint->ipv6_settings.xDNSServerAddresses[ ucIndex ].ucBytes;
+
+                                /* Test if the DNS entry is in used. */
+                                if( ( ucBytes[ 0 ] != 0U ) && ( ucBytes[ 1 ] != 0U ) )
+                                {
+                                    pxAddress->sin_family = FREERTOS_AF_INET6;
+                                    pxAddress->sin_len = ( uint8_t ) sizeof( struct freertos_sockaddr );
+                                    ( void ) memcpy( pxAddress->sin_address.xIP_IPv6.ucBytes,
+                                                        pxEndPoint->ipv6_settings.xDNSServerAddresses[ ucIndex ].ucBytes,
+                                                        ipSIZE_OF_IPv6_ADDRESS );
+                                    break;
+                                }
+                            }
+                            break;
+                    #endif /* ( ipconfigUSE_IPv6 != 0 ) */
+                    
+                    default:
+                        /* MISRA 16.4 Compliance */
+                        FreeRTOS_debug_printf( ( "prvFillSockAddress: Undefined xDNS_IP_Preference \n" ) );
                         break;
-                    }
+
                 }
-                else
-                {
-                    /* do nothing, coverity happy */
-                }
+
             }
         }
 
@@ -1246,16 +1307,28 @@
                       ( xBytes == 0 ) ) )
                 {
                     /* This search timed out, next time try with a different DNS. */
-                    #if ( ipconfigUSE_IPv6 != 0 )
-                        if( xAddress.sin_family == ( uint8_t ) FREERTOS_AF_INET6 )
-                        {
-                            prvIncreaseDNS6Index( pxEndPoint );
-                        }
-                        else
-                    #endif
+                    switch(xAddress.sin_family)
                     {
-                        prvIncreaseDNS4Index( pxEndPoint );
+
+                        #if ( ipconfigUSE_IPv4 != 0 )
+                            case FREERTOS_AF_INET:
+                                prvIncreaseDNS4Index( pxEndPoint );
+                                break;
+                        #endif /* ( ipconfigUSE_IPv4 != 0 ) */
+
+                        #if ( ipconfigUSE_IPv6 != 0 )
+                            case FREERTOS_AF_INET6:
+                                prvIncreaseDNS6Index( pxEndPoint );
+                                break;
+                        #endif /* ( ipconfigUSE_IPv6 != 0 ) */
+                        
+                        default:
+                            /* MISRA 16.4 Compliance */
+                            FreeRTOS_debug_printf( ( "prvGetHostByNameOp: Undefined sin_family \n" ) );
+                            break;
+
                     }
+
                 }
 
                 if( xReceiveBuffer.pucPayloadBuffer != NULL )
