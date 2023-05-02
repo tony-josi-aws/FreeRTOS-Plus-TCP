@@ -238,7 +238,7 @@
 /* Include all API's and code that is needed for the IPv6 protocol.
  * When defined as zero, the application should uses IPv4. */
 #ifndef ipconfigUSE_IPv6
-    #define ipconfigUSE_IPv6    ( 1 )
+    #define ipconfigUSE_IPv6    ( 0 )
 #endif
 
 #if ( ipconfigUSE_IPv4 != 1 ) && ( ipconfigUSE_IPv6 != 1 )
