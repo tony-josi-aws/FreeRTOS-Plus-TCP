@@ -250,7 +250,7 @@
  * with single end point IPv4 version of the FreeRTOS+TCP library.
  */
 #ifndef ipconfigIPv4_BACKWARD_COMPATIBLE
-    #define ipconfigIPv4_BACKWARD_COMPATIBLE    1
+    #define ipconfigIPv4_BACKWARD_COMPATIBLE    0
 #endif
 
 /* Determine the number of clock ticks that the API's FreeRTOS_recv() and
