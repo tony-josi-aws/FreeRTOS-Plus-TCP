@@ -238,7 +238,7 @@
 /* Include all API's and code that is needed for the IPv6 protocol.
  * When defined as zero, the application should uses IPv4. */
 #ifndef ipconfigUSE_IPv6
-    #define ipconfigUSE_IPv6    ( 1 )
+    #define ipconfigUSE_IPv6    ( 0 )
 #endif
 
 #if ( ipconfigUSE_IPv4 != 1 ) && ( ipconfigUSE_IPv6 != 1 )
@@ -250,7 +250,7 @@
  * with single end point IPv4 version of the FreeRTOS+TCP library.
  */
 #ifndef ipconfigIPv4_BACKWARD_COMPATIBLE
-    #define ipconfigIPv4_BACKWARD_COMPATIBLE    0
+    #define ipconfigIPv4_BACKWARD_COMPATIBLE    1
 #endif
 
 /* Determine the number of clock ticks that the API's FreeRTOS_recv() and
