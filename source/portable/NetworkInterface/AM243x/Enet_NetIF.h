@@ -42,6 +42,8 @@
 #include <enet_cfg.h>
 #include "Enet_NetIFQueue.h"
 
+#define NUM_RX_POOL_NETWORK_BUFFER_DESCRIPTORS      (32U)
+
 #define CONFIG_MAX_RX_CHANNELS      2
 #define CONFIG_MAX_TX_CHANNELS      2
 

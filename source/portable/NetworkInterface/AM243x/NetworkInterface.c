@@ -115,6 +115,22 @@ void vNetworkInterfaceAllocateRAMToBuffers( NetworkBufferDescriptor_t pxNetworkB
     }
 }
 
+void vNetworkInterfaceAllocateRAMToRxPoolBuffers( NetworkBufferDescriptor_t pxNetworkBuffers[ NUM_RX_POOL_NETWORK_BUFFER_DESCRIPTORS ] )
+{
+    // TODO: check alignment and section where this memory block should be placed. Also,
+    // check if ETH_MAX_PACKET_SIZE appropriate.
+    static uint8_t ucNetworkPacketsRxPool[ NUM_RX_POOL_NETWORK_BUFFER_DESCRIPTORS * ETH_MAX_PACKET_SIZE ] __attribute__( ( aligned( 32 ) ) );
+    uint8_t * ucRAMBuffer = ucNetworkPacketsRxPool;
+    uint32_t ul;
+
+    for( ul = 0; ul < NUM_RX_POOL_NETWORK_BUFFER_DESCRIPTORS; ul++ )
+    {
+        pxNetworkBuffers[ ul ].pucEthernetBuffer = ucRAMBuffer + ipBUFFER_PADDING;
+        *( ( unsigned * ) ucRAMBuffer ) = ( unsigned ) ( &( pxNetworkBuffers[ ul ] ) );
+        ucRAMBuffer += ETH_MAX_PACKET_SIZE;
+    }
+}
+
 NetworkInterface_t * pxAM243x_Eth_FillInterfaceDescriptor( BaseType_t xEMACIndex,
                                                           NetworkInterface_t * pxInterface )
 {
