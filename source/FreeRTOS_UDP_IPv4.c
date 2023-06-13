@@ -59,6 +59,8 @@
     #include "FreeRTOS_DNS.h"
 #endif
 
+#include "FreeRTOS_Net_Stat.h"
+
 /* Just make sure the contents doesn't get compiled if IPv4 is not enabled. */
 /* *INDENT-OFF* */
     #if( ipconfigUSE_IPv4 != 0 )
@@ -308,6 +310,13 @@ void vProcessGeneratedUDPPacket_IPv4( NetworkBufferDescriptor_t * const pxNetwor
                     }
                 }
             #endif /* if( ipconfigETHERNET_MINIMUM_PACKET_BYTES > 0 ) */
+
+            if( request_stat == 1 )
+            {
+                vUdpPacketSendCount();
+                vUdpDataSendCount( pxNetworkBuffer->xDataLength );
+            }
+
             iptraceNETWORK_INTERFACE_OUTPUT( pxNetworkBuffer->xDataLength, pxNetworkBuffer->pucEthernetBuffer );
 
             if( ( pxInterface != NULL ) && ( pxInterface->pfOutput != NULL ) )
@@ -317,6 +326,12 @@ void vProcessGeneratedUDPPacket_IPv4( NetworkBufferDescriptor_t * const pxNetwor
         }
         else
         {
+
+            if( request_stat == 1 )
+            {
+                vUdpTxPacketLossCount();
+            }
+
             /* The packet can't be sent (no route found).  Drop the packet. */
             vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
         }

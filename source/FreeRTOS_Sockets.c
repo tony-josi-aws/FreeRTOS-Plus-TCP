@@ -57,6 +57,9 @@
     #include "tcp_mem_stats.h"
 #endif
 
+#include "FreeRTOS_Net_Stat.h"
+#include "FreeRTOS_Time.h"
+
 /* The ItemValue of the sockets xBoundSocketListItem member holds the socket's
  * port number. */
 /** @brief Set the port number for the socket in the xBoundSocketListItem. */
@@ -4589,6 +4592,7 @@ void vSocketWakeUpUser( FreeRTOS_Socket_t * pxSocket )
     {
         BaseType_t xByteCount = -pdFREERTOS_ERRNO_EINVAL;
         FreeRTOS_Socket_t * pxSocket = ( FreeRTOS_Socket_t * ) xSocket;
+        MeasuredCycleCount_t TxCycleCountData;
 
         if( pvBuffer != NULL )
         {
@@ -4603,6 +4607,13 @@ void vSocketWakeUpUser( FreeRTOS_Socket_t * pxSocket )
             /* prvTCPSendLoop() will try to send as many bytes as possible,
              * returning number of bytes that have been queued for transmission.. */
             xByteCount = prvTCPSendLoop( pxSocket, pvBuffer, uxDataLength, xFlags );
+
+            if( request_stat == 1 )
+            {
+                vTcpPacketSendCount();
+                vTcpDataSendCount( uxDataLength );
+                vMeasureCycleCountStart( &TxCycleCountData );
+            }
 
             if( xByteCount == 0 )
             {
@@ -4623,6 +4634,19 @@ void vSocketWakeUpUser( FreeRTOS_Socket_t * pxSocket )
                     xByteCount = ( BaseType_t ) -pdFREERTOS_ERRNO_ENOSPC;
                 }
             }
+        }
+
+        if( xByteCount <= 0 )
+        {
+            if( request_stat == 1 )
+            {
+                vTcpTxPacketLossCount();
+            }
+        }
+
+        if( request_stat == 1 )
+        {
+            vGetTxLatency( uiMeasureCycleCountStop( &TxCycleCountData ) );
         }
 
         return xByteCount;

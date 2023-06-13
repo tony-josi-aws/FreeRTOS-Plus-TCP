@@ -60,6 +60,9 @@
 #include "FreeRTOS_Routing.h"
 #include "FreeRTOS_ND.h"
 
+#include "FreeRTOS_Net_Stat.h"
+#include "FreeRTOS_Time.h"
+
 /** @brief Time delay between repeated attempts to initialise the network hardware. */
 #ifndef ipINITIALISATION_RETRY_DELAY
     #define ipINITIALISATION_RETRY_DELAY    ( pdMS_TO_TICKS( 3000U ) )
@@ -67,6 +70,15 @@
 #if ( ipconfigUSE_TCP_MEM_STATS != 0 )
     #include "tcp_mem_stats.h"
 #endif
+
+/* IPv4 multi-cast addresses range from 224.0.0.0.0 to 240.0.0.0. */
+#define ipFIRST_MULTI_CAST_IPv4             0xE0000000U /**< Lower bound of the IPv4 multicast address. */
+#define ipLAST_MULTI_CAST_IPv4              0xF0000000U /**< Higher bound of the IPv4 multicast address. */
+
+/* The first byte in the IPv4 header combines the IP version (4) with
+ * with the length of the IP header. */
+#define ipIPV4_VERSION_HEADER_LENGTH_MIN    0x45U /**< Minimum IPv4 header length. */
+#define ipIPV4_VERSION_HEADER_LENGTH_MAX    0x4FU /**< Maximum IPv4 header length. */
 
 /** @brief Maximum time to wait for an ARP resolution while holding a packet. */
 #ifndef ipARP_RESOLUTION_MAX_DELAY
@@ -258,6 +270,7 @@ static void prvProcessIPEventsAndTimers( void )
     TickType_t xNextIPSleep;
     FreeRTOS_Socket_t * pxSocket;
     struct freertos_sockaddr xAddress;
+    MeasuredCycleCount_t RxCycleCountData, TxCycleCountData;
 
     ipconfigWATCHDOG_TIMER();
 
@@ -303,10 +316,21 @@ static void prvProcessIPEventsAndTimers( void )
 
         case eNetworkRxEvent:
 
+            if( request_stat == 1 )
+            {
+                vMeasureCycleCountStart( &RxCycleCountData );
+            }
+
             /* The network hardware driver has received a new packet.  A
              * pointer to the received buffer is located in the pvData member
              * of the received event structure. */
             prvHandleEthernetPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
+
+            if( request_stat == 1 )
+            {
+                vGetRxLatency( uiMeasureCycleCountStop( &RxCycleCountData ) );
+            }
+
             break;
 
         case eNetworkTxEvent:
@@ -386,10 +410,21 @@ static void prvProcessIPEventsAndTimers( void )
 
         case eStackTxEvent:
 
+            if( request_stat == 1 )
+            {
+                vMeasureCycleCountStart( &TxCycleCountData );
+            }
+
             /* The network stack has generated a packet to send.  A
              * pointer to the generated buffer is located in the pvData
              * member of the received event structure. */
             vProcessGeneratedUDPPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
+
+            if( request_stat == 1 )
+            {
+                vGetTxLatency( uiMeasureCycleCountStop( &TxCycleCountData ) );
+            }
+
             break;
 
         case eDHCPEvent:
@@ -1276,6 +1311,13 @@ void FreeRTOS_SetEndPointConfiguration( const uint32_t * pulIPAddress,
         size_t uxTotalLength;
         BaseType_t xEnoughSpace;
         IPStackEvent_t xStackTxEvent = { eStackTxEvent, NULL };
+        MeasuredCycleCount_t TxCycleCountData;
+
+        if( request_stat == 1 )
+        {
+            vIcmpPacketSendCount();
+            vIcmpDataSendCount( uxNumberOfBytesToSend );
+        }
 
         uxTotalLength = uxNumberOfBytesToSend + sizeof( ICMPPacket_t );
 
@@ -1290,6 +1332,11 @@ void FreeRTOS_SetEndPointConfiguration( const uint32_t * pulIPAddress,
 
         if( ( uxGetNumberOfFreeNetworkBuffers() >= 4U ) && ( uxNumberOfBytesToSend >= 1U ) && ( xEnoughSpace != pdFALSE ) )
         {
+            if( request_stat == 1 )
+            {
+                vMeasureCycleCountStart( &TxCycleCountData );
+            }
+
             pxNetworkBuffer = pxGetNetworkBufferWithDescriptor( uxTotalLength, uxBlockTimeTicks );
 
             if( pxNetworkBuffer != NULL )
@@ -1328,17 +1375,31 @@ void FreeRTOS_SetEndPointConfiguration( const uint32_t * pulIPAddress,
                 {
                     vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
                     iptraceSTACK_TX_EVENT_LOST( ipSTACK_TX_EVENT );
+
+                    if( request_stat == 1 )
+                    {
+                        vIcmpTxPacketLossCount();
+                    }
                 }
                 else
                 {
                     xReturn = ( BaseType_t ) usSequenceNumber;
                 }
             }
+
+            if( request_stat == 1 )
+            {
+                vGetTxLatency( uiMeasureCycleCountStop( &TxCycleCountData ) );
+            }
         }
         else
         {
             /* The requested number of bytes will not fit in the available space
              * in the network buffer. */
+            if( request_stat == 1 )
+            {
+                vIcmpTxPacketLossCount();
+            }
         }
 
         return xReturn;
@@ -1594,7 +1655,7 @@ static void prvProcessEthernetPacket( NetworkBufferDescriptor_t * const pxNetwor
                         /* MISRA Ref 11.3.1 [Misaligned access] */
                         /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
                         /* coverity[misra_c_2012_rule_11_3_violation] */
-                        eReturned = prvProcessIPPacket( ( ( IPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer ), pxNetworkBuffer );
+						eReturned = prvProcessIPPacket( ( ( IPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer ), pxNetworkBuffer );
                     }
                     else
                     {
@@ -1976,7 +2037,21 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
                              * receives. */
                             #if ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) || ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
                                 {
-                                    eReturn = ProcessICMPPacket( pxNetworkBuffer );
+                                    if( pxIPHeader->ulDestinationIPAddress == *ipLOCAL_IP_ADDRESS_POINTER )
+                                    {
+                                        if( request_stat == 1 )
+                                        {
+                                            vIcmpPacketRecvCount();
+                                            vIcmpDataRecvCount( pxNetworkBuffer->xDataLength );
+                                        }
+
+                                        eReturn = ProcessICMPPacket( pxNetworkBuffer );
+
+                                        if( eReturn == eReleaseBuffer )
+                                        {
+                                            vIcmpRxPacketLossCount();
+                                        }
+                                    }
                                 }
                             #endif /* ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) || ( ipconfigSUPPORT_OUTGOING_PINGS == 1 ) */
                             break;
@@ -1991,17 +2066,39 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
                     case ipPROTOCOL_UDP:
                         /* The IP packet contained a UDP frame. */
 
+                        if( request_stat == 1 )
+                        {
+                            vUdpPacketRecvCount();
+                            vUdpDataRecvCount( pxNetworkBuffer->xDataLength );
+                        }
+
                         eReturn = prvProcessUDPPacket( pxNetworkBuffer );
+
+                        if( eReturn == eReleaseBuffer )
+                        {
+                            vUdpRxPacketLossCount();
+                        }
+
                         break;
 
                         #if ipconfigUSE_TCP == 1
                             case ipPROTOCOL_TCP:
 
+                                if( request_stat == 1 )
+                                {
+                                    vTcpPacketRecvCount();
+                                    vTcpDataRecvCount( pxNetworkBuffer->xDataLength );
+                                }
+                                
                                 if( xProcessReceivedTCPPacket( pxNetworkBuffer ) == pdPASS )
                                 {
                                     eReturn = eFrameConsumed;
                                 }
-
+                                else
+                                {
+                                    vTcpRxPacketLossCount();
+                                }
+                                
                                 /* Setting this variable will cause xTCPTimerCheck()
                                  * to be called just before the IP-task blocks. */
                                 xProcessedTCPMessage++;

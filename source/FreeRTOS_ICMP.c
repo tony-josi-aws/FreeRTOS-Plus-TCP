@@ -53,6 +53,8 @@
 #include "NetworkBufferManagement.h"
 #include "FreeRTOS_DNS.h"
 
+#include "FreeRTOS_Net_Stat.h"
+
 /*
  * Turns around an incoming ping request to convert it into a ping reply.
  */
