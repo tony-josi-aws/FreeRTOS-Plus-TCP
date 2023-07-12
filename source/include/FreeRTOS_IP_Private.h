@@ -891,6 +891,10 @@ BaseType_t xIsCallingFromIPTask( void );
 /* Send the network-up event and start the ARP timer. */
 void vIPNetworkUpCalls( NetworkEndPoint_t * pxEndPoint );
 
+/* The loopback address block is defined as part of rfc5735 */
+#define ipLOOPBACK_ADDRESS             ( FreeRTOS_inet_addr_quick( 127, 0, 0, 0 ) )
+#define ipLOOPBACK_NETMASK             ( FreeRTOS_inet_addr_quick( 255, 0, 0, 0 ) )
+
 /* *INDENT-OFF* */
 #ifdef __cplusplus
     } /* extern "C" */

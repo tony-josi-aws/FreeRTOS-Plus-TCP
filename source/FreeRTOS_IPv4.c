@@ -265,6 +265,7 @@ eFrameProcessingResult_t prvAllowIPPacketIPv4( const IPPacket_t * const pxIPPack
                 ( pxNetworkBuffer->pxEndPoint == NULL ) &&
                 /* Is it an IPv4 broadcast address x.x.x.255 ? */
                 ( ( FreeRTOS_ntohl( ulDestinationIPAddress ) & 0xffU ) != 0xffU ) &&
+                ( ( ulDestinationIPAddress & ipLOOPBACK_NETMASK ) != ( ipLOOPBACK_ADDRESS & ipLOOPBACK_NETMASK ) ) &&
                 ( xIsIPv4Multicast( ulDestinationIPAddress ) == pdFALSE ) &&
                 /* Or (during DHCP negotiation) we have no IP-address yet? */
                 ( FreeRTOS_IsNetworkUp() != pdFALSE ) )

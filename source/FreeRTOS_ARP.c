@@ -492,7 +492,8 @@ BaseType_t xCheckRequiresARPResolution( const NetworkBufferDescriptor_t * pxNetw
                    const IPHeader_t * pxIPHeader = &( pxIPPacket->xIPHeader );
                    const IPV4Parameters_t * pxIPv4Settings = &( pxNetworkBuffer->pxEndPoint->ipv4_settings );
 
-                   if( ( pxIPHeader->ulSourceIPAddress & pxIPv4Settings->ulNetMask ) == ( pxIPv4Settings->ulIPAddress & pxIPv4Settings->ulNetMask ) )
+                   if( ( pxIPHeader->ulSourceIPAddress & pxIPv4Settings->ulNetMask ) == ( pxIPv4Settings->ulIPAddress & pxIPv4Settings->ulNetMask ) &&
+                     ( ( pxIPHeader->ulDestinationIPAddress & ipLOOPBACK_NETMASK ) != ( ipLOOPBACK_ADDRESS & ipLOOPBACK_NETMASK ) ) )
                    {
                        /* If the IP is on the same subnet and we do not have an ARP entry already,
                         * then we should send out ARP for finding the MAC address. */
@@ -927,6 +928,12 @@ static BaseType_t prvFindCacheEntry( const MACAddress_t * pxMACAddress,
             }
 
             eReturn = eARPCacheHit;
+        }
+        else if( ( *pulIPAddress & ipLOOPBACK_NETMASK ) == ( ipLOOPBACK_ADDRESS & ipLOOPBACK_NETMASK ) )
+        {
+            /* The address of this device. May be useful for the loopback device. */
+            eReturn = eARPCacheHit;
+            ( void ) memcpy( pxMACAddress->ucBytes, ipLOCAL_MAC_ADDRESS, sizeof( pxMACAddress->ucBytes ) );
         }
         else
         {
