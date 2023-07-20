@@ -430,7 +430,7 @@ static BaseType_t prvChecksumProtocolChecks( size_t uxBufferLength,
             }
             else
             {
-                uxOptionsLength = ( size_t ) ( ( ucLength - 5U ) << 2U );
+                uxOptionsLength = ( ( ( size_t ) ucLength - 5U ) << 2U );
 
                 pxSet->uxProtocolHeaderLength = ipSIZE_OF_TCP_HEADER + uxOptionsLength;
                 #if ( ipconfigHAS_DEBUG_PRINTF != 0 )
@@ -547,7 +547,7 @@ static void prvChecksumProtocolCalculate( BaseType_t xOutgoingPacket,
 
             pulHeader[ 0 ] = ( uint32_t ) pxSet->usProtocolBytes;
             pulHeader[ 0 ] = FreeRTOS_htonl( pulHeader[ 0 ] );
-            pulHeader[ 1 ] = ( uint32_t ) pxSet->pxIPPacket_IPv6->ucNextHeader;
+            pulHeader[ 1 ] = ( uint32_t ) pxSet->ucProtocol;
             pulHeader[ 1 ] = FreeRTOS_htonl( pulHeader[ 1 ] );
 
             pxSet->usChecksum = usGenerateChecksum( 0U,

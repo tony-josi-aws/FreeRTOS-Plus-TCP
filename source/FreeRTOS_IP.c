@@ -519,13 +519,20 @@ static void prvIPTask_Initialise( void )
     /* Mark the timer as inactive since we are not waiting on any ARP resolution as of now. */
     vIPSetARPResolutionTimerEnableState( pdFALSE );
 
-    #if ( ipconfigDNS_USE_CALLBACKS != 0 )
+    #if ( ( ipconfigDNS_USE_CALLBACKS != 0 ) && ( ipconfigUSE_DNS != 0 ) )
         {
-            /* The following function is declared in FreeRTOS_DNS.c	and 'private' to
+            /* The following function is declared in FreeRTOS_DNS.c and 'private' to
              * this library */
             vDNSInitialise();
         }
-    #endif /* ipconfigDNS_USE_CALLBACKS != 0 */
+    #endif /* ( ipconfigDNS_USE_CALLBACKS != 0 ) && ( ipconfigUSE_DNS != 0 ) */
+
+    #if ( ( ipconfigUSE_DNS_CACHE != 0 ) && ( ipconfigUSE_DNS != 0 ) )
+        {
+            /* Clear the DNS cache once only. */
+            FreeRTOS_dnsclear();
+        }
+    #endif /* ( ( ipconfigUSE_DNS_CACHE != 0 ) && ( ipconfigUSE_DNS != 0 ) ) */
 
     /* Initialisation is complete and events can now be processed. */
     xIPTaskInitialised = pdTRUE;
@@ -1797,23 +1804,31 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
     {
         #if ( ipconfigUSE_IPv6 != 0 )
             case ipIPv6_FRAME_TYPE:
-                /* MISRA Ref 11.3.1 [Misaligned access] */
-                /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
-                /* coverity[misra_c_2012_rule_11_3_violation] */
-                pxIPHeader_IPv6 = ( ( const IPHeader_IPv6_t * ) &( pxNetworkBuffer->pucEthernetBuffer[ ipSIZE_OF_ETH_HEADER ] ) );
 
+                if( pxNetworkBuffer->xDataLength < sizeof( IPPacket_IPv6_t ) )
+                {
+                    /* The packet size is less than minimum IPv6 packet. */
+                    eReturn = eReleaseBuffer;
+                }
+                else
+                {
+                    /* MISRA Ref 11.3.1 [Misaligned access] */
+                    /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+                    /* coverity[misra_c_2012_rule_11_3_violation] */
+                    pxIPHeader_IPv6 = ( ( const IPHeader_IPv6_t * ) &( pxNetworkBuffer->pucEthernetBuffer[ ipSIZE_OF_ETH_HEADER ] ) );
 
-                uxHeaderLength = ipSIZE_OF_IPv6_HEADER;
-                ucProtocol = pxIPHeader_IPv6->ucNextHeader;
-                /* MISRA Ref 11.3.1 [Misaligned access] */
-                /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
-                /* coverity[misra_c_2012_rule_11_3_violation] */
-                eReturn = prvAllowIPPacketIPv6( ( ( const IPHeader_IPv6_t * ) &( pxIPPacket->xIPHeader ) ), pxNetworkBuffer, uxHeaderLength );
+                    uxHeaderLength = ipSIZE_OF_IPv6_HEADER;
+                    ucProtocol = pxIPHeader_IPv6->ucNextHeader;
+                    /* MISRA Ref 11.3.1 [Misaligned access] */
+                    /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+                    /* coverity[misra_c_2012_rule_11_3_violation] */
+                    eReturn = prvAllowIPPacketIPv6( ( ( const IPHeader_IPv6_t * ) &( pxIPPacket->xIPHeader ) ), pxNetworkBuffer, uxHeaderLength );
 
-                /* The IP-header type is copied to a location 6 bytes before the messages
-                 * starts.  It might be needed later on when a UDP-payload buffer is being
-                 * used. */
-                pxNetworkBuffer->pucEthernetBuffer[ 0 - ( BaseType_t ) ipIP_TYPE_OFFSET ] = pxIPHeader_IPv6->ucVersionTrafficClass;
+                    /* The IP-header type is copied to a location 6 bytes before the messages
+                     * starts.  It might be needed later on when a UDP-payload buffer is being
+                     * used. */
+                    pxNetworkBuffer->pucEthernetBuffer[ 0 - ( BaseType_t ) ipIP_TYPE_OFFSET ] = pxIPHeader_IPv6->ucVersionTrafficClass;
+                }
                 break;
         #endif /* ( ipconfigUSE_IPv6 != 0 ) */
 
@@ -1934,15 +1949,8 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
 
                         #if ( ipconfigUSE_IPv4 != 0 )
                             case ipIPv4_FRAME_TYPE:
-
-                                /* IP address is not on the same subnet, ARP table can be updated.
-                                 * Refresh the ARP cache with the IP/MAC-address of the received
-                                 *  packet. For UDP packets, this will be done later in
-                                 *  xProcessReceivedUDPPacket(), as soon as it's know that the message
-                                 *  will be handled.  This will prevent the ARP cache getting
-                                 *  overwritten with the IP address of useless broadcast packets.
-                                 */
-                                vARPRefreshCacheEntry( &( pxIPPacket->xEthernetHeader.xSourceAddress ), pxIPHeader->ulSourceIPAddress, pxNetworkBuffer->pxEndPoint );
+                                /* Refresh the age of this cache entry since a packet was received. */
+                                vARPRefreshCacheEntryAge( &( pxIPPacket->xEthernetHeader.xSourceAddress ), pxIPHeader->ulSourceIPAddress );
                                 break;
                         #endif /* ( ipconfigUSE_IPv4 != 0 ) */
 
@@ -2025,11 +2033,6 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
 void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
                            BaseType_t xReleaseAfterSend )
 {
-    IPPacket_t * pxIPPacket;
-/* memcpy() helper variables for MISRA Rule 21.15 compliance*/
-    const void * pvCopySource;
-    void * pvCopyDest;
-
     #if ( ipconfigZERO_COPY_TX_DRIVER != 0 )
         NetworkBufferDescriptor_t * pxNewBuffer;
     #endif
@@ -2073,7 +2076,16 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
         /* MISRA Ref 11.3.1 [Misaligned access] */
         /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
         /* coverity[misra_c_2012_rule_11_3_violation] */
-        pxIPPacket = ( ( IPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
+        IPPacket_t * pxIPPacket = ( ( IPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
+        /* memcpy() helper variables for MISRA Rule 21.15 compliance*/
+        const void * pvCopySource = NULL;
+        void * pvCopyDest;
+
+        #if ( ipconfigUSE_IPv4 != 0 )
+            MACAddress_t xMACAddress;
+            eARPLookupResult_t eResult;
+            uint32_t ulDestinationIPAddress = 0U;
+        #endif /* ( ipconfigUSE_IPv4 != 0 ) */
 
         /* Send! */
         if( pxNetworkBuffer->pxEndPoint == NULL )
@@ -2108,8 +2120,43 @@ void vReturnEthernetFrame( NetworkBufferDescriptor_t * pxNetworkBuffer,
         {
             NetworkInterface_t * pxInterface = pxNetworkBuffer->pxEndPoint->pxNetworkInterface; /*_RB_ Why not use the pxNetworkBuffer->pxNetworkInterface directly? */
 
-            /* Swap source and destination MAC addresses. */
-            pvCopySource = &( pxIPPacket->xEthernetHeader.xSourceAddress );
+            /* Interpret the Ethernet packet being sent. */
+            switch( pxIPPacket->xEthernetHeader.usFrameType )
+            {
+                #if ( ipconfigUSE_IPv4 != 0 )
+                    case ipIPv4_FRAME_TYPE:
+                        ulDestinationIPAddress = pxIPPacket->xIPHeader.ulDestinationIPAddress;
+
+                        /* Try to find a MAC address corresponding to the destination IP
+                         * address. */
+                        eResult = eARPGetCacheEntry( &ulDestinationIPAddress, &xMACAddress, &( pxNetworkBuffer->pxEndPoint ) );
+
+                        if( eResult == eARPCacheHit )
+                        {
+                            /* Best case scenario - an address is found, use it. */
+                            pvCopySource = &xMACAddress;
+                        }
+                        else
+                        {
+                            /* If an address is not found, just swap the source and destination MAC addresses. */
+                            pvCopySource = &( pxIPPacket->xEthernetHeader.xSourceAddress );
+                        }
+                        break;
+                #endif /* ( ipconfigUSE_IPv4 != 0 ) */
+
+                case ipIPv6_FRAME_TYPE:
+                case ipARP_FRAME_TYPE:
+                default:
+                    /* In case of ARP frame, just swap the source and destination MAC addresses. */
+                    pvCopySource = &( pxIPPacket->xEthernetHeader.xSourceAddress );
+                    break;
+            }
+
+            /*
+             * Use helper variables for memcpy() to remain
+             * compliant with MISRA Rule 21.15.  These should be
+             * optimized away.
+             */
             pvCopyDest = &( pxIPPacket->xEthernetHeader.xDestinationAddress );
             ( void ) memcpy( pvCopyDest, pvCopySource, sizeof( pxIPPacket->xEthernetHeader.xDestinationAddress ) );
 
