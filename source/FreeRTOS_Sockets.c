@@ -1443,6 +1443,15 @@ static int32_t prvSendUDPPacket( const FreeRTOS_Socket_t * pxSocket,
     xStackTxEvent.pvData = pxNetworkBuffer;
 
     /* Ask the IP-task to send this packet */
+#if ( ipconfigRAW_PACKETS == 1 )
+    if( ( ( UBaseType_t ) xFlags & ( UBaseType_t ) FREERTOS_AF_RAW ) != 0U )
+    {
+        /* The packet was successfully sent to the IP task. */
+        lReturn = ( int32_t ) uxTotalDataLength;
+        vProcessGeneratedUDPPacket( pxNetworkBuffer );
+    }
+    else
+#endif
     if( xSendEventStructToIPTask( &xStackTxEvent, xTicksToWait ) == pdPASS )
     {
         /* The packet was successfully sent to the IP task. */

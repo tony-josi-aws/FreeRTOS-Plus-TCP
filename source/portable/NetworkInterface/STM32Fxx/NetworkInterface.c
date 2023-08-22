@@ -256,6 +256,8 @@ static ETH_HandleTypeDef xETH;
  * DMA TX descriptors. */
 static SemaphoreHandle_t xTXDescriptorSemaphore = NULL;
 
+/* Binary semaphore to access the netif o/p exclusively */
+static SemaphoreHandle_t xTXNetworkInterfaceOutSem = NULL;
 /*
  * Note: it is advised to define both
  *
@@ -461,6 +463,7 @@ BaseType_t xSTM32F_NetworkInterfaceInitialise( NetworkInterface_t * pxInterface 
     if( xMacInitStatus == eMACInit )
     {
         xTXDescriptorSemaphore = xSemaphoreCreateCounting( ( UBaseType_t ) ETH_TXBUFNB, ( UBaseType_t ) ETH_TXBUFNB );
+        vSemaphoreCreateBinary(xTXNetworkInterfaceOutSem);
 
         if( xTXDescriptorSemaphore == NULL )
         {
@@ -796,6 +799,8 @@ static BaseType_t xSTM32F_NetworkInterfaceOutput( NetworkInterface_t * pxInterfa
     /* As there is only a single instance of the EMAC, there is only one pxInterface object. */
     ( void ) pxInterface;
 
+    xSemaphoreTake(xTXNetworkInterfaceOutSem, portMAX_DELAY);
+
     /* Open a do {} while ( 0 ) loop to be able to call break. */
     do
     {
@@ -938,6 +943,8 @@ static BaseType_t xSTM32F_NetworkInterfaceOutput( NetworkInterface_t * pxInterfa
     {
         vReleaseNetworkBufferAndDescriptor( pxDescriptor );
     }
+
+    xSemaphoreGive(xTXNetworkInterfaceOutSem);
 
     return xReturn;
 }
