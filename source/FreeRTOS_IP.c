@@ -418,8 +418,9 @@ static void prvProcessIPEventsAndTimers( void )
             /* The network stack has generated a packet to send.  A
              * pointer to the generated buffer is located in the pvData
              * member of the received event structure. */
+            LOG_SYSCLK_COUNT; //
             vProcessGeneratedUDPPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
-
+            LOG_SYSCLK_COUNT; 
             if( request_stat == 1 )
             {
                 vGetTxLatency( uiMeasureCycleCountStop( &TxCycleCountData ) );

@@ -1443,12 +1443,16 @@ static int32_t prvSendUDPPacket( const FreeRTOS_Socket_t * pxSocket,
     xStackTxEvent.pvData = pxNetworkBuffer;
 
     /* Ask the IP-task to send this packet */
+        LOG_SYSCLK_COUNT; // 2
+
 #if ( ipconfigRAW_PACKETS == 1 )
     if( ( ( UBaseType_t ) xFlags & ( UBaseType_t ) FREERTOS_AF_RAW ) != 0U )
     {
         /* The packet was successfully sent to the IP task. */
         lReturn = ( int32_t ) uxTotalDataLength;
+        LOG_SYSCLK_COUNT; // 1
         vProcessGeneratedUDPPacket( pxNetworkBuffer );
+        LOG_SYSCLK_COUNT; // 2
     }
     else
 #endif
@@ -1596,6 +1600,10 @@ int32_t FreeRTOS_sendto( Socket_t xSocket,
     size_t uxMaxPayloadLength = 0;
     size_t uxPayloadOffset = 0;
 
+    LOG_SYSCLK_COUNT_RESET;
+
+    LOG_SYSCLK_COUNT;  // 0
+
     #if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 )
         struct freertos_sockaddr xTempDestinationAddress;
 
@@ -1661,6 +1669,14 @@ int32_t FreeRTOS_sendto( Socket_t xSocket,
             /* The data is longer than the available buffer space. */
             iptraceSENDTO_DATA_TOO_LONG();
         }
+    }
+
+    LOG_SYSCLK_COUNT; // 3
+
+    extern uint32_t time_logger[], time_logg_cntr;
+    for(int i = 0; i < time_logg_cntr; ++i)
+    {
+        FreeRTOS_debug_printf(("ID: %d Timestamp: %u Delta: %u \r\n", i , time_logger[i], i == 0 ? 0 : time_logger[i] - time_logger[i-1]));
     }
 
     return lReturn;

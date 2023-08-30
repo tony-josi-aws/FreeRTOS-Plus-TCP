@@ -799,7 +799,7 @@ static BaseType_t xSTM32F_NetworkInterfaceOutput( NetworkInterface_t * pxInterfa
     /* As there is only a single instance of the EMAC, there is only one pxInterface object. */
     ( void ) pxInterface;
 
-    xSemaphoreTake(xTXNetworkInterfaceOutSem, portMAX_DELAY);
+    //xSemaphoreTake(xTXNetworkInterfaceOutSem, portMAX_DELAY);
 
     /* Open a do {} while ( 0 ) loop to be able to call break. */
     do
@@ -944,7 +944,7 @@ static BaseType_t xSTM32F_NetworkInterfaceOutput( NetworkInterface_t * pxInterfa
         vReleaseNetworkBufferAndDescriptor( pxDescriptor );
     }
 
-    xSemaphoreGive(xTXNetworkInterfaceOutSem);
+    //xSemaphoreGive(xTXNetworkInterfaceOutSem);
 
     return xReturn;
 }
