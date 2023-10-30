@@ -140,7 +140,7 @@ jobs:
           asset_content_type: application/zip
   cleanup:
     needs:
-      -create-release
+      - create-release
     name: Cleanup
     runs-on: ubuntu-latest
     steps:
