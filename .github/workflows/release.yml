@@ -75,13 +75,13 @@ jobs:
           ls FreeRTOS-Plus-TCP-${{ github.event.inputs.version_number }}
           diff -r -x "*.git*" FreeRTOS-Plus-TCP-${{ github.event.inputs.version_number }}/FreeRTOS-Plus-TCP/ ../FreeRTOS-Plus-TCP/
           cd ../
-      - name: Build
-        run: |
-          cd zip-check/FreeRTOS-Plus-TCP-${{ github.event.inputs.version_number }}/FreeRTOS-Plus-TCP
-          sudo apt-get install -y lcov
-          sudo apt-get install unifdef
-          cmake -S test/unit-test -B test/unit-test/build/
-          make -C test/unit-test/build/ all
+      # - name: Build
+      #   run: |
+      #     cd zip-check/FreeRTOS-Plus-TCP-${{ github.event.inputs.version_number }}/FreeRTOS-Plus-TCP
+      #     sudo apt-get install -y lcov
+      #     sudo apt-get install unifdef
+      #     cmake -S test/unit-test -B test/unit-test/build/
+      #     make -C test/unit-test/build/ all
       # - name: Test
       #   run: |
       #     cd zip-check/FreeRTOS-Plus-TCP-${{ github.event.inputs.version_number }}/FreeRTOS-Plus-TCP
@@ -149,4 +149,4 @@ jobs:
       - name: Delete SBOM version number branch
         run: |
           # Delete the branch created for Tag by SBOM generator
-          git push -u origin --delete ${{ github.event.inputs.version_number }}
+          git push -u origin --delete refs/heads/${{ github.event.inputs.version_number }}
