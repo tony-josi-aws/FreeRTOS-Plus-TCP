@@ -26,7 +26,7 @@ jobs:
       - name: create a new branch that references commit id
         run: git checkout -b ${{ github.event.inputs.version_number }} ${{ github.event.inputs.commit_id }}
       - name: Generate SBOM
-        uses: FreeRTOS/CI-CD-Github-Actions/sbom-generator@main
+        uses: tony-josi-aws/CI-CD-Github-Actions/sbom-generator@main
         with:
           repo_path: ./
           source_path: ./source
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Doxygen generation
-        uses: FreeRTOS/CI-CD-Github-Actions/doxygen-generation@main
+        uses: tony-josi-aws/CI-CD-Github-Actions/doxygen-generation@main
         with:
           ref: ${{ github.event.inputs.version_number }}
           add_release: "true"
