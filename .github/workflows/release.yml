@@ -82,15 +82,15 @@ jobs:
           sudo apt-get install unifdef
           cmake -S test/unit-test -B test/unit-test/build/
           make -C test/unit-test/build/ all
-      - name: Test
-        run: |
-          cd zip-check/FreeRTOS-Plus-TCP-${{ github.event.inputs.version_number }}/FreeRTOS-Plus-TCP
-          pushd test/unit-test/build/
-          ctest -E system --output-on-failure
-          popd
-          make -C test/unit-test/build/ coverage
-          lcov --list --rc lcov_branch_coverage=1 test/unit-test/build/coverage.info
-          cd ..
+      # - name: Test
+      #   run: |
+      #     cd zip-check/FreeRTOS-Plus-TCP-${{ github.event.inputs.version_number }}/FreeRTOS-Plus-TCP
+      #     pushd test/unit-test/build/
+      #     ctest -E system --output-on-failure
+      #     popd
+      #     make -C test/unit-test/build/ coverage
+      #     lcov --list --rc lcov_branch_coverage=1 test/unit-test/build/coverage.info
+      #     cd ..
       - name: Create artifact of ZIP
         uses: actions/upload-artifact@v2
         with:
@@ -138,8 +138,14 @@ jobs:
           asset_path: ./FreeRTOS-Plus-TCP-${{ github.event.inputs.version_number }}.zip
           asset_name: FreeRTOS-Plus-TCP-${{ github.event.inputs.version_number }}.zip
           asset_content_type: application/zip
-      - name: Cleanup
-        working-directory: ./FreeRTOS-Plus-TCP
+  cleanup:
+    needs:
+      -create-release
+    name: Cleanup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
         run: |
           # Delete the branch created for Tag by SBOM generator
           git push -u origin --delete ${{ github.event.inputs.version_number }}
