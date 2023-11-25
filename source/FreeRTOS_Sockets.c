@@ -1440,7 +1440,15 @@ static int32_t prvSendUDPPacket( const FreeRTOS_Socket_t * pxSocket,
     xStackTxEvent.pvData = pxNetworkBuffer;
 
     /* Ask the IP-task to send this packet */
-    if( xSendEventStructToIPTask( &xStackTxEvent, xTicksToWait ) == pdPASS )
+    if ( ( UBaseType_t ) xFlags & ( UBaseType_t ) FREERTOS_MSG_RAW_DTH )
+    {
+        extern uint32_t currentTick;
+        // FreeRTOS_printf(("Before vProcessGeneratedUDPPacket Tick Delta SENDTO: %u \n", CycleCounterP_getCount32() - currentTick));
+        vProcessGeneratedUDPPacket( ( NetworkBufferDescriptor_t * ) pxNetworkBuffer );
+        // currentTick = CycleCounterP_getCount32() - currentTick;
+        FreeRTOS_printf(("Tick Delta SENDTO: %u \n", CycleCounterP_getCount32() - currentTick));
+    }
+    else if( xSendEventStructToIPTask( &xStackTxEvent, xTicksToWait ) == pdPASS )
     {
         /* The packet was successfully sent to the IP task. */
         lReturn = ( int32_t ) uxTotalDataLength;

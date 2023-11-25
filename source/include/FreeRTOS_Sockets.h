@@ -103,6 +103,7 @@
     #define FREERTOS_MSG_PEEK                ( 4 )  /* Can be used with recvfrom() and recv(). */
     #define FREERTOS_MSG_DONTROUTE           ( 8 )  /* Not used. */
     #define FREERTOS_MSG_DONTWAIT            ( 16 ) /* Can be used with recvfrom(), sendto(), recv() and send(). */
+    #define FREERTOS_MSG_RAW_DTH             ( 32 )
 
 /* Values that can be passed in the option name parameter of calls to
  * FreeRTOS_setsockopt(). */
