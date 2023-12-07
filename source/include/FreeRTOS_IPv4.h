@@ -43,8 +43,16 @@
 
 /* Forward declarations. */
 struct xNETWORK_BUFFER;
-enum eFrameProcessingResult;
 struct xIP_PACKET;
+
+#ifdef __GNUC__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wpedantic"
+    enum eFrameProcessingResult;
+    #pragma GCC diagnostic pop
+#else
+    enum eFrameProcessingResult;
+#endif
 
 #define ipSIZE_OF_IPv4_HEADER               20U
 #define ipSIZE_OF_IPv4_ADDRESS              4U
