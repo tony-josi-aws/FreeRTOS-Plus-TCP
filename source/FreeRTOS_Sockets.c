@@ -2898,9 +2898,16 @@ BaseType_t FreeRTOS_setsockopt( Socket_t xSocket,
                         /* MISRA Ref 11.1.1 [ Conversion between pointer to
                          * a function and another type ] */
                         /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-111 */
+                        #ifdef __GNUC__
+                        #pragma GCC diagnostic push
+                        #pragma GCC diagnostic ignored "-Wpedantic"
+                        #endif
                         /* coverity[misra_c_2012_rule_11_8_violation] */
                         /* coverity[misra_c_2012_rule_11_1_violation] */
                         pxSocket->pxUserWakeCallback = ( SocketWakeupCallback_t ) pvOptionValue;
+                        #ifdef __GNUC__
+                        #pragma GCC diagnostic pop
+                        #endif
                         xReturn = 0;
                         break;
                 #endif /* ipconfigSOCKET_HAS_USER_WAKE_CALLBACK */
