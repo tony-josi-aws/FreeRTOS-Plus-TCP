@@ -112,6 +112,7 @@ void vNetworkInterfaceAllocateRAMToBuffers( NetworkBufferDescriptor_t pxNetworkB
     for( ul = 0; ul < ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS; ul++ )
     {
         pxNetworkBuffers[ ul ].pucEthernetBuffer = ucRAMBuffer + ipBUFFER_PADDING;
+        pxNetworkBuffers[ ul ].xDataLength = ENET_MEM_LARGE_POOL_PKT_SIZE; //FIXME: less than ENET_MEM_LARGE_POOL_PKT_SIZE because of padding
         *( ( unsigned * ) ucRAMBuffer ) = ( unsigned ) ( &( pxNetworkBuffers[ ul ] ) );
         ucRAMBuffer += ETH_MAX_PACKET_SIZE;
     }
@@ -129,6 +130,7 @@ void vNetworkInterfaceAllocateRAMToBuffers_RX_POOL( EnetNetIF_AppIf_CustomNetBuf
     {
         //pxNetworkBuffers[ ul ].pucEthernetBuffer = ucRAMBuffer + ipBUFFER_PADDING;
         pxCustomNetworkBuffers[ ul ].xNetworkBuffer.pucEthernetBuffer = ucRAMBuffer + ipBUFFER_PADDING;
+        pxCustomNetworkBuffers[ ul ].xNetworkBuffer.xDataLength = ENET_MEM_LARGE_POOL_PKT_SIZE; //FIXME: less than ENET_MEM_LARGE_POOL_PKT_SIZE because of padding
         *( ( unsigned * ) ucRAMBuffer ) = ( unsigned ) ( &( pxCustomNetworkBuffers[ ul ].xNetworkBuffer ) );
         ucRAMBuffer += (ETH_MAX_PACKET_SIZE + ipBUFFER_PADDING);
     }
