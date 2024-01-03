@@ -65,7 +65,7 @@
 /* ========================================================================== */
 /*                           Macros & Typedefs                                */
 /* ========================================================================== */
-#define ENETNETIF_PACKET_POLL_PERIOD_US (1000U)
+// #define ENETNETIF_PACKET_POLL_PERIOD_US (1000U)
 
 #define ENETNETIF_APP_POLL_PERIOD       (500U)
 /*! \brief RX packet task stack size */
@@ -116,13 +116,17 @@ void EnetNetIFAppCb_getEnetIFInstInfo(Enet_Type enetType, uint32_t instId, EnetN
 NetworkBufferDescriptor_t * pxGetNetworkBufferWithDescriptor_RX( size_t xRequestedSizeBytes,
                                                               TickType_t xBlockTimeTicks );
 
-uint8_t gPktTxRxTaskStack[ENETNETIF_TX_RX_PACKET_TASK_STACK] __attribute__ ((aligned(sizeof(long long))));
+uint8_t gPktTxTaskStack[ENETNETIF_TX_RX_PACKET_TASK_STACK] __attribute__ ((aligned(sizeof(long long))));
+uint8_t gPktRxTaskStack[ENETNETIF_TX_RX_PACKET_TASK_STACK] __attribute__ ((aligned(sizeof(long long))));
+
+
 uint8_t gPollTaskStack[ENETNETIF_POLL_TASK_STACK] __attribute__ ((aligned(sizeof(long long))));
 
 #define ENET_TX_NOTIFY_BIT      (1U)
 #define ENET_RX_NOTIFY_BIT      (2U)
 
-StaticTask_t xTxRxTaskStaticObj;
+StaticTask_t xTxTaskStaticObj;
+StaticTask_t xRxTaskStaticObj;
 TaskHandle_t xTxRxTask;
 
 /*!* Handle to Polling task semaphore, on which the pollTask awaits for notification
@@ -137,6 +141,11 @@ TaskP_Object pollTask;
  * Clock handle for triggering the packet Rx notify
  */
 ClockP_Object pollLinkClkObj;
+
+SemaphoreP_Object shutDownRxSemObj;
+SemaphoreP_Object shutDownTxSemObj;
+SemaphoreP_Object RxSemObj;
+SemaphoreP_Object TxSemObj;
 
 /*
  * Handle to counting shutdown semaphore, which all subtasks created in the
@@ -162,8 +171,9 @@ uint8_t * getEnetAppBuffMem(uint32_t req_Size, uint8_t *pktAddr)
 {
     (void) req_Size;
     (void) pktAddr;
-
+    configASSERT(req_Size == 1536U);
     NetworkBufferDescriptor_t * pxReturn = pxGetNetworkBufferWithDescriptor_RX(1536U, 0);
+    configASSERT(pxReturn != NULL);
     return pxReturn->pucEthernetBuffer;
 
 }
@@ -831,6 +841,15 @@ static void EnetNetIFApp_NotifyTask(void *pArg)
     
 }
 
+/*
+* create a function called postEvent[i]. each event, each postfxn.
+*/
+static void EnetNetIFApp_postSemaphore(void *pArg)
+{
+    SemaphoreP_Object *pSem = (SemaphoreP_Object *) pArg;
+    SemaphoreP_post(pSem);
+}
+
 static uint32_t EnetNetIF_prepTxPktQ(EnetNetIF_TxObj *tx,
                                      EnetDma_PktQ *pPktQ)
 {
@@ -1070,6 +1089,7 @@ static uint32_t EnetNetIF_prepRxPktQ(EnetNetIF_RxObj *rx,
                     pxhNetworkBuffer = &(cPbuf->xNetworkBuffer);
                 }
                 configASSERT(pxhNetworkBuffer != NULL);
+                pxhNetworkBuffer->xDataLength = list->segmentFilledLen;
                 /* Fill the pbuf with the sg list data */
                 // if (Lwip2Enet_setCustomPbuf(PBUF_RAW, list->segmentFilledLen, PBUF_POOL, &(cPbuf->p), list->bufPtr, list->segmentAllocLen) == NULL)
                 // {
@@ -1321,50 +1341,89 @@ void EnetNetIF_Enet_rxPktHandler(NetworkInterface_t * pxInterface)
 }
 
 
-static void EnetNetIFApp_txrxPacketTask(void *arg)
+// static void EnetNetIFApp_txrxPacketTask(void *arg)
+// {
+//     NetworkInterface_t * pxInterface = (NetworkInterface_t *) arg;
+//     uint32_t ulNotifiedValue;
+//     while (!shutDownFlag)
+//     {
+//         xTaskNotifyWait(0, ULONG_MAX, &ulNotifiedValue, portMAX_DELAY );
+
+//         if (ulNotifiedValue & ENET_RX_NOTIFY_BIT)
+//         {
+//             /* Wait for the Rx ISR to notify us that packets are available with data */
+            
+//             //FreeRTOS_debug_printf(("===> RX CMPLT DSR: %d, TOT: %d\n", rxISRCnt, totalISRCnt));
+//             if (shutDownFlag)
+//             {
+//                 /* This translation layer is shutting down, don't give anything else to the stack */
+//                 break;
+//             }
+
+//             EnetNetIF_Enet_rxPktHandler(pxInterface);
+//         }
+        
+//         if (ulNotifiedValue & ENET_TX_NOTIFY_BIT)
+//         {
+//             /*
+//             * Wait for the Tx ISR to notify us that empty packets are available
+//             * that were used to send data
+//             */
+//             EnetNetIF_Enet_txPktHandler(pxInterface);
+//         }
+        
+//     }
+
+//     /* We are shutting down, notify that we are done */
+//     SemaphoreP_post(&shutDownSemObj);
+// }
+
+static void EnetNetIFApp_rxPacketTask(void *arg)
 {
     NetworkInterface_t * pxInterface = (NetworkInterface_t *) arg;
-    uint32_t ulNotifiedValue;
-    while (!shutDownFlag)
+
+    while (true)
     {
-        xTaskNotifyWait(0, ULONG_MAX, &ulNotifiedValue, portMAX_DELAY );
-
-        if (ulNotifiedValue & ENET_RX_NOTIFY_BIT)
-        {
-            /* Wait for the Rx ISR to notify us that packets are available with data */
-            
-            //FreeRTOS_debug_printf(("===> RX CMPLT DSR: %d, TOT: %d\n", rxISRCnt, totalISRCnt));
-            if (shutDownFlag)
-            {
-                /* This translation layer is shutting down, don't give anything else to the stack */
-                break;
-            }
-
-            EnetNetIF_Enet_rxPktHandler(pxInterface);
-        }
-        
-        if (ulNotifiedValue & ENET_TX_NOTIFY_BIT)
-        {
-            /*
-            * Wait for the Tx ISR to notify us that empty packets are available
-            * that were used to send data
-            */
-            EnetNetIF_Enet_txPktHandler(pxInterface);
-        }
-        
+        /*
+         * Wait for the Tx ISR to notify us that empty packets are available
+         * that were used to send data
+         */
+        SemaphoreP_pend(&RxSemObj, SystemP_WAIT_FOREVER);
+        EnetNetIF_Enet_rxPktHandler(pxInterface);
     }
 
     /* We are shutting down, notify that we are done */
-    SemaphoreP_post(&shutDownSemObj);
+    SemaphoreP_post(&shutDownRxSemObj);
+}
+
+static void EnetNetIFApp_txPacketTask(void *arg)
+{
+    NetworkInterface_t * pxInterface = (NetworkInterface_t *) arg;
+
+    while (true)
+    {
+        /*
+         * Wait for the Tx ISR to notify us that empty packets are available
+         * that were used to send data
+         */
+        SemaphoreP_pend(&TxSemObj, SystemP_WAIT_FOREVER);
+        EnetNetIF_Enet_txPktHandler(pxInterface);
+    }
+
+    /* We are shutting down, notify that we are done */
+    SemaphoreP_post(&shutDownTxSemObj);
 }
 
 void EnetNetIFApp_createTxRxPktHandlerTask(NetworkInterface_t * pxInterface)
 {
 
 
-    xTxRxTask = xTaskCreateStatic(&EnetNetIFApp_txrxPacketTask, "EnetNetIFApp_rxPacketTask", sizeof(gPktTxRxTaskStack) / (sizeof(configSTACK_DEPTH_TYPE)), \
-    pxInterface, ENETNETIF_RX_PACKET_TASK_PRI, (StackType_t*) &gPktTxRxTaskStack[0], &xTxRxTaskStaticObj);
+    xTxRxTask = xTaskCreateStatic(&EnetNetIFApp_rxPacketTask, "EnetNetIFApp_rxPacketTask", sizeof(gPktRxTaskStack) / (sizeof(configSTACK_DEPTH_TYPE)), \
+    pxInterface, ENETNETIF_RX_PACKET_TASK_PRI, (StackType_t*) &gPktRxTaskStack[0], &xRxTaskStaticObj);
     
+    xTxRxTask = xTaskCreateStatic(&EnetNetIFApp_txPacketTask, "EnetNetIFApp_txPacketTask", sizeof(gPktTxTaskStack) / (sizeof(configSTACK_DEPTH_TYPE)), \
+    pxInterface, ENETNETIF_RX_PACKET_TASK_PRI, (StackType_t*) &gPktTxTaskStack[0], &xTxTaskStaticObj);
+
     // configASSERT(ret_status == pdPASS);
 
 }
@@ -1627,7 +1686,7 @@ void EnetNetIF_sendTxPackets(FreeRTOSTCP2Enet_netif_t* pInterface, const Enet_Ma
             }
             else
             {
-                configASSERT((0));
+                //configASSERT((0));
                 break;
             }
         }
@@ -1852,22 +1911,34 @@ static int8_t EnetNetIF_EnetApp_createPollTask(NetworkInterface_t * pxInterface)
 
 void EnetNetIFApp_startSchedule(NetworkInterface_t * pxInterface)
 {
-    // uint32_t status;
+    uint32_t status = ENET_SOK;
+
+    status = SemaphoreP_constructBinary(&shutDownRxSemObj, 0U);
+    configASSERT(status == SystemP_SUCCESS);
+
+    status = SemaphoreP_constructBinary(&shutDownTxSemObj, 0U);
+    configASSERT(status == SystemP_SUCCESS);
+
+    status = SemaphoreP_constructBinary(&RxSemObj, 0U);
+    configASSERT(status == SystemP_SUCCESS);
+
+    status = SemaphoreP_constructBinary(&TxSemObj, 0U);
+    configASSERT(status == SystemP_SUCCESS);
     
     Enet_notify_t rxNotify =
-        {
-           .cbFxn = &EnetNetIFApp_NotifyTask, //gives different cb fxn for different events.
-           .cbArg = (void *) ENET_RX_NOTIFY_BIT //
-        };
+    {
+        .cbFxn = &EnetNetIFApp_postSemaphore, //gives different cb fxn for different events.
+        .cbArg = &RxSemObj //
+    };
     Enet_notify_t txNotify =
-        {
-                .cbFxn = &EnetNetIFApp_NotifyTask,
-                .cbArg = (void *) ENET_TX_NOTIFY_BIT
-        };
+    {
+        .cbFxn = &EnetNetIFApp_postSemaphore,
+        .cbArg = &TxSemObj
+    };
 
     EnetNetIF_setNotifyCallbacks(pxInterface, &rxNotify, &txNotify);
 
-    /* Initialize TX RX Task*/
+    // /* Initialize TX RX Task*/
     EnetNetIFApp_createTxRxPktHandlerTask(pxInterface);
 
     // /* Initialize Polling task*/
