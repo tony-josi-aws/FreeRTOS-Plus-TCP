@@ -161,6 +161,7 @@ void harness()
     /* Interface init. */
     pxNetworkEndPoints->pxNetworkInterface = ( NetworkInterface_t * ) safeMalloc( sizeof( NetworkInterface_t ) );
     __CPROVER_assume( pxNetworkEndPoints->pxNetworkInterface != NULL );
+    __CPROVER_assume( pxNetworkEndPoints->pxNetworkInterface->pfAddAllowedMAC == NULL );
 
     if( nondet_bool() )
     {

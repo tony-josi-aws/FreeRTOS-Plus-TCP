@@ -81,6 +81,11 @@ void harness()
     NetworkInterface_t * pxInterface = ( NetworkInterface_t * ) safeMalloc( sizeof( NetworkInterface_t ) );
     uint32_t ulLen;
 
+    if( pxInterface != NULL )
+    {
+        __CPROVER_assume( pxInterface->pfAddAllowedMAC == NULL );
+    }
+
     /* The code does not expect pxNetworkBuffer to be NULL. */
     __CPROVER_assume( pxNetworkBuffer != NULL );
 
