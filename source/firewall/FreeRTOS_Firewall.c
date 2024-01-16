@@ -110,7 +110,7 @@ static BaseType_t xRuleParser_IPv4(xFirewallRule_IPv4_t *xRuleObj, uint8_t * ucR
                 }
                 else
                 {
-                    xResult |= FreeRTOS_inet_pton4(ucCurrToken, &uxSourceIP);
+                    xResult &= FreeRTOS_inet_pton4(ucCurrToken, &uxSourceIP);
                 }
                 break;
             
@@ -121,7 +121,7 @@ static BaseType_t xRuleParser_IPv4(xFirewallRule_IPv4_t *xRuleObj, uint8_t * ucR
                 }
                 else
                 {
-                    xResult |= xConvertStringToInt(ucCurrToken, &uxSourcePort);
+                    xResult &= xConvertStringToInt(ucCurrToken, &uxSourcePort);
                 }
                 break;
 
@@ -132,7 +132,7 @@ static BaseType_t xRuleParser_IPv4(xFirewallRule_IPv4_t *xRuleObj, uint8_t * ucR
                 }
                 else
                 {
-                    xResult |= FreeRTOS_inet_pton4(ucCurrToken, &uxDestnIP);
+                    xResult &= FreeRTOS_inet_pton4(ucCurrToken, &uxDestnIP);
                 }
                 break;
 
@@ -143,7 +143,7 @@ static BaseType_t xRuleParser_IPv4(xFirewallRule_IPv4_t *xRuleObj, uint8_t * ucR
                 }
                 else
                 {
-                    xResult |= xConvertStringToInt(ucCurrToken, &uxDestnPort);
+                    xResult &= xConvertStringToInt(ucCurrToken, &uxDestnPort);
                 }
                 break;
 
@@ -154,12 +154,12 @@ static BaseType_t xRuleParser_IPv4(xFirewallRule_IPv4_t *xRuleObj, uint8_t * ucR
                 }
                 else
                 {
-                    xResult |= xConvertStringToInt(ucCurrToken, &ucProtocol);
+                    xResult &= xConvertStringToInt(ucCurrToken, &ucProtocol);
                 }
                 break;
 
             case 5:
-                xResult |= xConvertStringToInt(ucCurrToken, &ucAction);
+                xResult &= xConvertStringToInt(ucCurrToken, &ucAction);
                 break;
 
             default:
