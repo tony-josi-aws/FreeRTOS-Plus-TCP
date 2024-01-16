@@ -34,6 +34,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <errno.h>
+#include <inttypes.h>
 
 /* FreeRTOS includes. */
 #include "FreeRTOS.h"
@@ -197,7 +198,7 @@ static BaseType_t xCompareRule_IPv4(xFirewallRule_IPv4_t *xRuleObj, NetworkBuffe
             if(
                 (xRuleObj->uxWildcardBitmap & (1 << 0) || xRuleObj->uxSourceIP == pxPacket->xUDPPacket.xIPHeader.ulSourceIPAddress) &&
                 (xRuleObj->uxWildcardBitmap & (1 << 1) || xRuleObj->uxDestnIP == pxPacket->xUDPPacket.xIPHeader.ulDestinationIPAddress) &&
-                (xRuleObj->uxWildcardBitmap & (1 << 4) || xRuleObj->uxSourcePort == pxPacket->xUDPPacket.xIPHeader.ucProtocol)
+                (xRuleObj->uxWildcardBitmap & (1 << 4) || xRuleObj->ucProtocol == pxPacket->xUDPPacket.xIPHeader.ucProtocol)
             )
             {
                 xMatch = pdTRUE;
@@ -353,7 +354,7 @@ BaseType_t xFirewallRemoveRule(uint32_t uxRuleID)
 {
 
     BaseType_t xReturn = pdFALSE;
-    const ListItem_t * pxIterator;
+    ListItem_t * pxIterator;
     const ListItem_t * pxEnd = ( ( const ListItem_t * ) &( xFirewallRulesList_IPv4.xListEnd ) );
 
     /* Check if the rules list has been initialised. */
@@ -386,7 +387,7 @@ BaseType_t xFirewallRemoveRule(uint32_t uxRuleID)
  */
 void vFirewallDeInit( void )
 {
-    const ListItem_t * pxIterator;
+    ListItem_t * pxIterator;
     const ListItem_t * pxEnd = ( ( const ListItem_t * ) &( xFirewallRulesList_IPv4.xListEnd ) );
 
     /* Check if the rules list has been initialised. */
