@@ -304,6 +304,20 @@ BaseType_t xFirewallFilterPackets(NetworkBufferDescriptor_t * pxNetworkBuffer)
 
 }
 
+/*
+
+ Rule format: 
+ 
+ <src ip> <src port> <destn ip> <destn port> 
+ <protocol num 1- ICMP 6 - TCP 17 - UDP> <1 -Allow / 0 - Block>
+
+ --------------------- Sample Rules ---------------------
+
+ 
+ "192.168.0.144 * * * 1 0"   ==> Block ICMP traffic from 192.168.0.144
+ "192.168.0.149 * * * 17 0"  ==> Block UDP traffic from 192.168.0.149
+
+*/
 BaseType_t xFirewallAddRule(uint8_t * ucRuleString)
 {
 
