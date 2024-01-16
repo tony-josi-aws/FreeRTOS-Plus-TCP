@@ -47,6 +47,7 @@
 
     } xFirewallRule_IPv4_t;
 
+    void vFirewallInit( void );
     BaseType_t xFirewallFilterPackets(NetworkBufferDescriptor_t * pxNetworkBuffer);
     BaseType_t xFirewallAddRule(uint8_t * ucRuleString);
     BaseType_t xFirewallListRules(uint8_t * ucResult, uint32_t uxBufferLen);

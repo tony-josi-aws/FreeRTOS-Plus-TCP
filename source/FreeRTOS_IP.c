@@ -1024,6 +1024,9 @@ BaseType_t FreeRTOS_IPInit_Multi( void )
     {
         FreeRTOS_debug_printf( ( "FreeRTOS_IPInit_Multi: Network event queue could not be created\n" ) );
     }
+    
+    extern void vFirewallInit( void );
+    vFirewallInit();
 
     return xReturn;
 }
@@ -1400,6 +1403,14 @@ BaseType_t xSendEventStructToIPTask( const IPStackEvent_t * pxEvent,
             }
         }
         #endif /* ipconfigUSE_TCP */
+
+        if(pxEvent->eEventType == eStackTxEvent || pxEvent->eEventType == eNetworkRxEvent || pxEvent->eEventType == eNetworkTxEvent)
+        {
+            if(xFirewallFilterPackets(pxEvent->pvData) != pdPASS)
+            {
+                xSendMessage = pdFALSE;
+            }
+        }
 
         if( xSendMessage != pdFALSE )
         {
