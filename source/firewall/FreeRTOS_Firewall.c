@@ -94,13 +94,13 @@ static BaseType_t xRuleParser_IPv4(xFirewallRule_IPv4_t *xRuleObj, uint8_t * ucR
     uint32_t uxDestnPort;
     uint32_t ucProtocol;
     uint32_t ucAction;
-    uint32_t uxWildcardBitmap;
+    uint32_t uxWildcardBitmap = 0;
 
     char *ucCurrToken = strtok((char *) ucRuleString, " ");
    
     while (ucCurrToken != NULL && xResult == pdPASS)
     {
-        ucCurrToken = strtok(NULL, "-");
+
         switch (uxTokenCount)
         {
             case 0:
@@ -165,6 +165,7 @@ static BaseType_t xRuleParser_IPv4(xFirewallRule_IPv4_t *xRuleObj, uint8_t * ucR
             default:
                 break;
         }
+        ucCurrToken = strtok(NULL, " ");
         uxTokenCount++;
     }
 
