@@ -390,8 +390,6 @@ static size_t prvSnprintfReturnValueToCharsWritten( int iSnprintfReturnValue,
 
 BaseType_t xFirewallListRules(uint8_t * ucResult, uint32_t uxBufferLength)
 {
-    /* Check if the rules list has been initialised. */
-    configASSERT( listLIST_IS_INITIALISED( &xFirewallRulesList_IPv4 ) );
 
     BaseType_t xReturn = pdTRUE;
     ListItem_t * pxIterator;
