@@ -341,9 +341,11 @@ BaseType_t xFirewallAddRule(uint8_t * ucRuleString)
         {
             vTaskSuspendAll();
             {
+                xRuleObj->uxRuleID = xCurrRuleID;
                 vListInitialiseItem(&(xRuleObj->xRuleListItem));
                 listSET_LIST_ITEM_OWNER( &( xRuleObj->xRuleListItem ), ( void * ) xRuleObj );
                 vListInsertEnd( &xFirewallRulesList_IPv4, &( xRuleObj->xRuleListItem ) );
+                xCurrRuleID++;
             }
             ( void ) xTaskResumeAll();
         }
@@ -361,6 +363,29 @@ BaseType_t xFirewallListRules(uint8_t * ucResult, uint32_t uxBufferLen)
 {
     /* Check if the rules list has been initialised. */
     configASSERT( listLIST_IS_INITIALISED( &xFirewallRulesList_IPv4 ) );
+
+    BaseType_t xReturn = pdFALSE;
+    ListItem_t * pxIterator;
+    size_t uxConsumedBufferLength = 0;
+    size_t uxCharsWrittenBySnprintf;
+    BaseType_t xOutputBufferFull = pdFALSE;
+
+    /* Check if the rules list has been initialised. */
+    configASSERT( listLIST_IS_INITIALISED( &xFirewallRulesList_IPv4 ) );
+
+    const ListItem_t * pxEnd = ( ( const ListItem_t * ) &( xFirewallRulesList_IPv4.xListEnd ) );
+
+    memset(ucResult, 0x00, uxBufferLen);
+
+    for( pxIterator = listGET_NEXT( pxEnd );
+            pxIterator != pxEnd;
+            pxIterator = listGET_NEXT( pxIterator ) )
+    {
+        xFirewallRule_IPv4_t *xRuleObj = listGET_LIST_ITEM_OWNER(pxIterator);
+       
+    }
+
+    return xReturn;
 
 }
 
