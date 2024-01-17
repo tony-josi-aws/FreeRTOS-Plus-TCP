@@ -359,30 +359,86 @@ BaseType_t xFirewallAddRule(uint8_t * ucRuleString)
 
 }
 
-BaseType_t xFirewallListRules(uint8_t * ucResult, uint32_t uxBufferLen)
+
+static size_t prvSnprintfReturnValueToCharsWritten( int iSnprintfReturnValue,
+                                                    size_t n )
+{
+    size_t uxCharsWritten;
+
+    if( iSnprintfReturnValue < 0 )
+    {
+        /* Encoding error - Return 0 to indicate that nothing
+            * was written to the buffer. */
+        uxCharsWritten = 0;
+    }
+    else if( iSnprintfReturnValue >= ( int ) n )
+    {
+        /* This is the case when the supplied buffer is not
+            * large to hold the generated string. Return the
+            * number of characters actually written without
+            * counting the terminating NULL character. */
+        uxCharsWritten = n - 1;
+    }
+    else
+    {
+        /* Complete string was written to the buffer. */
+        uxCharsWritten = ( size_t ) iSnprintfReturnValue;
+    }
+
+    return uxCharsWritten;
+}
+
+BaseType_t xFirewallListRules(uint8_t * ucResult, uint32_t uxBufferLength)
 {
     /* Check if the rules list has been initialised. */
     configASSERT( listLIST_IS_INITIALISED( &xFirewallRulesList_IPv4 ) );
 
-    BaseType_t xReturn = pdFALSE;
+    BaseType_t xReturn = pdTRUE;
     ListItem_t * pxIterator;
     size_t uxConsumedBufferLength = 0;
     size_t uxCharsWrittenBySnprintf;
-    BaseType_t xOutputBufferFull = pdFALSE;
+    int iSnprintfReturnValue;
 
     /* Check if the rules list has been initialised. */
     configASSERT( listLIST_IS_INITIALISED( &xFirewallRulesList_IPv4 ) );
 
     const ListItem_t * pxEnd = ( ( const ListItem_t * ) &( xFirewallRulesList_IPv4.xListEnd ) );
 
-    memset(ucResult, 0x00, uxBufferLen);
+    memset(ucResult, 0x00, uxBufferLength);
 
     for( pxIterator = listGET_NEXT( pxEnd );
-            pxIterator != pxEnd;
+            (pxIterator != pxEnd) && uxConsumedBufferLength < ( uxBufferLength - 1 );
             pxIterator = listGET_NEXT( pxIterator ) )
     {
         xFirewallRule_IPv4_t *xRuleObj = listGET_LIST_ITEM_OWNER(pxIterator);
+        char cBuffer[ 16 ] = {'\0'};
+        char cBufferSrcPort[ 16 ] = {'\0'};
+        char cBufferDestnPort[ 16 ] = {'\0'};
+        char cBufferProtocol[ 16 ] = {'\0'};
+
+        sprintf(cBufferSrcPort, "%lu", xRuleObj->uxSourcePort);
+        sprintf(cBufferDestnPort, "%lu", xRuleObj->uxDestnPort);
+        sprintf(cBufferProtocol, "%u", xRuleObj->ucProtocol);
+
+        iSnprintfReturnValue = snprintf((char *) ucResult,
+                                        uxBufferLength - uxConsumedBufferLength,
+                                        "%s\t%s\t%s\t%s\t%s\t%u",
+                                        (xRuleObj->uxWildcardBitmap & (1 << 0)) ? "*" : FreeRTOS_inet_ntoa(xRuleObj->uxSourceIP, cBuffer),
+                                        (xRuleObj->uxWildcardBitmap & (1 << 1)) ? "*" : cBufferSrcPort,
+                                        (xRuleObj->uxWildcardBitmap & (1 << 2)) ? "*" : FreeRTOS_inet_ntoa(xRuleObj->uxDestnIP, cBuffer),
+                                        (xRuleObj->uxWildcardBitmap & (1 << 3)) ? "*" : cBufferDestnPort,
+                                        (xRuleObj->uxWildcardBitmap & (1 << 4)) ? "*" : cBufferProtocol,
+                                        xRuleObj->ucAction
+                                        );
+        uxCharsWrittenBySnprintf = prvSnprintfReturnValueToCharsWritten( iSnprintfReturnValue, uxBufferLength - uxConsumedBufferLength );
+        uxConsumedBufferLength += uxCharsWrittenBySnprintf;
+        ucResult += uxCharsWrittenBySnprintf;
        
+    }
+
+    if(uxConsumedBufferLength >= uxBufferLength)
+    {
+        xReturn = pdFALSE;
     }
 
     return xReturn;
