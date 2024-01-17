@@ -309,6 +309,7 @@ void vProcessGeneratedUDPPacket_IPv4( NetworkBufferDescriptor_t * const pxNetwor
             }
             #endif /* if( ipconfigETHERNET_MINIMUM_PACKET_BYTES > 0 ) */
             iptraceNETWORK_INTERFACE_OUTPUT( pxNetworkBuffer->xDataLength, pxNetworkBuffer->pucEthernetBuffer );
+            iptraceUDP_PACKET_SEND( pxNetworkBuffer );
 
             if( ( pxInterface != NULL ) && ( pxInterface->pfOutput != NULL ) )
             {
@@ -317,12 +318,14 @@ void vProcessGeneratedUDPPacket_IPv4( NetworkBufferDescriptor_t * const pxNetwor
         }
         else
         {
+            iptraceUDP_TX_PACKET_DROP( pxNetworkBuffer );
             /* The packet can't be sent (no route found).  Drop the packet. */
             vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
         }
     }
     else
     {
+        iptraceUDP_TX_PACKET_DROP( pxNetworkBuffer );
         /* The packet can't be sent (DHCP not completed?).  Just drop the
          * packet. */
         vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );

@@ -298,7 +298,9 @@ static void prvProcessIPEventsAndTimers( void )
             /* The network hardware driver has received a new packet.  A
              * pointer to the received buffer is located in the pvData member
              * of the received event structure. */
+            iptracePACKET_RECEIVE_START();
             prvHandleEthernetPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
+            iptracePACKET_RECEIVE_END();
             break;
 
         case eNetworkTxEvent:
@@ -381,7 +383,9 @@ static void prvProcessIPEventsAndTimers( void )
             /* The network stack has generated a packet to send.  A
              * pointer to the generated buffer is located in the pvData
              * member of the received event structure. */
+            iptraceSTACK_PACKET_SEND_START();
             vProcessGeneratedUDPPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
+            iptraceSTACK_PACKET_SEND_END();
             break;
 
         case eDHCPEvent:
@@ -1285,6 +1289,7 @@ void FreeRTOS_SetEndPointConfiguration( const uint32_t * pulIPAddress,
 
         if( ( uxGetNumberOfFreeNetworkBuffers() >= 4U ) && ( uxNumberOfBytesToSend >= 1U ) && ( xEnoughSpace != pdFALSE ) )
         {
+            iptracePING_SEND_START();
             pxNetworkBuffer = pxGetNetworkBufferWithDescriptor( uxTotalLength, uxBlockTimeTicks );
 
             if( pxNetworkBuffer != NULL )
@@ -1329,12 +1334,15 @@ void FreeRTOS_SetEndPointConfiguration( const uint32_t * pulIPAddress,
                     xReturn = ( BaseType_t ) usSequenceNumber;
                 }
             }
+            iptracePING_SEND_END();
         }
         else
         {
             /* The requested number of bytes will not fit in the available space
              * in the network buffer. */
         }
+
+        iptraceICMP_PACKET_SEND( uxNumberOfBytesToSend, xReturn );
 
         return xReturn;
     }
@@ -1976,6 +1984,7 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
                             #if ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) || ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
                             {
                                 eReturn = ProcessICMPPacket( pxNetworkBuffer );
+                                iptraceICMP_PACKET_RECEIVE( pxNetworkBuffer, eReturn );
                             }
                             #endif /* ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) || ( ipconfigSUPPORT_OUTGOING_PINGS == 1 ) */
                             break;
@@ -1989,8 +1998,8 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
 
                     case ipPROTOCOL_UDP:
                         /* The IP packet contained a UDP frame. */
-
                         eReturn = prvProcessUDPPacket( pxNetworkBuffer );
+                        iptraceUDP_PACKET_RECEIVE( pxNetworkBuffer, eReturn );
                         break;
 
                         #if ipconfigUSE_TCP == 1
@@ -2000,6 +2009,8 @@ static eFrameProcessingResult_t prvProcessIPPacket( const IPPacket_t * pxIPPacke
                                 {
                                     eReturn = eFrameConsumed;
                                 }
+
+                                iptraceTCP_PACKET_RECEIVE( pxNetworkBuffer, eReturn );
 
                                 /* Setting this variable will cause xTCPTimerCheck()
                                  * to be called just before the IP-task blocks. */

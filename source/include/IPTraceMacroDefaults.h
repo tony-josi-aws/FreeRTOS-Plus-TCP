@@ -852,4 +852,66 @@
 /*---------------------------------------------------------------------------*/
 /*===========================================================================*/
 
+#ifndef iptracePACKET_RECEIVE_START
+    #define iptracePACKET_RECEIVE_START()
+#endif
+
+#ifndef iptracePACKET_RECEIVE_END
+    #define iptracePACKET_RECEIVE_END()
+#endif
+
+#ifndef iptraceSTACK_PACKET_SEND_START
+    #define iptraceSTACK_PACKET_SEND_START()
+#endif
+
+#ifndef iptraceSTACK_PACKET_SEND_END
+    #define iptraceSTACK_PACKET_SEND_END()
+#endif
+
+#ifndef iptracePING_SEND_START
+    #define iptracePING_SEND_START()
+#endif
+
+#ifndef iptracePING_SEND_END
+    #define iptracePING_SEND_END()
+#endif
+
+#ifndef iptraceTCP_SEND_START
+    #define iptraceTCP_SEND_START()
+#endif
+
+#ifndef iptraceTCP_SEND_END
+    #define iptraceTCP_SEND_END()
+#endif
+
+#ifndef iptraceICMP_PACKET_SEND
+    #define iptraceICMP_PACKET_SEND( packetLength, result )
+#endif
+
+#ifndef iptraceTCP_PACKET_SEND
+    #define iptraceTCP_PACKET_SEND( packetLength, sentLength )
+#endif
+
+#ifndef iptraceUDP_PACKET_SEND
+    #define iptraceUDP_PACKET_SEND( networkBuffer )
+#endif
+
+#ifndef iptraceUDP_TX_PACKET_DROP
+    #define iptraceUDP_TX_PACKET_DROP( networkBuffer )
+#endif
+
+#ifndef iptraceICMP_PACKET_RECEIVE
+    #define iptraceICMP_PACKET_RECEIVE( networkBuffer, result )
+#endif
+
+#ifndef iptraceUDP_PACKET_RECEIVE
+    #define iptraceUDP_PACKET_RECEIVE( networkBuffer, result )
+#endif
+
+#ifndef iptraceTCP_PACKET_RECEIVE
+    #define iptraceTCP_PACKET_RECEIVE( networkBuffer, result )
+#endif
+
+
+
 #endif /* IP_TRACE_MACRO_DEFAULTS_H */

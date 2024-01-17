@@ -4649,6 +4649,8 @@ void vSocketWakeUpUser( FreeRTOS_Socket_t * pxSocket )
         BaseType_t xByteCount;
         FreeRTOS_Socket_t * pxSocket = ( FreeRTOS_Socket_t * ) xSocket;
 
+        iptraceTCP_SEND_START();
+
         xByteCount = ( BaseType_t ) prvTCPSendCheck( pxSocket, uxDataLength );
 
         if( xByteCount > 0 )
@@ -4677,6 +4679,9 @@ void vSocketWakeUpUser( FreeRTOS_Socket_t * pxSocket )
                 }
             }
         }
+
+        iptraceTCP_SEND_END();
+        iptraceTCP_PACKET_SEND( uxDataLength, xByteCount );
 
         return xByteCount;
     }
