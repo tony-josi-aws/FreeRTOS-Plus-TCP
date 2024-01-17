@@ -268,7 +268,6 @@ BaseType_t xFirewallFilterPackets(NetworkBufferDescriptor_t * pxNetworkBuffer)
             break;
 
         case ipIPv4_FRAME_TYPE:
-        vTaskSuspendAll();
         {
             const ListItem_t * pxIterator;
             const ListItem_t * pxEnd = ( ( const ListItem_t * ) &( xFirewallRulesList_IPv4.xListEnd ) );
@@ -285,7 +284,6 @@ BaseType_t xFirewallFilterPackets(NetworkBufferDescriptor_t * pxNetworkBuffer)
                 }
             }
         }
-        ( void ) xTaskResumeAll();
 
         default:
             break;
@@ -420,7 +418,8 @@ BaseType_t xFirewallListRules(uint8_t * ucResult, uint32_t uxBufferLength)
 
         iSnprintfReturnValue = snprintf((char *) ucResult,
                                         uxBufferLength - uxConsumedBufferLength,
-                                        "%s\t%s\t%s\t%s\t%s\t%u\n",
+                                        "%lu %s %s %s %s %s %u\n",
+                                        xRuleObj->uxRuleID,
                                         (xRuleObj->uxWildcardBitmap & (1 << 0)) ? "*" : FreeRTOS_inet_ntoa(xRuleObj->uxSourceIP, cBuffer),
                                         (xRuleObj->uxWildcardBitmap & (1 << 1)) ? "*" : cBufferSrcPort,
                                         (xRuleObj->uxWildcardBitmap & (1 << 2)) ? "*" : FreeRTOS_inet_ntoa(xRuleObj->uxDestnIP, cBuffer),
