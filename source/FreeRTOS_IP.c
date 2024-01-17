@@ -59,6 +59,7 @@
 #include "FreeRTOS_DNS.h"
 #include "FreeRTOS_Routing.h"
 #include "FreeRTOS_ND.h"
+#include "FreeRTOS_Firewall.h"
 
 /** @brief Time delay between repeated attempts to initialise the network hardware. */
 #ifndef ipINITIALISATION_RETRY_DELAY
