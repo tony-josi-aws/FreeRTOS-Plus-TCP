@@ -98,7 +98,7 @@ static BaseType_t xRuleParser_IPv4(xFirewallRule_IPv4_t *xRuleObj, uint8_t * ucR
     uint32_t uxWildcardBitmap = 0;
 
     char *ucCurrToken = strtok((char *) ucRuleString, " ");
-   
+
     while (ucCurrToken != NULL && xResult == pdPASS)
     {
 
@@ -114,7 +114,7 @@ static BaseType_t xRuleParser_IPv4(xFirewallRule_IPv4_t *xRuleObj, uint8_t * ucR
                     xResult &= FreeRTOS_inet_pton4(ucCurrToken, &uxSourceIP);
                 }
                 break;
-            
+
             case 1:
                 if(*ucCurrToken == '*')
                 {
@@ -193,7 +193,7 @@ static BaseType_t xCompareRule_IPv4(xFirewallRule_IPv4_t *xRuleObj, NetworkBuffe
 
     switch( usFrameType )
     {
-        
+
         case ipIPv4_FRAME_TYPE:
             if(
                 (xRuleObj->uxWildcardBitmap & (1 << 0) || xRuleObj->uxSourceIP == pxPacket->xUDPPacket.xIPHeader.ulSourceIPAddress) &&
@@ -304,14 +304,14 @@ BaseType_t xFirewallFilterPackets(NetworkBufferDescriptor_t * pxNetworkBuffer)
 
 /*
 
- Rule format: 
- 
- <src ip> <src port> <destn ip> <destn port> 
+ Rule format:
+
+ <src ip> <src port> <destn ip> <destn port>
  <protocol num 1- ICMP 6 - TCP 17 - UDP> <1 -Allow / 0 - Block>
 
  --------------------- Sample Rules ---------------------
 
- 
+
  "192.168.0.144 * * * 1 0"   ==> Block ICMP traffic from 192.168.0.144
  "192.168.0.149 * * * 17 0"  ==> Block UDP traffic from 192.168.0.149
 
@@ -398,39 +398,53 @@ BaseType_t xFirewallListRules(uint8_t * ucResult, uint32_t uxBufferLength)
     /* Check if the rules list has been initialised. */
     configASSERT( listLIST_IS_INITIALISED( &xFirewallRulesList_IPv4 ) );
 
-    const ListItem_t * pxEnd = ( ( const ListItem_t * ) &( xFirewallRulesList_IPv4.xListEnd ) );
-
-    memset(ucResult, 0x00, uxBufferLength);
-
-    for( pxIterator = listGET_NEXT( pxEnd );
-            (pxIterator != pxEnd) && uxConsumedBufferLength < ( uxBufferLength - 1 );
-            pxIterator = listGET_NEXT( pxIterator ) )
+    if( listCURRENT_LIST_LENGTH( &( xFirewallRulesList_IPv4 ) ) == 0 )
     {
-        xFirewallRule_IPv4_t *xRuleObj = listGET_LIST_ITEM_OWNER(pxIterator);
-        char cBuffer[ 16 ] = {'\0'};
-        char cBufferSrcPort[ 16 ] = {'\0'};
-        char cBufferDestnPort[ 16 ] = {'\0'};
-        char cBufferProtocol[ 16 ] = {'\0'};
-
-        sprintf(cBufferSrcPort, "%lu", xRuleObj->uxSourcePort);
-        sprintf(cBufferDestnPort, "%lu", xRuleObj->uxDestnPort);
-        sprintf(cBufferProtocol, "%u", xRuleObj->ucProtocol);
-
         iSnprintfReturnValue = snprintf((char *) ucResult,
-                                        uxBufferLength - uxConsumedBufferLength,
-                                        "%lu %s %s %s %s %s %u\n",
-                                        xRuleObj->uxRuleID,
-                                        (xRuleObj->uxWildcardBitmap & (1 << 0)) ? "*" : FreeRTOS_inet_ntoa(xRuleObj->uxSourceIP, cBuffer),
-                                        (xRuleObj->uxWildcardBitmap & (1 << 1)) ? "*" : cBufferSrcPort,
-                                        (xRuleObj->uxWildcardBitmap & (1 << 2)) ? "*" : FreeRTOS_inet_ntoa(xRuleObj->uxDestnIP, cBuffer),
-                                        (xRuleObj->uxWildcardBitmap & (1 << 3)) ? "*" : cBufferDestnPort,
-                                        (xRuleObj->uxWildcardBitmap & (1 << 4)) ? "*" : cBufferProtocol,
-                                        xRuleObj->ucAction
-                                        );
-        uxCharsWrittenBySnprintf = prvSnprintfReturnValueToCharsWritten( iSnprintfReturnValue, uxBufferLength - uxConsumedBufferLength );
-        uxConsumedBufferLength += uxCharsWrittenBySnprintf;
-        ucResult += uxCharsWrittenBySnprintf;
-       
+                                        uxBufferLength,
+                                        "No firewall rules installed!");
+        uxCharsWrittenBySnprintf = prvSnprintfReturnValueToCharsWritten( iSnprintfReturnValue, uxBufferLength );
+
+        if( uxCharsWrittenBySnprintf != iSnprintfReturnValue )
+        {
+            xReturn = pdFALSE;
+        }
+    }
+    else
+    {
+        const ListItem_t * pxEnd = ( ( const ListItem_t * ) &( xFirewallRulesList_IPv4.xListEnd ) );
+
+        memset(ucResult, 0x00, uxBufferLength);
+
+        for( pxIterator = listGET_NEXT( pxEnd );
+                (pxIterator != pxEnd) && uxConsumedBufferLength < ( uxBufferLength - 1 );
+                pxIterator = listGET_NEXT( pxIterator ) )
+        {
+            xFirewallRule_IPv4_t *xRuleObj = listGET_LIST_ITEM_OWNER(pxIterator);
+            char cBuffer[ 16 ] = {'\0'};
+            char cBufferSrcPort[ 16 ] = {'\0'};
+            char cBufferDestnPort[ 16 ] = {'\0'};
+            char cBufferProtocol[ 16 ] = {'\0'};
+
+            sprintf(cBufferSrcPort, "%lu", xRuleObj->uxSourcePort);
+            sprintf(cBufferDestnPort, "%lu", xRuleObj->uxDestnPort);
+            sprintf(cBufferProtocol, "%u", xRuleObj->ucProtocol);
+
+            iSnprintfReturnValue = snprintf((char *) ucResult,
+                                            uxBufferLength - uxConsumedBufferLength,
+                                            "%lu %s %s %s %s %s %u\n",
+                                            xRuleObj->uxRuleID,
+                                            (xRuleObj->uxWildcardBitmap & (1 << 0)) ? "*" : FreeRTOS_inet_ntoa(xRuleObj->uxSourceIP, cBuffer),
+                                            (xRuleObj->uxWildcardBitmap & (1 << 1)) ? "*" : cBufferSrcPort,
+                                            (xRuleObj->uxWildcardBitmap & (1 << 2)) ? "*" : FreeRTOS_inet_ntoa(xRuleObj->uxDestnIP, cBuffer),
+                                            (xRuleObj->uxWildcardBitmap & (1 << 3)) ? "*" : cBufferDestnPort,
+                                            (xRuleObj->uxWildcardBitmap & (1 << 4)) ? "*" : cBufferProtocol,
+                                            xRuleObj->ucAction
+                                            );
+            uxCharsWrittenBySnprintf = prvSnprintfReturnValueToCharsWritten( iSnprintfReturnValue, uxBufferLength - uxConsumedBufferLength );
+            uxConsumedBufferLength += uxCharsWrittenBySnprintf;
+            ucResult += uxCharsWrittenBySnprintf;
+        }
     }
 
     if(uxConsumedBufferLength >= uxBufferLength)
