@@ -299,9 +299,11 @@ static void prvProcessIPEventsAndTimers( void )
             /* The network hardware driver has received a new packet.  A
              * pointer to the received buffer is located in the pvData member
              * of the received event structure. */
-            iptracePACKET_RECEIVE_START();
-            prvHandleEthernetPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
-            iptracePACKET_RECEIVE_END();
+            {
+                iptracePACKET_RECEIVE_START();
+                prvHandleEthernetPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
+                iptracePACKET_RECEIVE_END();
+            }
             break;
 
         case eNetworkTxEvent:
@@ -384,9 +386,11 @@ static void prvProcessIPEventsAndTimers( void )
             /* The network stack has generated a packet to send.  A
              * pointer to the generated buffer is located in the pvData
              * member of the received event structure. */
-            iptraceSTACK_PACKET_SEND_START();
-            vProcessGeneratedUDPPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
-            iptraceSTACK_PACKET_SEND_END();
+            {
+                iptraceSTACK_PACKET_SEND_START();
+                vProcessGeneratedUDPPacket( ( NetworkBufferDescriptor_t * ) xReceivedEvent.pvData );
+                iptraceSTACK_PACKET_SEND_END();
+            }
             break;
 
         case eDHCPEvent:
