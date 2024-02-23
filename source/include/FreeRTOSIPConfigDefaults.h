@@ -169,7 +169,7 @@
  */
 
 #ifndef ipconfigIPv4_BACKWARD_COMPATIBLE
-    #define ipconfigIPv4_BACKWARD_COMPATIBLE    ipconfigDISABLE
+    #define ipconfigIPv4_BACKWARD_COMPATIBLE    ipconfigENABLE
 #endif
 
 #if ( ( ipconfigIPv4_BACKWARD_COMPATIBLE != ipconfigDISABLE ) && ( ipconfigIPv4_BACKWARD_COMPATIBLE != ipconfigENABLE ) )
