@@ -2886,25 +2886,29 @@ BaseType_t FreeRTOS_setsockopt( Socket_t xSocket,
 
                 #if ( ipconfigSOCKET_HAS_USER_WAKE_CALLBACK != 0 )
                     case FREERTOS_SO_WAKEUP_CALLBACK:
+                        {
+                            const void * pvCopySource = pvOptionValue;
+                            void * pvCopyDest = (void *) &( pxSocket->pxUserWakeCallback );
 
-                        /* Each socket can have a callback function that is executed
-                         * when there is an event the socket's owner might want to
-                         * process. */
+                            /* Each socket can have a callback function that is executed
+                            * when there is an event the socket's owner might want to
+                            * process. */
 
-                        /* The type cast of the pointer expression "A" to
-                         * type "B" removes const qualifier from the pointed to type. */
+                            /* The type cast of the pointer expression "A" to
+                            * type "B" removes const qualifier from the pointed to type. */
 
-                        /* MISRA Ref 11.8.1 [Function pointer and use of const pointer] */
-                        /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-118 */
+                            /* MISRA Ref 11.8.1 [Function pointer and use of const pointer] */
+                            /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-118 */
 
-                        /* MISRA Ref 11.1.1 [ Conversion between pointer to
-                         * a function and another type ] */
-                        /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-111 */
-                        /* coverity[misra_c_2012_rule_11_8_violation] */
-                        /* coverity[misra_c_2012_rule_11_1_violation] */
-                        pxSocket->pxUserWakeCallback = ( SocketWakeupCallback_t ) pvOptionValue;
-                        xReturn = 0;
-                        break;
+                            /* MISRA Ref 11.1.1 [ Conversion between pointer to
+                            * a function and another type ] */
+                            /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-111 */
+                            /* coverity[misra_c_2012_rule_11_8_violation] */
+                            /* coverity[misra_c_2012_rule_11_1_violation] */
+                            memcpy( pvCopyDest, pvCopySource, sizeof( SocketWakeupCallback_t ) );
+                            xReturn = 0;
+                            break;
+                        }
                 #endif /* ipconfigSOCKET_HAS_USER_WAKE_CALLBACK */
 
                 #if ( ipconfigUSE_TCP != 0 )
@@ -3781,6 +3785,7 @@ void vSocketWakeUpUser( FreeRTOS_Socket_t * pxSocket )
         ( void ) xAddressLength;
 
         #if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 )
+        {
             struct freertos_sockaddr xTempAddress;
 
             if( ( pxAddress != NULL ) && ( pxAddress->sin_family != FREERTOS_AF_INET6 ) && ( pxAddress->sin_family != FREERTOS_AF_INET ) )
@@ -3792,6 +3797,7 @@ void vSocketWakeUpUser( FreeRTOS_Socket_t * pxSocket )
                 xTempAddress.sin_family = FREERTOS_AF_INET;
                 pxAddress = &xTempAddress;
             }
+        }
         #endif /* ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 ) */
 
         xResult = prvTCPConnectStart( pxSocket, pxAddress );
