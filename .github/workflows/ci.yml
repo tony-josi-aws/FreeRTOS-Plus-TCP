@@ -153,7 +153,7 @@ jobs:
         run: |
           # ${{ env.stepName }}
           echo "::group:: ${{ env.stepName }}"
-          cmake -S . -B build -DFREERTOS_PLUS_TCP_TEST_CONFIGURATION=ENABLE_ALL
+          cmake -S . -B build -DFREERTOS_PLUS_TCP_TEST_CONFIGURATION=ENABLE_ALL -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
           cmake --build build --target freertos_plus_tcp_build_test
           echo "::endgroup::"
           echo -e "${{ env.bashPass }} ${{ env.stepName }} ${{ env.bashEnd }}"
