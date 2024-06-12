@@ -164,7 +164,7 @@ jobs:
         run: |
           # ${{ env.stepName }}
           echo "::group:: ${{ env.stepName }}"
-          cmake -S . -B build -DFREERTOS_PLUS_TCP_TEST_CONFIGURATION=ENABLE_ALL_IPV4
+          cmake -S . -B build -DFREERTOS_PLUS_TCP_TEST_CONFIGURATION=ENABLE_ALL_IPV4 -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
           cmake --build build --target clean
           cmake --build build --target freertos_plus_tcp_build_test
           echo "::endgroup::"
