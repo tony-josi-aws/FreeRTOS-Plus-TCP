@@ -1149,7 +1149,7 @@ STATIC_ASSERT( pdMS_TO_TICKS( ipconfigPHY_LS_LOW_CHECK_TIME_MS ) <= portMAX_DELA
  * Minimum: configMINIMAL_STACK_SIZE
  *
  * The size, in words (not bytes), of the stack allocated to the
- * FreeRTOS-Plus-TCP RTOS task. FreeRTOS includes optional stack overflow
+ * FreeRTOS-Plus-TCP V129.0.3
  * detection.
  */
 
