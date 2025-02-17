@@ -416,6 +416,87 @@ static int32_t FreeRTOS_recvfrom_LoopedCall( const ConstSocket_t xSocket,
     return xSizeRetBufferSize;
 }
 
+static int32_t FreeRTOS_recvfrom_FailAfterPeek( const ConstSocket_t xSocket,
+                                             void * pvBuffer,
+                                             size_t uxBufferLength,
+                                             BaseType_t xFlags,
+                                             struct freertos_sockaddr * pxSourceAddress,
+                                             socklen_t * pxSourceAddressLength,
+                                             int callbacks )
+{
+    NetworkEndPoint_t * pxIterator = pxNetworkEndPoints;
+    size_t xSizeRetBufferSize = xSizeofUDPBuffer;
+
+    if( ( xFlags & FREERTOS_ZERO_COPY ) != 0 )
+    {
+
+        if( callbacks == 0 )
+        {
+            *( ( uint8_t ** ) pvBuffer ) = pucUDPBuffer;
+            xSizeRetBufferSize = 5;
+        }
+        else if( callbacks == 1 )
+        {
+            *( ( uint8_t ** ) pvBuffer ) = NULL;
+            xSizeRetBufferSize = -pdFREERTOS_ERRNO_EAGAIN;
+            pxNetworkEndPoints->xDHCPData.eDHCPState = eInitialWait;
+        }
+
+    }
+
+    if( pxSourceAddress != NULL )
+    {
+        memcpy( pxSourceAddress, &xSourceAddress2, sizeof( xSourceAddress2 ) );
+    }
+
+    if( pxSourceAddressLength != NULL )
+    {
+        *pxSourceAddressLength = sizeof( xSourceAddress2 );
+    }
+
+    return xSizeRetBufferSize;
+}
+
+static int32_t FreeRTOS_recvfrom_FailAfterPeek2( const ConstSocket_t xSocket,
+                                             void * pvBuffer,
+                                             size_t uxBufferLength,
+                                             BaseType_t xFlags,
+                                             struct freertos_sockaddr * pxSourceAddress,
+                                             socklen_t * pxSourceAddressLength,
+                                             int callbacks )
+{
+    NetworkEndPoint_t * pxIterator = pxNetworkEndPoints;
+    size_t xSizeRetBufferSize = xSizeofUDPBuffer;
+
+    if( ( xFlags & FREERTOS_ZERO_COPY ) != 0 )
+    {
+        xSizeRetBufferSize = 5;
+        if( callbacks == 0 )
+        {
+            *( ( uint8_t ** ) pvBuffer ) = pucUDPBuffer;
+        }
+        else if( callbacks == 1 )
+        {
+            *( ( uint8_t ** ) pvBuffer ) = NULL;
+            pxNetworkEndPoints->xDHCPData.eDHCPState = eInitialWait;
+
+        }
+
+    }
+
+    if( pxSourceAddress != NULL )
+    {
+        memcpy( pxSourceAddress, &xSourceAddress2, sizeof( xSourceAddress2 ) );
+    }
+
+    if( pxSourceAddressLength != NULL )
+    {
+        *pxSourceAddressLength = sizeof( xSourceAddress2 );
+    }
+
+    return xSizeRetBufferSize;
+}
+
 static int32_t FreeRTOS_recvfrom_ResetAndIncorrectStateWithSocketAlreadyCreated_validUDPmessage_TwoFlagOptions_nullbytes( const ConstSocket_t xSocket,
                                                                                                                           void * pvBuffer,
                                                                                                                           size_t uxBufferLength,

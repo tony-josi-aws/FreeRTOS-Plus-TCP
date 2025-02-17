@@ -234,7 +234,14 @@
 
                     if( ( lBytes >= 0 ) && ( pucUDPPayload != NULL ) )
                     {
-                        FreeRTOS_ReleaseUDPPayloadBuffer( pucUDPPayload );
+                        /* Invalid DHCP message, fetch the message and delete it. */
+                        lBytes = FreeRTOS_recvfrom( EP_DHCPData.xDHCPSocket, &( pucUDPPayload ), 0, FREERTOS_ZERO_COPY, NULL, NULL );
+                        if( ( lBytes >= 0 ) && ( pucUDPPayload != NULL ) )
+                        {
+                            /* Remove it now, destination not found. */
+                            FreeRTOS_ReleaseUDPPayloadBuffer( pucUDPPayload );
+                            FreeRTOS_printf( ( "vDHCPProcess: Removed invalid %d-byte message\n", ( int ) lBytes ) );
+                        }
                     }
 
                     break;

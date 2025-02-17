@@ -455,6 +455,76 @@ void test_vDHCPProcess_CorrectStateDHCPHookFailsDHCPSocketNonNULL( void )
     TEST_ASSERT_EQUAL( pxEndPoint->ipv4_defaults.ulIPAddress, pxEndPoint->ipv4_settings.ulIPAddress );
 }
 
+/* Socket returns invalid DHCP message with length less than size of 
+ * DHCPMessage_IPv4_t but recvfrom fails while trying to delete the packet
+ * by returning error.
+ */
+void test_vDHCPProcess_DiscardingPacketFails( void )
+{
+    struct xSOCKET xTestSocket;
+    NetworkEndPoint_t xEndPoint = { 0 }, * pxEndPoint = &xEndPoint;
+    uint8_t * pucUDPPayload;
+
+    /* This should remain unchanged. */
+    xDHCPv4Socket = &xTestSocket;
+    xDHCPSocketUserCount = 1;
+    pxEndPoint->xDHCPData.xDHCPSocket = &xTestSocket;
+    /* Put the required state. */
+    pxEndPoint->xDHCPData.eDHCPState = eLeasedAddress;
+    pxEndPoint->xDHCPData.eExpectedState = eLeasedAddress;
+    pxEndPoint->xDHCPData.ulTransactionId = 0x01ABCDEF;
+
+    /* Make sure that the local IP address is uninitialised. */
+    pxEndPoint->ipv4_settings.ulIPAddress = 0;
+    /* Put a verifiable value. */
+    memset( &pxEndPoint->ipv4_settings, 0xAA, sizeof( IPV4Parameters_t ) );
+    /* Put a verifiable value. */
+    memset( &pxEndPoint->ipv4_defaults, 0xBB, sizeof( IPV4Parameters_t ) );
+
+    pxNetworkEndPoints = pxEndPoint;
+
+    /* Expect these arguments. */
+    FreeRTOS_recvfrom_Stub( FreeRTOS_recvfrom_FailAfterPeek );
+
+    vDHCPProcess( pdFALSE, pxEndPoint );
+
+}
+
+/* Socket returns invalid DHCP message with length less than size of 
+ * DHCPMessage_IPv4_t but recvfrom fails while trying to delete the packet
+ * by returning NULL in zero copy buffer.
+ */
+void test_vDHCPProcess_DiscardingPacketFailsNullPtr( void )
+{
+    struct xSOCKET xTestSocket;
+    NetworkEndPoint_t xEndPoint = { 0 }, * pxEndPoint = &xEndPoint;
+    uint8_t * pucUDPPayload;
+
+    /* This should remain unchanged. */
+    xDHCPv4Socket = &xTestSocket;
+    xDHCPSocketUserCount = 1;
+    pxEndPoint->xDHCPData.xDHCPSocket = &xTestSocket;
+    /* Put the required state. */
+    pxEndPoint->xDHCPData.eDHCPState = eLeasedAddress;
+    pxEndPoint->xDHCPData.eExpectedState = eLeasedAddress;
+    pxEndPoint->xDHCPData.ulTransactionId = 0x01ABCDEF;
+
+    /* Make sure that the local IP address is uninitialised. */
+    pxEndPoint->ipv4_settings.ulIPAddress = 0;
+    /* Put a verifiable value. */
+    memset( &pxEndPoint->ipv4_settings, 0xAA, sizeof( IPV4Parameters_t ) );
+    /* Put a verifiable value. */
+    memset( &pxEndPoint->ipv4_defaults, 0xBB, sizeof( IPV4Parameters_t ) );
+
+    pxNetworkEndPoints = pxEndPoint;
+
+    /* Expect these arguments. */
+    FreeRTOS_recvfrom_Stub( FreeRTOS_recvfrom_FailAfterPeek2 );
+
+    vDHCPProcess( pdFALSE, pxEndPoint );
+
+}
+
 void test_vDHCPProcess_CorrectStateDHCPHookDefaultReturn( void )
 {
     struct xSOCKET xTestSocket;
