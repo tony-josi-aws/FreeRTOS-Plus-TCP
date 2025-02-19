@@ -252,7 +252,7 @@
                 {
                     pxIterator = pxNetworkEndPoints;
 
-                    /* Find the end-point with given transaction ID and verify DHCP server address. */
+                    /* Find the end-point with given transaction ID. */
                     while( pxIterator != NULL )
                     {
                         if( pxDHCPMessage->ulTransactionID == FreeRTOS_htonl( pxIterator->xDHCPData.ulTransactionId ) )
