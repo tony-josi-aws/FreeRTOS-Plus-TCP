@@ -421,21 +421,14 @@ void vDHCPv6Process( BaseType_t xReset,
 
         BaseType_t lBytes;
         size_t uxLength;
-        struct freertos_sockaddr xSourceAddress;
-        BaseType_t xFristIter = pdTRUE;
-
-        memset( &xSourceAddress, 0, sizeof( xSourceAddress ) );
 
         for( ; ; )
         {
             BaseType_t xResult;
             BaseType_t xRecvFlags = ( BaseType_t ) FREERTOS_ZERO_COPY;
-            struct freertos_sockaddr xSourceAddressCurrent;
-            socklen_t xSourceAddressCurrentLength = 0;
-            pucUDPPayload = NULL;
 
             /* Get the next UDP message. */
-            lBytes = FreeRTOS_recvfrom( EP_DHCPData.xDHCPSocket, &( pucUDPPayload ), 0, xRecvFlags, &xSourceAddressCurrent, &xSourceAddressCurrentLength );
+            lBytes = FreeRTOS_recvfrom( EP_DHCPData.xDHCPSocket, &( pucUDPPayload ), 0, xRecvFlags, NULL, NULL );
 
             if( lBytes <= 0 )
             {
@@ -444,36 +437,18 @@ void vDHCPv6Process( BaseType_t xReset,
                     FreeRTOS_printf( ( "vDHCPProcess: FreeRTOS_recvfrom returns %d\n", ( int ) lBytes ) );
                 }
 
-                if( ( lBytes == 0 ) && ( pucUDPPayload != NULL ) )
-                {
-                    FreeRTOS_ReleaseUDPPayloadBuffer( pucUDPPayload );
-                }
-
                 break;
             }
 
-            if( xFristIter == pdTRUE )
+            uxLength = ( size_t ) lBytes;
+
+            xResult = prvDHCPv6Analyse( pxEndPoint, pucUDPPayload, uxLength, &( xDHCPMessage ) );
+
+            FreeRTOS_printf( ( "prvDHCPv6Analyse: %s\n", ( xResult == pdPASS ) ? "Pass" : "Fail" ) );
+
+            if( xResult == pdPASS )
             {
-                memcpy( &xSourceAddress, &xSourceAddressCurrent, sizeof( xSourceAddress ) );
-                xFristIter = pdFALSE;
-            }
-
-            /* Verify DHCPv6 server address. */
-            if( ( memcmp( &( xSourceAddress.sin_address.xIP_IPv6.ucBytes ),        \
-                          &( xSourceAddressCurrent.sin_address.xIP_IPv6.ucBytes ), \
-                          sizeof( xSourceAddressCurrent.sin_address.xIP_IPv6.ucBytes ) ) == 0 ) &&
-                ( xSourceAddress.sin_port == xSourceAddressCurrent.sin_port ) )
-            {
-                uxLength = ( size_t ) lBytes;
-
-                xResult = prvDHCPv6Analyse( pxEndPoint, pucUDPPayload, uxLength, &( xDHCPMessage ) );
-
-                FreeRTOS_printf( ( "prvDHCPv6Analyse: %s\n", ( xResult == pdPASS ) ? "Pass" : "Fail" ) );
-
-                if( xResult == pdPASS )
-                {
-                    xDoProcess = xDHCPv6Process_PassReplyToEndPoint( pxEndPoint );
-                }
+                xDoProcess = xDHCPv6Process_PassReplyToEndPoint( pxEndPoint );
             }
 
             FreeRTOS_ReleaseUDPPayloadBuffer( pucUDPPayload );

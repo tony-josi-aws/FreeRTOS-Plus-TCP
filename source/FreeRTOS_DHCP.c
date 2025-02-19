@@ -209,21 +209,15 @@
             uint8_t * pucUDPPayload = NULL;
             const DHCPMessage_IPv4_t * pxDHCPMessage;
             int32_t lBytes;
-            struct freertos_sockaddr xSourceAddress;
-            BaseType_t xFristIter = pdTRUE;
-
-            memset( &xSourceAddress, 0, sizeof( xSourceAddress ) );
 
             while( EP_DHCPData.xDHCPSocket != NULL )
             {
                 BaseType_t xRecvFlags = FREERTOS_ZERO_COPY + FREERTOS_MSG_PEEK;
                 NetworkEndPoint_t * pxIterator = NULL;
-                struct freertos_sockaddr xSourceAddressCurrent;
-                socklen_t xSourceAddressCurrentLength = 0;
                 pucUDPPayload = NULL;
 
                 /* Peek the next UDP message. */
-                lBytes = FreeRTOS_recvfrom( EP_DHCPData.xDHCPSocket, &( pucUDPPayload ), 0, xRecvFlags, &xSourceAddressCurrent, &xSourceAddressCurrentLength );
+                lBytes = FreeRTOS_recvfrom( EP_DHCPData.xDHCPSocket, &( pucUDPPayload ), 0, xRecvFlags, NULL, NULL );
 
                 if( lBytes < ( ( int32_t ) sizeof( DHCPMessage_IPv4_t ) ) )
                 {
@@ -238,19 +232,13 @@
                         lBytes = FreeRTOS_recvfrom( EP_DHCPData.xDHCPSocket, &( pucUDPPayload ), 0, FREERTOS_ZERO_COPY, NULL, NULL );
                         if( ( lBytes >= 0 ) && ( pucUDPPayload != NULL ) )
                         {
-                            /* Remove it now, destination not found. */
+                            /* Remove the invalid packet */
                             FreeRTOS_ReleaseUDPPayloadBuffer( pucUDPPayload );
                             FreeRTOS_printf( ( "vDHCPProcess: Removed invalid %d-byte message\n", ( int ) lBytes ) );
                         }
                     }
 
                     break;
-                }
-
-                if( xFristIter == pdTRUE )
-                {
-                    memcpy( &xSourceAddress, &xSourceAddressCurrent, xSourceAddressCurrentLength );
-                    xFristIter = pdFALSE;
                 }
 
                 /* Map a DHCP structure onto the received data. */
@@ -267,9 +255,7 @@
                     /* Find the end-point with given transaction ID and verify DHCP server address. */
                     while( pxIterator != NULL )
                     {
-                        if( ( pxDHCPMessage->ulTransactionID == FreeRTOS_htonl( pxIterator->xDHCPData.ulTransactionId ) ) &&
-                            ( ( xSourceAddress.sin_address.ulIP_IPv4 == xSourceAddressCurrent.sin_address.ulIP_IPv4 ) &&
-                              ( xSourceAddress.sin_port == xSourceAddressCurrent.sin_port ) ) )
+                        if( pxDHCPMessage->ulTransactionID == FreeRTOS_htonl( pxIterator->xDHCPData.ulTransactionId ) )
                         {
                             break;
                         }
@@ -284,7 +270,7 @@
                     pxIterator = NULL;
                 }
 
-                if( pxIterator != NULL )
+                if(( pxIterator != NULL ) && ( pxIterator->xDHCPData.eDHCPState == pxIterator->xDHCPData.eExpectedState ) )
                 {
                     /* The second parameter pdTRUE tells to check for a UDP message. */
                     vDHCPProcessEndPoint( pdFALSE, pdTRUE, pxIterator );
@@ -296,7 +282,7 @@
                 }
                 else
                 {
-                    /* Target not found, fetch the message and delete it. */
+                    /* Target not found or there is a state mismatch, fetch the message and delete it. */
                     /* PAss the address of a pointer pucUDPPayload, because zero-copy is used. */
                     lBytes = FreeRTOS_recvfrom( EP_DHCPData.xDHCPSocket, &( pucUDPPayload ), 0, FREERTOS_ZERO_COPY, NULL, NULL );
 
