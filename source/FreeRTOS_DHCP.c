@@ -975,20 +975,7 @@
                      * state machine is expecting. */
                     pxSet->ulProcessed++;
                 }
-                else
-                {
-                    if( pxSet->pucByte[ pxSet->uxIndex ] == ( uint8_t ) dhcpMESSAGE_TYPE_NACK )
-                    {
-                        if( xExpectedMessageType == ( BaseType_t ) dhcpMESSAGE_TYPE_ACK )
-                        {
-                            /* Start again. */
-                            EP_DHCPData.eDHCPState = eInitialWait;
-                        }
-                    }
-
-                    /* Stop processing further options. */
-                    pxSet->uxLength = 0;
-                }
+                pxSet->ucMessageOptionCode = pxSet->pucByte[ pxSet->uxIndex ];
 
                 break;
 
@@ -1077,6 +1064,7 @@
                         if( EP_DHCPData.ulDHCPServerAddress == pxSet->ulParameter )
                         {
                             pxSet->ulProcessed++;
+                            pxSet->ucMatchingServer = pdTRUE;
                         }
                     }
                 }
@@ -1327,6 +1315,23 @@
                                            pxEndPoint->xMACAddress.ucBytes[ 4 ],
                                            pxEndPoint->xMACAddress.ucBytes[ 5 ] ) );
                         xReturn = pdPASS;
+                    }
+
+                    if(xExpectedMessageType == (BaseType_t) dhcpMESSAGE_TYPE_ACK )
+                    {
+                        if(xSet.ucMessageOptionCode == (BaseType_t) dhcpMESSAGE_TYPE_NACK )
+                        {
+                            if((xSet.ucMatchingServer != pdPASS))
+                            {
+                                FreeRTOS_printf( ( "vDHCPProcess: Received dhcpMESSAGE_TYPE_NACK from different server. Ignore ") );
+                                xReturn = pdFALSE;
+                            }
+                            else
+                            {
+                                /* Start again. */
+                                EP_DHCPData.eDHCPState = eInitialWait;
+                            }
+                        }
                     }
                 }
             }
