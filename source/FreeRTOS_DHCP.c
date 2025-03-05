@@ -1005,25 +1005,7 @@
                      * state machine is expecting. */
                     pxSet->ulProcessed++;
                 }
-                else
-                {
-                    if( pxSet->pucByte[ pxSet->uxIndex ] == ( uint8_t ) dhcpMESSAGE_TYPE_NACK )
-                    {
-                        if( xExpectedMessageType == ( BaseType_t ) dhcpMESSAGE_TYPE_ACK )
-                        {
-                            /* Start again. */
-                            EP_DHCPData.eDHCPState = eInitialWait;
-
-                            /* Reset expected state so that DHCP packets from
-                             * different DHCP servers if available already in the DHCP socket can
-                             * be processed */
-                            EP_DHCPData.eExpectedState = eInitialWait;
-                        }
-                    }
-
-                    /* Stop processing further options. */
-                    pxSet->uxLength = 0;
-                }
+                pxSet->ucMessageOptionCode = pxSet->pucByte[ pxSet->uxIndex ];
 
                 break;
 
@@ -1112,6 +1094,7 @@
                         if( EP_DHCPData.ulDHCPServerAddress == pxSet->ulParameter )
                         {
                             pxSet->ulProcessed++;
+                            pxSet->ucMatchingServer = pdTRUE;
                         }
                     }
                 }
@@ -1320,6 +1303,7 @@
                 }
                 else
                 {
+                    BaseType_t xIgnore = pdFALSE;
                     /* None of the essential options have been processed yet. */
                     xSet.ulProcessed = 0U;
 
@@ -1352,8 +1336,35 @@
                         }
                     }
 
+                    /* In the case of DHCPNACK packets (option code - dhcpMESSAGE_TYPE_NACK), 
+                     * make sure that the response was from the expected DHCP server
+                     * in that case start the DHCP process again, otherwise
+                     * if the response was from the different server
+                     * ignore the packet. */
+                    if(xExpectedMessageType == (BaseType_t) dhcpMESSAGE_TYPE_ACK )
+                    {
+                        if(xSet.ucMessageOptionCode == (BaseType_t) dhcpMESSAGE_TYPE_NACK )
+                        {
+                            if((xSet.ucMatchingServer != pdPASS))
+                            {
+                                FreeRTOS_printf( ( "vDHCPProcess: Received dhcpMESSAGE_TYPE_NACK from different server. Ignore ") );
+                                xIgnore = pdTRUE;
+                            }
+                            else
+                            {
+                                /* Start again. */
+                                EP_DHCPData.eDHCPState = eInitialWait;
+
+                                /* Reset expected state so that DHCP packets from
+                                * different DHCP servers if available already in the DHCP socket can
+                                * be processed */
+                                EP_DHCPData.eExpectedState = eInitialWait;
+                            }
+                        }
+                    }
+
                     /* Were all the mandatory options received? */
-                    if( xSet.ulProcessed >= ulMandatoryOptions )
+                    if( xSet.ulProcessed >= ulMandatoryOptions && xIgnore != pdTRUE)
                     {
                         /* HT:endian: used to be network order */
                         EP_DHCPData.ulOfferedIPAddress = pxDHCPMessage->ulYourIPAddress_yiaddr;
@@ -1363,6 +1374,7 @@
                                            pxEndPoint->xMACAddress.ucBytes[ 5 ] ) );
                         xReturn = pdPASS;
                     }
+
                 }
             }
 

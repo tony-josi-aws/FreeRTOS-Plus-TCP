@@ -223,6 +223,10 @@ typedef struct xProcessSet
     uint32_t ulParameter;       /**< The uint32 value of the answer, if available. */
     uint32_t ulProcessed;       /**< The number of essential options that were parsed. */
     const uint8_t * pucByte;    /**< A pointer to the data to be analysed. */
+
+    /* Parsing results  */
+    uint8_t ucMessageOptionCode; /**< In case of ACK/NACK messages, specifies the option code. */
+    uint8_t ucMatchingServer;    /**< Did the packet came from expected server. */
 } ProcessSet_t;
 
 
