@@ -50,19 +50,19 @@
 
 #if ( ( ipconfigDNS_USE_CALLBACKS == 1 ) && ( ipconfigUSE_DNS != 0 ) )
 
-    BaseType_t xDNSDoCallback( ParseSet_t * pxSet,
-                               struct freertos_addrinfo * pxAddress );
+BaseType_t xDNSDoCallback( ParseSet_t * pxSet,
+                           struct freertos_addrinfo * pxAddress );
 
-    BaseType_t xDNSSetCallBack( const char * pcHostName,
-                                void * pvSearchID,
-                                FOnDNSEvent pCallbackFunction,
-                                TickType_t uxTimeout,
-                                TickType_t uxIdentifier,
-                                BaseType_t xIsIPv6 );
+BaseType_t xDNSSetCallBack( const char * pcHostName,
+                            void * pvSearchID,
+                            FOnDNSEvent pCallbackFunction,
+                            TickType_t uxTimeout,
+                            TickType_t uxIdentifier,
+                            BaseType_t xIsIPv6 );
 
-    void vDNSCheckCallBack( void * pvSearchID );
+void vDNSCheckCallBack( void * pvSearchID );
 
-    void vDNSCallbackInitialise( void );
+void vDNSCallbackInitialise( void );
 
 #endif /* ipconfigDNS_USE_CALLBACKS  && ipconfigUSE_DNS */
 

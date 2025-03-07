@@ -51,47 +51,47 @@
  * type. */
 
     #if ( ipconfigUSE_DNS_CACHE == 1 ) || ( ipconfigDNS_USE_CALLBACKS == 1 )
-        size_t DNS_ReadNameField( ParseSet_t * pxSet,
-                                  size_t uxDestLen );
+size_t DNS_ReadNameField( ParseSet_t * pxSet,
+                          size_t uxDestLen );
     #endif /* ipconfigUSE_DNS_CACHE || ipconfigDNS_USE_CALLBACKS */
 
 /*
  * Simple routine that jumps over the NAME field of a resource record.
  * It returns the number of bytes read.
  */
-    size_t DNS_SkipNameField( const uint8_t * pucByte,
-                              size_t uxLength );
+size_t DNS_SkipNameField( const uint8_t * pucByte,
+                          size_t uxLength );
 
 /*
  * Process a response packet from a DNS server.
  * The parameter 'xExpected' indicates whether the identifier in the reply
  * was expected, and thus if the DNS cache may be updated with the reply.
  */
-    uint32_t DNS_ParseDNSReply( uint8_t * pucUDPPayloadBuffer,
-                                size_t uxBufferLength,
-                                struct freertos_addrinfo ** ppxAddressInfo,
-                                BaseType_t xExpected,
-                                uint16_t usPort );
+uint32_t DNS_ParseDNSReply( uint8_t * pucUDPPayloadBuffer,
+                            size_t uxBufferLength,
+                            struct freertos_addrinfo ** ppxAddressInfo,
+                            BaseType_t xExpected,
+                            uint16_t usPort );
 
 /*
  * The NBNS and the LLMNR protocol share this reply function.
  */
     #if ( ( ipconfigUSE_MDNS == 1 ) || ( ipconfigUSE_LLMNR == 1 ) || ( ipconfigUSE_NBNS == 1 ) )
-        void prepareReplyDNSMessage( NetworkBufferDescriptor_t * pxNetworkBuffer,
-                                     BaseType_t lNetLength );
+void prepareReplyDNSMessage( NetworkBufferDescriptor_t * pxNetworkBuffer,
+                             BaseType_t lNetLength );
     #endif
     #if ( ipconfigUSE_NBNS == 1 )
-        void DNS_TreatNBNS( uint8_t * pucPayload,
-                            size_t uxBufferLength,
-                            uint32_t ulIPAddress );
+void DNS_TreatNBNS( uint8_t * pucPayload,
+                    size_t uxBufferLength,
+                    uint32_t ulIPAddress );
     #endif
 
 /**
  * Parse the DNS answer/response.
  */
-    uint32_t parseDNSAnswer( ParseSet_t * pxSet,
-                             struct freertos_addrinfo ** ppxAddressInfo,
-                             size_t * uxBytesRead );
+uint32_t parseDNSAnswer( ParseSet_t * pxSet,
+                         struct freertos_addrinfo ** ppxAddressInfo,
+                         size_t * uxBytesRead );
 
 #endif /* if ( ipconfigUSE_DNS != 0 ) */
 

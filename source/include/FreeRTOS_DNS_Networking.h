@@ -37,7 +37,7 @@
  * Create a socket and bind it to the standard DNS port number.  Return the
  * the created socket - or NULL if the socket could not be created or bound.
  */
-    Socket_t DNS_CreateSocket( TickType_t uxReadTimeOut_ticks );
+Socket_t DNS_CreateSocket( TickType_t uxReadTimeOut_ticks );
 
 /**
  * @brief Bind the socket to a port number.
@@ -45,18 +45,18 @@
  * @param[in] usPort: the port number to bind to.
  * @return The created socket - or NULL if the socket could not be created or could not be bound.
  */
-    BaseType_t DNS_BindSocket( Socket_t xSocket,
-                               uint16_t usPort );
+BaseType_t DNS_BindSocket( Socket_t xSocket,
+                           uint16_t usPort );
 
-    BaseType_t DNS_SendRequest( Socket_t xDNSSocket,
-                                const struct freertos_sockaddr * xAddress,
-                                const struct xDNSBuffer * pxDNSBuf );
+BaseType_t DNS_SendRequest( Socket_t xDNSSocket,
+                            const struct freertos_sockaddr * xAddress,
+                            const struct xDNSBuffer * pxDNSBuf );
 
-    BaseType_t DNS_ReadReply( ConstSocket_t xDNSSocket,
-                              struct freertos_sockaddr * xAddress,
-                              struct xDNSBuffer * pxReceiveBuffer );
+BaseType_t DNS_ReadReply( ConstSocket_t xDNSSocket,
+                          struct freertos_sockaddr * xAddress,
+                          struct xDNSBuffer * pxReceiveBuffer );
 
-    void DNS_CloseSocket( Socket_t xDNSSocket );
+void DNS_CloseSocket( Socket_t xDNSSocket );
 
 #endif /* if ( ipconfigUSE_DNS != 0 ) */
 #endif /* FREERTOS_DNS_NETWORKING_H */

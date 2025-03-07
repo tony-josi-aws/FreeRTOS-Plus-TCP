@@ -43,51 +43,51 @@
  * @param[in] usPort the port number to bind to.
  * @return The created socket - or NULL if the socket could not be created or could not be bound.
  */
-    BaseType_t DNS_BindSocket( Socket_t xSocket,
-                               uint16_t usPort )
-    {
-        struct freertos_sockaddr xAddress;
-        BaseType_t xReturn;
+BaseType_t DNS_BindSocket( Socket_t xSocket,
+                           uint16_t usPort )
+{
+	struct freertos_sockaddr xAddress;
+	BaseType_t xReturn;
 
-        ( void ) memset( &( xAddress ), 0, sizeof( xAddress ) );
-        xAddress.sin_family = FREERTOS_AF_INET;
-        xAddress.sin_port = usPort;
+	( void ) memset( &( xAddress ), 0, sizeof( xAddress ) );
+	xAddress.sin_family = FREERTOS_AF_INET;
+	xAddress.sin_port = usPort;
 
-        xReturn = FreeRTOS_bind( xSocket, &xAddress, ( socklen_t ) sizeof( xAddress ) );
+	xReturn = FreeRTOS_bind( xSocket, &xAddress, ( socklen_t ) sizeof( xAddress ) );
 
-        return xReturn;
-    }
+	return xReturn;
+}
 
 /**
  * @brief Create a socket and bind it to the standard DNS port number.
  *
  * @return The created socket - or NULL if the socket could not be created or could not be bound.
  */
-    Socket_t DNS_CreateSocket( TickType_t uxReadTimeOut_ticks )
-    {
-        Socket_t xSocket;
-        TickType_t uxWriteTimeOut_ticks = ipconfigDNS_SEND_BLOCK_TIME_TICKS;
+Socket_t DNS_CreateSocket( TickType_t uxReadTimeOut_ticks )
+{
+	Socket_t xSocket;
+	TickType_t uxWriteTimeOut_ticks = ipconfigDNS_SEND_BLOCK_TIME_TICKS;
 
-        /* This must be the first time this function has been called.  Create
-         * the socket. */
-        xSocket = FreeRTOS_socket( FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP );
+	/* This must be the first time this function has been called.  Create
+	 * the socket. */
+	xSocket = FreeRTOS_socket( FREERTOS_AF_INET, FREERTOS_SOCK_DGRAM, FREERTOS_IPPROTO_UDP );
 
-        if( xSocketValid( xSocket ) == pdFALSE )
-        {
-            /* There was an error, return NULL. */
-            xSocket = NULL;
-        }
-        else
-        {
-            /* Ideally we should check for the return value. But since we are passing
-             * correct parameters, and xSocket is != NULL, the return value is
-             * going to be '0' i.e. success. Thus, return value is discarded */
-            ( void ) FreeRTOS_setsockopt( xSocket, 0, FREERTOS_SO_SNDTIMEO, &( uxWriteTimeOut_ticks ), sizeof( TickType_t ) );
-            ( void ) FreeRTOS_setsockopt( xSocket, 0, FREERTOS_SO_RCVTIMEO, &( uxReadTimeOut_ticks ), sizeof( TickType_t ) );
-        }
+	if( xSocketValid( xSocket ) == pdFALSE )
+	{
+		/* There was an error, return NULL. */
+		xSocket = NULL;
+	}
+	else
+	{
+		/* Ideally we should check for the return value. But since we are passing
+		 * correct parameters, and xSocket is != NULL, the return value is
+		 * going to be '0' i.e. success. Thus, return value is discarded */
+		( void ) FreeRTOS_setsockopt( xSocket, 0, FREERTOS_SO_SNDTIMEO, &( uxWriteTimeOut_ticks ), sizeof( TickType_t ) );
+		( void ) FreeRTOS_setsockopt( xSocket, 0, FREERTOS_SO_RCVTIMEO, &( uxReadTimeOut_ticks ), sizeof( TickType_t ) );
+	}
 
-        return xSocket;
-    }
+	return xSocket;
+}
 
 /**
  * @brief perform a DNS network request
@@ -98,36 +98,36 @@
  *                  false otherwise
  *
  */
-    BaseType_t DNS_SendRequest( Socket_t xDNSSocket,
-                                const struct freertos_sockaddr * xAddress,
-                                const struct xDNSBuffer * pxDNSBuf )
-    {
-        BaseType_t xReturn = pdFALSE;
-        BaseType_t xSent;
+BaseType_t DNS_SendRequest( Socket_t xDNSSocket,
+                            const struct freertos_sockaddr * xAddress,
+                            const struct xDNSBuffer * pxDNSBuf )
+{
+	BaseType_t xReturn = pdFALSE;
+	BaseType_t xSent;
 
-        iptraceSENDING_DNS_REQUEST();
+	iptraceSENDING_DNS_REQUEST();
 
-        /* Send the DNS message. */
-        xSent = FreeRTOS_sendto( xDNSSocket,
-                                 pxDNSBuf->pucPayloadBuffer,
-                                 pxDNSBuf->uxPayloadLength,
-                                 FREERTOS_ZERO_COPY,
-                                 xAddress,
-                                 ( socklen_t ) sizeof( *xAddress ) );
+	/* Send the DNS message. */
+	xSent = FreeRTOS_sendto( xDNSSocket,
+	                         pxDNSBuf->pucPayloadBuffer,
+	                         pxDNSBuf->uxPayloadLength,
+	                         FREERTOS_ZERO_COPY,
+	                         xAddress,
+	                         ( socklen_t ) sizeof( *xAddress ) );
 
-        if( xSent == ( BaseType_t ) pxDNSBuf->uxPayloadLength )
-        {
-            xReturn = pdPASS;
-        }
-        else
-        {
-            /* The message was not sent so the stack will not be
-             * releasing the zero copy - it must be released here. */
-            xReturn = pdFAIL;
-        }
+	if( xSent == ( BaseType_t ) pxDNSBuf->uxPayloadLength )
+	{
+		xReturn = pdPASS;
+	}
+	else
+	{
+		/* The message was not sent so the stack will not be
+		 * releasing the zero copy - it must be released here. */
+		xReturn = pdFAIL;
+	}
 
-        return xReturn;
-    }
+	return xReturn;
+}
 /*-----------------------------------------------------------*/
 
 /**
@@ -136,38 +136,38 @@
  * @param xAddress address to read from
  * @param pxReceiveBuffer buffer to fill with received data
  */
-    BaseType_t DNS_ReadReply( ConstSocket_t xDNSSocket,
-                              struct freertos_sockaddr * xAddress,
-                              struct xDNSBuffer * pxReceiveBuffer )
-    {
-        BaseType_t xReturn;
-        uint32_t ulAddressLength = ( uint32_t ) sizeof( struct freertos_sockaddr );
+BaseType_t DNS_ReadReply( ConstSocket_t xDNSSocket,
+                          struct freertos_sockaddr * xAddress,
+                          struct xDNSBuffer * pxReceiveBuffer )
+{
+	BaseType_t xReturn;
+	uint32_t ulAddressLength = ( uint32_t ) sizeof( struct freertos_sockaddr );
 
-        /* Wait for the reply. */
-        xReturn = FreeRTOS_recvfrom( xDNSSocket,
-                                     &pxReceiveBuffer->pucPayloadBuffer,
-                                     0,
-                                     FREERTOS_ZERO_COPY,
-                                     xAddress,
-                                     &ulAddressLength );
+	/* Wait for the reply. */
+	xReturn = FreeRTOS_recvfrom( xDNSSocket,
+	                             &pxReceiveBuffer->pucPayloadBuffer,
+	                             0,
+	                             FREERTOS_ZERO_COPY,
+	                             xAddress,
+	                             &ulAddressLength );
 
-        if( xReturn <= 0 )
-        {
-            /* 'pdFREERTOS_ERRNO_EWOULDBLOCK' is returned in case of a timeout. */
-            FreeRTOS_printf( ( "DNS_ReadReply returns %d\n", ( int ) xReturn ) );
-        }
+	if( xReturn <= 0 )
+	{
+		/* 'pdFREERTOS_ERRNO_EWOULDBLOCK' is returned in case of a timeout. */
+		FreeRTOS_printf( ( "DNS_ReadReply returns %d\n", ( int ) xReturn ) );
+	}
 
-        return xReturn;
-    }
+	return xReturn;
+}
 /*-----------------------------------------------------------*/
 
 /**
  * @brief perform a DNS network close
  * @param xDNSSocket the DNS socket to close
  */
-    void DNS_CloseSocket( Socket_t xDNSSocket )
-    {
-        ( void ) FreeRTOS_closesocket( xDNSSocket );
-    }
+void DNS_CloseSocket( Socket_t xDNSSocket )
+{
+	( void ) FreeRTOS_closesocket( xDNSSocket );
+}
 #endif /* if ( ipconfigUSE_DNS != 0 ) */
 /*-----------------------------------------------------------*/

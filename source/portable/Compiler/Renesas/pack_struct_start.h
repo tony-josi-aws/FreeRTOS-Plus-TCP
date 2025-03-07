@@ -35,11 +35,11 @@
 
 #ifdef _SH
     #ifdef __RENESAS__
-        #pragma pack 1
+	#pragma pack 1
     #endif
 #endif
 #ifdef __RX
     #ifdef __CCRX__
-        #pragma pack
+	#pragma pack
     #endif
 #endif

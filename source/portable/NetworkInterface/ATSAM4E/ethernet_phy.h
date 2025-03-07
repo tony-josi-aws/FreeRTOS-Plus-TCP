@@ -47,7 +47,7 @@
     #include "compiler.h"
 
     #ifdef __cplusplus
-    extern "C" {
+extern "C" {
     #endif
 
 /* IEEE defined Registers */
@@ -110,17 +110,17 @@
     #define PHY_DUPLEX_FULL         2
     #define PHY_DUPLEX_AUTO         ( PHY_DUPLEX_FULL | PHY_DUPLEX_HALF )
 
-    typedef struct _SPhyProps
-    {
-        unsigned char speed;
-        unsigned char mdix;
-        unsigned char duplex;
-        unsigned char spare;
-    } SPhyProps;
+typedef struct _SPhyProps
+{
+	unsigned char speed;
+	unsigned char mdix;
+	unsigned char duplex;
+	unsigned char spare;
+} SPhyProps;
 
-    const char * phyPrintable( const SPhyProps * apProps );
+const char * phyPrintable( const SPhyProps * apProps );
 
-    extern SPhyProps phyProps;
+extern SPhyProps phyProps;
 
     #define GMII_OMSOR    0x16 /* Operation Mode Strap Override */
     #define GMII_OMSSR    0x17 /* Operation Mode Strap Status */
@@ -228,9 +228,9 @@
  *
  * Return GMAC_OK if successfully, GMAC_TIMEOUT if timeout.
  */
-    uint8_t ethernet_phy_init( Gmac * p_gmac,
-                               uint8_t uc_phy_addr,
-                               uint32_t ul_mck );
+uint8_t ethernet_phy_init( Gmac * p_gmac,
+                           uint8_t uc_phy_addr,
+                           uint32_t ul_mck );
 
 
 /**
@@ -243,9 +243,9 @@
  *
  * Return GMAC_OK if successfully, GMAC_TIMEOUT if timeout.
  */
-    uint8_t ethernet_phy_set_link( Gmac * p_gmac,
-                                   uint8_t uc_phy_addr,
-                                   uint8_t uc_apply_setting_flag );
+uint8_t ethernet_phy_set_link( Gmac * p_gmac,
+                               uint8_t uc_phy_addr,
+                               uint8_t uc_apply_setting_flag );
 
 
 /**
@@ -256,8 +256,8 @@
  *
  * Return GMAC_OK if successfully, GMAC_TIMEOUT if timeout.
  */
-    uint8_t ethernet_phy_auto_negotiate( Gmac * p_gmac,
-                                         uint8_t uc_phy_addr );
+uint8_t ethernet_phy_auto_negotiate( Gmac * p_gmac,
+                                     uint8_t uc_phy_addr );
 
 /**
  * \brief Issue a SW reset to reset all registers of the PHY.
@@ -267,18 +267,18 @@
  *
  * \Return GMAC_OK if successfully, GMAC_TIMEOUT if timeout.
  */
-    uint8_t ethernet_phy_reset( Gmac * p_gmac,
-                                uint8_t uc_phy_addr );
+uint8_t ethernet_phy_reset( Gmac * p_gmac,
+                            uint8_t uc_phy_addr );
 
-    typedef struct xPHY_PROPS
-    {
-        signed char phy_result;
-        uint32_t phy_params;
-        uint32_t phy_stat1;
-        uint32_t phy_stat2;
-        unsigned char phy_chn;
-    } PhyProps_t;
-    extern PhyProps_t phy_props;
+typedef struct xPHY_PROPS
+{
+	signed char phy_result;
+	uint32_t phy_params;
+	uint32_t phy_stat1;
+	uint32_t phy_stat2;
+	unsigned char phy_chn;
+} PhyProps_t;
+extern PhyProps_t phy_props;
 
     #ifdef __cplusplus
 }     /* extern "C" */

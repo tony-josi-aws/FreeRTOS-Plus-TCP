@@ -60,19 +60,19 @@
 /* Check for optimal performance parameters */
 #if ( CONF_GMAC_NCFGR_RXCOEN == 0 )
     #if ( ipconfigPORT_SUPPRESS_WARNING == 0 )
-        #warning This driver works best with RX CRC offloading enabled.
+	#warning This driver works best with RX CRC offloading enabled.
     #endif
 #endif
 
 #if ( CONF_GMAC_DCFGR_TXCOEN == 0 )
     #if ( ipconfigPORT_SUPPRESS_WARNING == 0 )
-        #warning This driver works best with TX CRC offloading enabled.
+	#warning This driver works best with TX CRC offloading enabled.
     #endif
 #endif
 
 #if ( CONF_GMAC_NCFGR_CAF != 0 )
     #if ( ipconfigPORT_SUPPRESS_WARNING == 0 )
-        #warning This driver includes GMAC hardware frame filtering for better performance.
+	#warning This driver includes GMAC hardware frame filtering for better performance.
     #endif
 #endif
 
@@ -130,7 +130,7 @@ static BaseType_t isICMP( const NetworkBufferDescriptor_t * pxDescriptor );
 /* 1536 bytes is more than needed, 1524 would be enough.
  * But 1536 is a multiple of 32, which gives a great alignment for cached memories. */
     #define NETWORK_BUFFER_SIZE    1536
-    static uint8_t ucBuffers[ ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS ][ NETWORK_BUFFER_SIZE ];
+static uint8_t ucBuffers[ ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS ][ NETWORK_BUFFER_SIZE ];
 #endif /* if ( ipUSE_STATIC_ALLOCATION == 1 ) */
 
 
@@ -141,7 +141,7 @@ TaskHandle_t xEMACTaskHandle = NULL;
 
 /* The PING response queue */
 #if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
-    QueueHandle_t xPingReplyQueue = NULL;
+QueueHandle_t xPingReplyQueue = NULL;
 #endif
 
 /* GMAC HW Init */
@@ -182,9 +182,9 @@ static EthernetPhy_t xPhyObject;
 /* Set both speed and Duplex to AUTO, or give them BOTH manual values. */
 const PhyProperties_t xPHYProperties =
 {
-    .ucSpeed  = PHY_SPEED_AUTO,
-    .ucDuplex = PHY_DUPLEX_AUTO,
-    .ucMDI_X  = PHY_MDIX_AUTO,
+	.ucSpeed  = PHY_SPEED_AUTO,
+	.ucDuplex = PHY_DUPLEX_AUTO,
+	.ucMDI_X  = PHY_MDIX_AUTO,
 };
 
 static void prvPHYLinkReset( void );
@@ -217,305 +217,305 @@ BaseType_t xATSAM5x_NetworkInterfaceOutput( NetworkInterface_t * pxInterface,
 NetworkInterface_t * pxATSAM5x_FillInterfaceDescriptor( BaseType_t xEMACIndex,
                                                         NetworkInterface_t * pxInterface )
 {
-    static char pcName[ 17 ];
+	static char pcName[ 17 ];
 
 /* This function pxATSAM5x_FillInterfaceDescriptor() adds a network-interface.
  * Make sure that the object pointed to by 'pxInterface'
  * is declared static or global, and that it will remain to exist. */
 
-    snprintf( pcName, sizeof( pcName ), "eth%u", ( unsigned ) xEMACIndex );
+	snprintf( pcName, sizeof( pcName ), "eth%u", ( unsigned ) xEMACIndex );
 
-    memset( pxInterface, '\0', sizeof( *pxInterface ) );
-    pxInterface->pcName = pcName;                    /* Just for logging, debugging. */
-    pxInterface->pvArgument = ( void * ) xEMACIndex; /* Has only meaning for the driver functions. */
-    pxInterface->pfInitialise = xATSAM5x_NetworkInterfaceInitialise;
-    pxInterface->pfOutput = xATSAM5x_NetworkInterfaceOutput;
-    pxInterface->pfGetPhyLinkStatus = xATSAM5x_PHYGetLinkStatus;
+	memset( pxInterface, '\0', sizeof( *pxInterface ) );
+	pxInterface->pcName = pcName;                /* Just for logging, debugging. */
+	pxInterface->pvArgument = ( void * ) xEMACIndex; /* Has only meaning for the driver functions. */
+	pxInterface->pfInitialise = xATSAM5x_NetworkInterfaceInitialise;
+	pxInterface->pfOutput = xATSAM5x_NetworkInterfaceOutput;
+	pxInterface->pfGetPhyLinkStatus = xATSAM5x_PHYGetLinkStatus;
 
-    FreeRTOS_AddNetworkInterface( pxInterface );
+	FreeRTOS_AddNetworkInterface( pxInterface );
 
-    return pxInterface;
+	return pxInterface;
 }
 
 BaseType_t xATSAM5x_NetworkInterfaceInitialise( NetworkInterface_t * pxInterface )
 {
-    /*
-     * Perform the hardware specific network initialization here.  Typically
-     * that will involve using the Ethernet driver library to initialize the
-     * Ethernet (or other network) hardware, initialize DMA descriptors, and
-     * perform a PHY auto-negotiation to obtain a network link. */
+	/*
+	 * Perform the hardware specific network initialization here.  Typically
+	 * that will involve using the Ethernet driver library to initialize the
+	 * Ethernet (or other network) hardware, initialize DMA descriptors, and
+	 * perform a PHY auto-negotiation to obtain a network link. */
 
-    if( xEMACTaskHandle == NULL )
-    {
-        pxMyInterface = pxInterface;
+	if( xEMACTaskHandle == NULL )
+	{
+		pxMyInterface = pxInterface;
 
-        /* Initialize MAC and PHY */
-        prvGMACInit();
-        prvPHYInit();
+		/* Initialize MAC and PHY */
+		prvGMACInit();
+		prvPHYInit();
 
-        /* (Re)set PHY link */
-        prvPHYLinkReset();
+		/* (Re)set PHY link */
+		prvPHYLinkReset();
 
-        /* Initialize PING capability */
-        #if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
-            xPingReplyQueue = xQueueCreate( ipconfigPING_QUEUE_SIZE, sizeof( uint16_t ) );
-        #endif
+		/* Initialize PING capability */
+	#if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
+		xPingReplyQueue = xQueueCreate( ipconfigPING_QUEUE_SIZE, sizeof( uint16_t ) );
+	#endif
 
-        /* Create event handler task */
-        xTaskCreate( prvEMACDeferredInterruptHandlerTask, /* Function that implements the task. */
-                     "EMACInt",                           /* Text name for the task. */
-                     256,                                 /* Stack size in words, not bytes. */
-                     ( void * ) 1,                        /* Parameter passed into the task. */
-                     configMAX_PRIORITIES - 1,            /* Priority at which the task is created. */
-                     &xEMACTaskHandle );                  /* Used to pass out the created task's handle. */
+		/* Create event handler task */
+		xTaskCreate( prvEMACDeferredInterruptHandlerTask, /* Function that implements the task. */
+		             "EMACInt",                   /* Text name for the task. */
+		             256,                         /* Stack size in words, not bytes. */
+		             ( void * ) 1,                /* Parameter passed into the task. */
+		             configMAX_PRIORITIES - 1,    /* Priority at which the task is created. */
+		             &xEMACTaskHandle );          /* Used to pass out the created task's handle. */
 
-        configASSERT( xEMACTaskHandle );
-    }
+		configASSERT( xEMACTaskHandle );
+	}
 
-    return xATSAM5x_PHYGetLinkStatus( NULL );
+	return xATSAM5x_PHYGetLinkStatus( NULL );
 }
 
 /* Check if the raw Ethernet frame is ICMP */
 static BaseType_t isICMP( const NetworkBufferDescriptor_t * pxDescriptor )
 {
-    BaseType_t xReturn = pdFALSE;
+	BaseType_t xReturn = pdFALSE;
 
-    const IPPacket_t * pkt = ( const IPPacket_t * ) pxDescriptor->pucEthernetBuffer;
+	const IPPacket_t * pkt = ( const IPPacket_t * ) pxDescriptor->pucEthernetBuffer;
 
-    if( pkt->xEthernetHeader.usFrameType == ipIPv4_FRAME_TYPE )
-    {
-        if( pkt->xIPHeader.ucProtocol == ( uint8_t ) ipPROTOCOL_ICMP )
-        {
-            xReturn = pdTRUE;
-        }
-    }
+	if( pkt->xEthernetHeader.usFrameType == ipIPv4_FRAME_TYPE )
+	{
+		if( pkt->xIPHeader.ucProtocol == ( uint8_t ) ipPROTOCOL_ICMP )
+		{
+			xReturn = pdTRUE;
+		}
+	}
 
     #if ipconfigUSE_IPv6 != 0
-        else if( pkt->xEthernetHeader.usFrameType == ipIPv6_FRAME_TYPE )
-        {
-            ICMPPacket_IPv6_t * icmp6 = ( ICMPPacket_IPv6_t * ) pxDescriptor->pucEthernetBuffer;
+	else if( pkt->xEthernetHeader.usFrameType == ipIPv6_FRAME_TYPE )
+	{
+		ICMPPacket_IPv6_t * icmp6 = ( ICMPPacket_IPv6_t * ) pxDescriptor->pucEthernetBuffer;
 
-            if( icmp6->xIPHeader.ucNextHeader == ipPROTOCOL_ICMP_IPv6 )
-            {
-                xReturn = pdTRUE;
-            }
-        }
+		if( icmp6->xIPHeader.ucNextHeader == ipPROTOCOL_ICMP_IPv6 )
+		{
+			xReturn = pdTRUE;
+		}
+	}
     #endif
-    return xReturn;
+	return xReturn;
 }
 
 static void prvEMACDeferredInterruptHandlerTask( void * pvParameters )
 {
-    NetworkBufferDescriptor_t * pxBufferDescriptor;
-    size_t xBytesReceived = 0, xBytesRead = 0;
+	NetworkBufferDescriptor_t * pxBufferDescriptor;
+	size_t xBytesReceived = 0, xBytesRead = 0;
 
-    uint16_t xICMPChecksumResult = ipCORRECT_CRC;
+	uint16_t xICMPChecksumResult = ipCORRECT_CRC;
 
 
-    /* Used to indicate that xSendEventStructToIPTask() is being called because
-     * of an Ethernet receive event. */
-    IPStackEvent_t xRxEvent;
+	/* Used to indicate that xSendEventStructToIPTask() is being called because
+	 * of an Ethernet receive event. */
+	IPStackEvent_t xRxEvent;
 
-    for( ; ; )
-    {
-        BaseType_t xRelease = pdFALSE;
+	for( ; ; )
+	{
+		BaseType_t xRelease = pdFALSE;
 
-        /* Wait for the Ethernet MAC interrupt to indicate that another packet
-         * has been received.  The task notification is used in a similar way to a
-         * counting semaphore to count Rx events, but is a lot more efficient than
-         * a semaphore. */
-        ulTaskNotifyTake( pdFALSE, pdMS_TO_TICKS( RECEIVE_BLOCK_TIME_MS ) );
+		/* Wait for the Ethernet MAC interrupt to indicate that another packet
+		 * has been received.  The task notification is used in a similar way to a
+		 * counting semaphore to count Rx events, but is a lot more efficient than
+		 * a semaphore. */
+		ulTaskNotifyTake( pdFALSE, pdMS_TO_TICKS( RECEIVE_BLOCK_TIME_MS ) );
 
-        /* See how much data was received.  Here it is assumed ReceiveSize() is
-         * a peripheral driver function that returns the number of bytes in the
-         * received Ethernet frame. */
-        xBytesReceived = mac_async_read_len( &ETH_MAC );
+		/* See how much data was received.  Here it is assumed ReceiveSize() is
+		 * a peripheral driver function that returns the number of bytes in the
+		 * received Ethernet frame. */
+		xBytesReceived = mac_async_read_len( &ETH_MAC );
 
-        if( xBytesReceived > 0 )
-        {
-            /* Allocate a network buffer descriptor that points to a buffer
-             * large enough to hold the received frame.  As this is the simple
-             * rather than efficient example the received data will just be copied
-             * into this buffer. */
-            pxBufferDescriptor = pxGetNetworkBufferWithDescriptor( xBytesReceived, 0 );
+		if( xBytesReceived > 0 )
+		{
+			/* Allocate a network buffer descriptor that points to a buffer
+			 * large enough to hold the received frame.  As this is the simple
+			 * rather than efficient example the received data will just be copied
+			 * into this buffer. */
+			pxBufferDescriptor = pxGetNetworkBufferWithDescriptor( xBytesReceived, 0 );
 
-            if( pxBufferDescriptor != NULL )
-            {
-                /* pxBufferDescriptor->pucEthernetBuffer now points to an Ethernet
-                 * buffer large enough to hold the received data.  Copy the
-                 * received data into pcNetworkBuffer->pucEthernetBuffer.  Here it
-                 * is assumed ReceiveData() is a peripheral driver function that
-                 * copies the received data into a buffer passed in as the function's
-                 * parameter.  Remember! While is is a simple robust technique -
-                 * it is not efficient.  An example that uses a zero copy technique
-                 * is provided further down this page. */
-                xBytesRead = mac_async_read( &ETH_MAC, pxBufferDescriptor->pucEthernetBuffer, xBytesReceived );
-                pxBufferDescriptor->xDataLength = xBytesRead;
-                pxBufferDescriptor->pxInterface = pxMyInterface;
-                pxBufferDescriptor->pxEndPoint = FreeRTOS_MatchingEndpoint( pxMyInterface, pxBufferDescriptor->pucEthernetBuffer );
+			if( pxBufferDescriptor != NULL )
+			{
+				/* pxBufferDescriptor->pucEthernetBuffer now points to an Ethernet
+				 * buffer large enough to hold the received data.  Copy the
+				 * received data into pcNetworkBuffer->pucEthernetBuffer.  Here it
+				 * is assumed ReceiveData() is a peripheral driver function that
+				 * copies the received data into a buffer passed in as the function's
+				 * parameter.  Remember! While is is a simple robust technique -
+				 * it is not efficient.  An example that uses a zero copy technique
+				 * is provided further down this page. */
+				xBytesRead = mac_async_read( &ETH_MAC, pxBufferDescriptor->pucEthernetBuffer, xBytesReceived );
+				pxBufferDescriptor->xDataLength = xBytesRead;
+				pxBufferDescriptor->pxInterface = pxMyInterface;
+				pxBufferDescriptor->pxEndPoint = FreeRTOS_MatchingEndpoint( pxMyInterface, pxBufferDescriptor->pucEthernetBuffer );
 
-                if( pxBufferDescriptor->pxEndPoint == NULL )
-                {
-                    /* Couldn't find a proper endpoint for the incoming packet, drop it. */
-                    FreeRTOS_printf( ( "NetworkInterface: can not find a proper endpoint\n" ) );
-                    xRelease = pdTRUE;
-                }
-                else
-                {
-                    #if ( ipconfigDRIVER_INCLUDED_RX_IP_CHECKSUM == 1 )
-                    {
-                        /* the Atmel SAM GMAC peripheral does not support hardware CRC offloading for ICMP packets.
-                         * It must therefore be implemented in software. */
-                        if( isICMP( pxBufferDescriptor ) == pdTRUE )
-                        {
-                            xICMPChecksumResult = usGenerateProtocolChecksum( pxBufferDescriptor->pucEthernetBuffer, pxBufferDescriptor->xDataLength, pdFALSE );
-                        }
-                        else
-                        {
-                            xICMPChecksumResult = ipCORRECT_CRC; /* Checksum already verified by GMAC */
-                        }
-                    }
-                    #endif /* if ( ipconfigDRIVER_INCLUDED_RX_IP_CHECKSUM == 1 ) */
+				if( pxBufferDescriptor->pxEndPoint == NULL )
+				{
+					/* Couldn't find a proper endpoint for the incoming packet, drop it. */
+					FreeRTOS_printf( ( "NetworkInterface: can not find a proper endpoint\n" ) );
+					xRelease = pdTRUE;
+				}
+				else
+				{
+		    #if ( ipconfigDRIVER_INCLUDED_RX_IP_CHECKSUM == 1 )
+					{
+						/* the Atmel SAM GMAC peripheral does not support hardware CRC offloading for ICMP packets.
+						 * It must therefore be implemented in software. */
+						if( isICMP( pxBufferDescriptor ) == pdTRUE )
+						{
+							xICMPChecksumResult = usGenerateProtocolChecksum( pxBufferDescriptor->pucEthernetBuffer, pxBufferDescriptor->xDataLength, pdFALSE );
+						}
+						else
+						{
+							xICMPChecksumResult = ipCORRECT_CRC; /* Checksum already verified by GMAC */
+						}
+					}
+		    #endif /* if ( ipconfigDRIVER_INCLUDED_RX_IP_CHECKSUM == 1 ) */
 
-                    /* See if the data contained in the received Ethernet frame needs
-                    * to be processed.  NOTE! It is preferable to do this in
-                    * the interrupt service routine itself, which would remove the need
-                    * to unblock this task for packets that don't need processing. */
-                    if( ( ipCONSIDER_FRAME_FOR_PROCESSING( pxBufferDescriptor->pucEthernetBuffer ) == eProcessBuffer ) &&
-                        ( xICMPChecksumResult == ipCORRECT_CRC ) )
-                    {
-                        /* The event about to be sent to the TCP/IP is an Rx event. */
-                        xRxEvent.eEventType = eNetworkRxEvent;
+					/* See if the data contained in the received Ethernet frame needs
+					* to be processed.  NOTE! It is preferable to do this in
+					* the interrupt service routine itself, which would remove the need
+					* to unblock this task for packets that don't need processing. */
+					if( ( ipCONSIDER_FRAME_FOR_PROCESSING( pxBufferDescriptor->pucEthernetBuffer ) == eProcessBuffer ) &&
+					    ( xICMPChecksumResult == ipCORRECT_CRC ) )
+					{
+						/* The event about to be sent to the TCP/IP is an Rx event. */
+						xRxEvent.eEventType = eNetworkRxEvent;
 
-                        /* pvData is used to point to the network buffer descriptor that
-                         * now references the received data. */
-                        xRxEvent.pvData = ( void * ) pxBufferDescriptor;
+						/* pvData is used to point to the network buffer descriptor that
+						 * now references the received data. */
+						xRxEvent.pvData = ( void * ) pxBufferDescriptor;
 
-                        /* Send the data to the TCP/IP stack. */
-                        if( xSendEventStructToIPTask( &xRxEvent, 0 ) == pdFALSE )
-                        {
-                            /* The buffer could not be sent to the IP task so the buffer
-                             * must be released. */
-                            xRelease = pdTRUE;
+						/* Send the data to the TCP/IP stack. */
+						if( xSendEventStructToIPTask( &xRxEvent, 0 ) == pdFALSE )
+						{
+							/* The buffer could not be sent to the IP task so the buffer
+							 * must be released. */
+							xRelease = pdTRUE;
 
-                            /* Make a call to the standard trace macro to log the
-                             * occurrence. */
-                            iptraceETHERNET_RX_EVENT_LOST();
-                        }
-                        else
-                        {
-                            /* The message was successfully sent to the TCP/IP stack.
-                            * Call the standard trace macro to log the occurrence. */
-                            iptraceNETWORK_INTERFACE_RECEIVE();
-                        }
-                    }
-                    else
-                    {
-                        /* The Ethernet frame can be dropped, but the Ethernet buffer
-                         * must be released. */
-                        xRelease = pdTRUE;
-                    }
-                }
+							/* Make a call to the standard trace macro to log the
+							 * occurrence. */
+							iptraceETHERNET_RX_EVENT_LOST();
+						}
+						else
+						{
+							/* The message was successfully sent to the TCP/IP stack.
+							* Call the standard trace macro to log the occurrence. */
+							iptraceNETWORK_INTERFACE_RECEIVE();
+						}
+					}
+					else
+					{
+						/* The Ethernet frame can be dropped, but the Ethernet buffer
+						 * must be released. */
+						xRelease = pdTRUE;
+					}
+				}
 
-                /* Release the descriptor in case it can not be delivered. */
-                if( xRelease == pdTRUE )
-                {
-                    /* The buffer could not be sent to the stack so must be released
-                     * again. */
-                    vReleaseNetworkBufferAndDescriptor( pxBufferDescriptor );
-                    iptraceETHERNET_RX_EVENT_LOST();
-                    FreeRTOS_printf( ( "prvEMACDeferredInterruptHandlerTask: Can not queue RX packet!\n" ) );
-                }
-            }
-            else
-            {
-                /* The event was lost because a network buffer was not available.
-                 * Call the standard trace macro to log the occurrence. */
-                iptraceETHERNET_RX_EVENT_LOST();
-            }
-        }
+				/* Release the descriptor in case it can not be delivered. */
+				if( xRelease == pdTRUE )
+				{
+					/* The buffer could not be sent to the stack so must be released
+					 * again. */
+					vReleaseNetworkBufferAndDescriptor( pxBufferDescriptor );
+					iptraceETHERNET_RX_EVENT_LOST();
+					FreeRTOS_printf( ( "prvEMACDeferredInterruptHandlerTask: Can not queue RX packet!\n" ) );
+				}
+			}
+			else
+			{
+				/* The event was lost because a network buffer was not available.
+				 * Call the standard trace macro to log the occurrence. */
+				iptraceETHERNET_RX_EVENT_LOST();
+			}
+		}
 
-        prvGMACEnablePHYManagementPort( true );
+		prvGMACEnablePHYManagementPort( true );
 
-        if( xPhyCheckLinkStatus( &xPhyObject, xBytesReceived ) )
-        {
-            prvPHYLinkReset();
-        }
+		if( xPhyCheckLinkStatus( &xPhyObject, xBytesReceived ) )
+		{
+			prvPHYLinkReset();
+		}
 
-        prvGMACEnablePHYManagementPort( false );
-    }
+		prvGMACEnablePHYManagementPort( false );
+	}
 }
 
 BaseType_t xATSAM5x_NetworkInterfaceOutput( NetworkInterface_t * pxInterface,
                                             NetworkBufferDescriptor_t * const pxDescriptor,
                                             BaseType_t xReleaseAfterSend )
 {
-    /* Simple network interfaces (as opposed to more efficient zero copy network
-     * interfaces) just use Ethernet peripheral driver library functions to copy
-     * data from the FreeRTOS+TCP buffer into the peripheral driver's own buffer.
-     * This example assumes SendData() is a peripheral driver library function that
-     * takes a pointer to the start of the data to be sent and the length of the
-     * data to be sent as two separate parameters.  The start of the data is located
-     * by pxDescriptor->pucEthernetBuffer.  The length of the data is located
-     * by pxDescriptor->xDataLength. */
+	/* Simple network interfaces (as opposed to more efficient zero copy network
+	 * interfaces) just use Ethernet peripheral driver library functions to copy
+	 * data from the FreeRTOS+TCP buffer into the peripheral driver's own buffer.
+	 * This example assumes SendData() is a peripheral driver library function that
+	 * takes a pointer to the start of the data to be sent and the length of the
+	 * data to be sent as two separate parameters.  The start of the data is located
+	 * by pxDescriptor->pucEthernetBuffer.  The length of the data is located
+	 * by pxDescriptor->xDataLength. */
 
-    /* As there is only a single instance of the EMAC, there is only one pxInterface object. */
-    ( void ) pxInterface;
+	/* As there is only a single instance of the EMAC, there is only one pxInterface object. */
+	( void ) pxInterface;
 
-    if( xATSAM5x_PHYGetLinkStatus( NULL ) )
-    {
-        #if ( ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM == 1 )
-        {
-            /* the Atmel SAM GMAC peripheral does not support hardware CRC offloading for ICMP packets.
-             * It must therefore be implemented in software. */
-            if( isICMP( pxDescriptor ) == pdTRUE )
-            {
-                ( void ) usGenerateProtocolChecksum( pxDescriptor->pucEthernetBuffer, pxDescriptor->xDataLength, pdTRUE );
-            }
-        }
-        #endif /* if ( ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM == 1 ) */
+	if( xATSAM5x_PHYGetLinkStatus( NULL ) )
+	{
+	#if ( ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM == 1 )
+		{
+			/* the Atmel SAM GMAC peripheral does not support hardware CRC offloading for ICMP packets.
+			 * It must therefore be implemented in software. */
+			if( isICMP( pxDescriptor ) == pdTRUE )
+			{
+				( void ) usGenerateProtocolChecksum( pxDescriptor->pucEthernetBuffer, pxDescriptor->xDataLength, pdTRUE );
+			}
+		}
+	#endif /* if ( ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM == 1 ) */
 
-        mac_async_write( &ETH_MAC, pxDescriptor->pucEthernetBuffer, pxDescriptor->xDataLength );
+		mac_async_write( &ETH_MAC, pxDescriptor->pucEthernetBuffer, pxDescriptor->xDataLength );
 
-        /* Call the standard trace macro to log the send event. */
-        iptraceNETWORK_INTERFACE_TRANSMIT();
-    }
+		/* Call the standard trace macro to log the send event. */
+		iptraceNETWORK_INTERFACE_TRANSMIT();
+	}
 
-    if( xReleaseAfterSend != pdFALSE )
-    {
-        /* It is assumed SendData() copies the data out of the FreeRTOS+TCP Ethernet
-         * buffer.  The Ethernet buffer is therefore no longer needed, and must be
-         * freed for re-use. */
-        vReleaseNetworkBufferAndDescriptor( pxDescriptor );
-    }
+	if( xReleaseAfterSend != pdFALSE )
+	{
+		/* It is assumed SendData() copies the data out of the FreeRTOS+TCP Ethernet
+		 * buffer.  The Ethernet buffer is therefore no longer needed, and must be
+		 * freed for re-use. */
+		vReleaseNetworkBufferAndDescriptor( pxDescriptor );
+	}
 
-    return pdTRUE;
+	return pdTRUE;
 }
 
 void xRxCallback( void )
 {
-    vTaskNotifyGiveFromISR( xEMACTaskHandle, 0 );
+	vTaskNotifyGiveFromISR( xEMACTaskHandle, 0 );
 }
 
 #if ( ipUSE_STATIC_ALLOCATION == 1 )
 
 /* Next provide the vNetworkInterfaceAllocateRAMToBuffers() function, which
  * simply fills in the pucEthernetBuffer member of each descriptor. */
-    void vNetworkInterfaceAllocateRAMToBuffers( NetworkBufferDescriptor_t pxNetworkBuffers[ ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS ] )
-    {
-        BaseType_t x;
+void vNetworkInterfaceAllocateRAMToBuffers( NetworkBufferDescriptor_t pxNetworkBuffers[ ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS ] )
+{
+	BaseType_t x;
 
-        for( x = 0; x < ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS; x++ )
-        {
-            /* pucEthernetBuffer is set to point ipBUFFER_PADDING bytes in from the
-             * beginning of the allocated buffer. */
-            pxNetworkBuffers[ x ].pucEthernetBuffer = &( ucBuffers[ x ][ ipBUFFER_PADDING ] );
+	for( x = 0; x < ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS; x++ )
+	{
+		/* pucEthernetBuffer is set to point ipBUFFER_PADDING bytes in from the
+		 * beginning of the allocated buffer. */
+		pxNetworkBuffers[ x ].pucEthernetBuffer = &( ucBuffers[ x ][ ipBUFFER_PADDING ] );
 
-            /* The following line is also required, but will not be required in
-             * future versions. */
-            *( ( uint32_t * ) &ucBuffers[ x ][ 0 ] ) = ( uint32_t ) &( pxNetworkBuffers[ x ] );
-        }
-    }
+		/* The following line is also required, but will not be required in
+		 * future versions. */
+		*( ( uint32_t * ) &ucBuffers[ x ][ 0 ] ) = ( uint32_t ) &( pxNetworkBuffers[ x ] );
+	}
+}
 #endif /* if ( ipUSE_STATIC_ALLOCATION == 1 ) */
 
 
@@ -530,144 +530,144 @@ void xRxCallback( void )
  * configuration is saved in "hpl_gmac_config.h". */
 static void prvGMACInit()
 {
-    NetworkEndPoint_t * pxEndPointIter;
+	NetworkEndPoint_t * pxEndPointIter;
 
-    /* Call MAC initialization function here: */
-    vGMACInit();
-    prvGMACEnablePHYManagementPort( false );
-    mac_async_disable_irq( &ETH_MAC );
+	/* Call MAC initialization function here: */
+	vGMACInit();
+	prvGMACEnablePHYManagementPort( false );
+	mac_async_disable_irq( &ETH_MAC );
 
-    /* Clear the MAC address hash table and enable multicast and unicast
-     * MAC address hash table. */
-    prvGMACClearMulticastHashTable();
-    prvGMACEnableUnicastHashTable( true );
-    prvGMACEnableMulticastHashTable( true );
+	/* Clear the MAC address hash table and enable multicast and unicast
+	 * MAC address hash table. */
+	prvGMACClearMulticastHashTable();
+	prvGMACEnableUnicastHashTable( true );
+	prvGMACEnableMulticastHashTable( true );
 
-    /* Enable traffic for LLMNR, if defined. */
+	/* Enable traffic for LLMNR, if defined. */
     #if ( ipconfigUSE_LLMNR == 1 )
-    {
-        mac_async_set_filter_ex( &ETH_MAC, ucLLMNR_MAC_address );
-    }
+	{
+		mac_async_set_filter_ex( &ETH_MAC, ucLLMNR_MAC_address );
+	}
     #endif
 
 
     #if ( ipconfigUSE_IPv6 != 0 )
-    {
-        /* Allow all nodes IPv6 multicast MAC */
-        uint8_t ucMACAddressAllNodes[ ipMAC_ADDRESS_LENGTH_BYTES ] = { 0x33, 0x33, 0, 0, 0, 1 };
-        mac_async_set_filter_ex( &ETH_MAC, ucMACAddressAllNodes );
+	{
+		/* Allow all nodes IPv6 multicast MAC */
+		uint8_t ucMACAddressAllNodes[ ipMAC_ADDRESS_LENGTH_BYTES ] = { 0x33, 0x33, 0, 0, 0, 1 };
+		mac_async_set_filter_ex( &ETH_MAC, ucMACAddressAllNodes );
 
-        #if ( ipconfigUSE_LLMNR == 1 )
-        {
-            uint8_t ucMACAddressLLMNRIPv6[ ipMAC_ADDRESS_LENGTH_BYTES ];
-            /* Avoid warning */
-            memcpy( ucMACAddressLLMNRIPv6, xLLMNR_MacAddressIPv6.ucBytes, ipMAC_ADDRESS_LENGTH_BYTES );
-            mac_async_set_filter_ex( &ETH_MAC, ucMACAddressLLMNRIPv6 );
-        }
-        #endif /* ipconfigUSE_LLMNR */
-    }
+	#if ( ipconfigUSE_LLMNR == 1 )
+		{
+			uint8_t ucMACAddressLLMNRIPv6[ ipMAC_ADDRESS_LENGTH_BYTES ];
+			/* Avoid warning */
+			memcpy( ucMACAddressLLMNRIPv6, xLLMNR_MacAddressIPv6.ucBytes, ipMAC_ADDRESS_LENGTH_BYTES );
+			mac_async_set_filter_ex( &ETH_MAC, ucMACAddressLLMNRIPv6 );
+		}
+	#endif /* ipconfigUSE_LLMNR */
+	}
     #endif /* ipconfigUSE_IPv6 */
 
-    for( pxEndPointIter = FreeRTOS_FirstEndPoint( pxMyInterface );
-         pxEndPointIter != NULL;
-         pxEndPointIter = FreeRTOS_NextEndPoint( pxMyInterface, pxEndPointIter ) )
-    {
-        #if ( ipconfigUSE_IPv6 != 0 )
-        {
-            if( pxEndPointIter->bits.bIPv6 != pdFALSE_UNSIGNED )
-            {
-                /* Allow traffic from IPv6 solicited-node multicast MAC address for
-                 * each endpoint */
-                uint8_t ucMACAddress[ 6 ] = { 0x33, 0x33, 0xff, 0, 0, 0 };
+	for( pxEndPointIter = FreeRTOS_FirstEndPoint( pxMyInterface );
+	     pxEndPointIter != NULL;
+	     pxEndPointIter = FreeRTOS_NextEndPoint( pxMyInterface, pxEndPointIter ) )
+	{
+	#if ( ipconfigUSE_IPv6 != 0 )
+		{
+			if( pxEndPointIter->bits.bIPv6 != pdFALSE_UNSIGNED )
+			{
+				/* Allow traffic from IPv6 solicited-node multicast MAC address for
+				 * each endpoint */
+				uint8_t ucMACAddress[ 6 ] = { 0x33, 0x33, 0xff, 0, 0, 0 };
 
-                ucMACAddress[ 3 ] = pxEndPointIter->ipv6_settings.xIPAddress.ucBytes[ 13 ];
-                ucMACAddress[ 4 ] = pxEndPointIter->ipv6_settings.xIPAddress.ucBytes[ 14 ];
-                ucMACAddress[ 5 ] = pxEndPointIter->ipv6_settings.xIPAddress.ucBytes[ 15 ];
-                mac_async_set_filter_ex( &ETH_MAC, ucMACAddress );
-            }
-        }
-        #endif /* ipconfigUSE_IPv6 */
+				ucMACAddress[ 3 ] = pxEndPointIter->ipv6_settings.xIPAddress.ucBytes[ 13 ];
+				ucMACAddress[ 4 ] = pxEndPointIter->ipv6_settings.xIPAddress.ucBytes[ 14 ];
+				ucMACAddress[ 5 ] = pxEndPointIter->ipv6_settings.xIPAddress.ucBytes[ 15 ];
+				mac_async_set_filter_ex( &ETH_MAC, ucMACAddress );
+			}
+		}
+	#endif /* ipconfigUSE_IPv6 */
 
-        /* Allow endpoint MAC */
-        mac_async_set_filter_ex( &ETH_MAC, pxEndPointIter->xMACAddress.ucBytes );
-    }
+		/* Allow endpoint MAC */
+		mac_async_set_filter_ex( &ETH_MAC, pxEndPointIter->xMACAddress.ucBytes );
+	}
 
-    /* Set GMAC interrupt priority to be compatible with FreeRTOS API */
-    NVIC_SetPriority( GMAC_IRQn, configMAX_SYSCALL_INTERRUPT_PRIORITY >> ( 8 - configPRIO_BITS ) );
+	/* Set GMAC interrupt priority to be compatible with FreeRTOS API */
+	NVIC_SetPriority( GMAC_IRQn, configMAX_SYSCALL_INTERRUPT_PRIORITY >> ( 8 - configPRIO_BITS ) );
 
-    /* Register callback(s). Currently only RX callback is implemented, but TX callback can be added the same way. */
-    mac_async_register_callback( &ETH_MAC, MAC_ASYNC_RECEIVE_CB, ( FUNC_PTR ) xRxCallback );
+	/* Register callback(s). Currently only RX callback is implemented, but TX callback can be added the same way. */
+	mac_async_register_callback( &ETH_MAC, MAC_ASYNC_RECEIVE_CB, ( FUNC_PTR ) xRxCallback );
 
-    /* Start the GMAC. */
-    mac_async_enable( &ETH_MAC );
-    mac_async_enable_irq( &ETH_MAC );
+	/* Start the GMAC. */
+	mac_async_enable( &ETH_MAC );
+	mac_async_enable_irq( &ETH_MAC );
 }
 
 static inline void prvGMACEnablePHYManagementPort( bool enable )
 {
-    if( enable )
-    {
-        ( ( Gmac * ) ETH_MAC.dev.hw )->NCR.reg |= GMAC_NCR_MPE;
-    }
-    else
-    {
-        ( ( Gmac * ) ETH_MAC.dev.hw )->NCR.reg &= ~GMAC_NCR_MPE;
-    }
+	if( enable )
+	{
+		( ( Gmac * ) ETH_MAC.dev.hw )->NCR.reg |= GMAC_NCR_MPE;
+	}
+	else
+	{
+		( ( Gmac * ) ETH_MAC.dev.hw )->NCR.reg &= ~GMAC_NCR_MPE;
+	}
 }
 
 static inline void prvGMACEnable100Mbps( bool enable )
 {
-    if( enable )
-    {
-        ( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg |= GMAC_NCFGR_SPD;
-    }
-    else
-    {
-        ( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg &= ~GMAC_NCFGR_SPD;
-    }
+	if( enable )
+	{
+		( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg |= GMAC_NCFGR_SPD;
+	}
+	else
+	{
+		( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg &= ~GMAC_NCFGR_SPD;
+	}
 }
 
 static inline void prvGMACEnableFullDuplex( bool enable )
 {
-    if( enable )
-    {
-        ( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg |= GMAC_NCFGR_FD;
-    }
-    else
-    {
-        ( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg &= ~GMAC_NCFGR_FD;
-    }
+	if( enable )
+	{
+		( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg |= GMAC_NCFGR_FD;
+	}
+	else
+	{
+		( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg &= ~GMAC_NCFGR_FD;
+	}
 }
 
 static inline void prvGMACClearMulticastHashTable()
 {
-    /* First clear Hash Register Bottom and then Top */
-    ( ( Gmac * ) ETH_MAC.dev.hw )->HRB.reg = 0;
-    ( ( Gmac * ) ETH_MAC.dev.hw )->HRT.reg = 0;
+	/* First clear Hash Register Bottom and then Top */
+	( ( Gmac * ) ETH_MAC.dev.hw )->HRB.reg = 0;
+	( ( Gmac * ) ETH_MAC.dev.hw )->HRT.reg = 0;
 }
 
 static inline void prvGMACEnableMulticastHashTable( bool enable )
 {
-    if( enable )
-    {
-        ( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg |= GMAC_NCFGR_MTIHEN;
-    }
-    else
-    {
-        ( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg &= ~GMAC_NCFGR_MTIHEN;
-    }
+	if( enable )
+	{
+		( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg |= GMAC_NCFGR_MTIHEN;
+	}
+	else
+	{
+		( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg &= ~GMAC_NCFGR_MTIHEN;
+	}
 }
 
 static inline void prvGMACEnableUnicastHashTable( bool enable )
 {
-    if( enable )
-    {
-        ( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg |= GMAC_NCFGR_UNIHEN;
-    }
-    else
-    {
-        ( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg &= ~GMAC_NCFGR_UNIHEN;
-    }
+	if( enable )
+	{
+		( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg |= GMAC_NCFGR_UNIHEN;
+	}
+	else
+	{
+		( ( Gmac * ) ETH_MAC.dev.hw )->NCFGR.reg &= ~GMAC_NCFGR_UNIHEN;
+	}
 }
 
 
@@ -678,68 +678,68 @@ static inline void prvGMACEnableUnicastHashTable( bool enable )
 /* Initializes the PHY hardware. Based on ASF4 generated code. */
 static void prvPHYInit()
 {
-    prvGMACEnablePHYManagementPort( true );
+	prvGMACEnablePHYManagementPort( true );
 
-    vPhyInitialise( &xPhyObject, &xPHYRead, &xPHYWrite );
-    xPhyDiscover( &xPhyObject );
-    xPhyConfigure( &xPhyObject, &xPHYProperties );
+	vPhyInitialise( &xPhyObject, &xPHYRead, &xPHYWrite );
+	xPhyDiscover( &xPhyObject );
+	xPhyConfigure( &xPhyObject, &xPHYProperties );
 
-    prvGMACEnablePHYManagementPort( false );
+	prvGMACEnablePHYManagementPort( false );
 }
 
 /* Start a new link negotiation on the PHY and wait until link is up. */
 static void prvPHYLinkReset()
 {
-    /* Restart an auto-negotiation */
-    prvGMACEnablePHYManagementPort( true );
+	/* Restart an auto-negotiation */
+	prvGMACEnablePHYManagementPort( true );
 
-    if( ( xPHYProperties.ucDuplex == PHY_DUPLEX_AUTO ) && ( xPHYProperties.ucSpeed == PHY_SPEED_AUTO ) && ( xPHYProperties.ucMDI_X == PHY_MDIX_AUTO ) )
-    {
-        /* Auto-negotiation */
-        xPhyStartAutoNegotiation( &xPhyObject, xPhyGetMask( &xPhyObject ) );
+	if( ( xPHYProperties.ucDuplex == PHY_DUPLEX_AUTO ) && ( xPHYProperties.ucSpeed == PHY_SPEED_AUTO ) && ( xPHYProperties.ucMDI_X == PHY_MDIX_AUTO ) )
+	{
+		/* Auto-negotiation */
+		xPhyStartAutoNegotiation( &xPhyObject, xPhyGetMask( &xPhyObject ) );
 
-        /* Update the MAC with the auto-negotiation result parameters. */
-        prvGMACEnableFullDuplex( xPhyObject.xPhyProperties.ucDuplex == PHY_DUPLEX_FULL );
-        prvGMACEnable100Mbps( xPhyObject.xPhyProperties.ucSpeed == PHY_SPEED_100 );
-    }
-    else
-    {
-        /* Fixed values */
-        xPhyObject.xPhyPreferences.ucDuplex = xPHYProperties.ucDuplex;
-        xPhyObject.xPhyPreferences.ucSpeed = xPHYProperties.ucSpeed;
-        xPhyObject.xPhyPreferences.ucMDI_X = xPHYProperties.ucMDI_X;
-        xPhyFixedValue( &xPhyObject, xPhyGetMask( &xPhyObject ) );
+		/* Update the MAC with the auto-negotiation result parameters. */
+		prvGMACEnableFullDuplex( xPhyObject.xPhyProperties.ucDuplex == PHY_DUPLEX_FULL );
+		prvGMACEnable100Mbps( xPhyObject.xPhyProperties.ucSpeed == PHY_SPEED_100 );
+	}
+	else
+	{
+		/* Fixed values */
+		xPhyObject.xPhyPreferences.ucDuplex = xPHYProperties.ucDuplex;
+		xPhyObject.xPhyPreferences.ucSpeed = xPHYProperties.ucSpeed;
+		xPhyObject.xPhyPreferences.ucMDI_X = xPHYProperties.ucMDI_X;
+		xPhyFixedValue( &xPhyObject, xPhyGetMask( &xPhyObject ) );
 
-        /* Update the MAC with the auto-negotiation result parameters. */
-        prvGMACEnableFullDuplex( xPHYProperties.ucDuplex == PHY_DUPLEX_FULL );
-        prvGMACEnable100Mbps( xPHYProperties.ucSpeed == PHY_SPEED_100 );
-    }
+		/* Update the MAC with the auto-negotiation result parameters. */
+		prvGMACEnableFullDuplex( xPHYProperties.ucDuplex == PHY_DUPLEX_FULL );
+		prvGMACEnable100Mbps( xPHYProperties.ucSpeed == PHY_SPEED_100 );
+	}
 
-    prvGMACEnablePHYManagementPort( false );
+	prvGMACEnablePHYManagementPort( false );
 }
 
 static BaseType_t xPHYRead( BaseType_t xAddress,
                             BaseType_t xRegister,
                             uint32_t * pulValue )
 {
-    prvGMACEnablePHYManagementPort( true );
-    BaseType_t readStatus = mac_async_read_phy_reg( &ETH_MAC, xAddress, xRegister, ( ( uint16_t * ) pulValue ) );
-    prvGMACEnablePHYManagementPort( false );
-    return readStatus;
+	prvGMACEnablePHYManagementPort( true );
+	BaseType_t readStatus = mac_async_read_phy_reg( &ETH_MAC, xAddress, xRegister, ( ( uint16_t * ) pulValue ) );
+	prvGMACEnablePHYManagementPort( false );
+	return readStatus;
 }
 
 static BaseType_t xPHYWrite( BaseType_t xAddress,
                              BaseType_t xRegister,
                              uint32_t pulValue )
 {
-    prvGMACEnablePHYManagementPort( true );
-    BaseType_t writeStatus = mac_async_write_phy_reg( &ETH_MAC, xAddress, xRegister, pulValue );
-    prvGMACEnablePHYManagementPort( false );
-    return writeStatus;
+	prvGMACEnablePHYManagementPort( true );
+	BaseType_t writeStatus = mac_async_write_phy_reg( &ETH_MAC, xAddress, xRegister, pulValue );
+	prvGMACEnablePHYManagementPort( false );
+	return writeStatus;
 }
 
 static inline BaseType_t xATSAM5x_PHYGetLinkStatus( NetworkInterface_t * pxInterface )
 {
-    ( void ) pxInterface;
-    return( xPhyObject.ulLinkStatusMask != 0 );
+	( void ) pxInterface;
+	return( xPhyObject.ulLinkStatusMask != 0 );
 }

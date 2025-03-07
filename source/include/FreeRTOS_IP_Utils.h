@@ -75,13 +75,13 @@ struct xNetworkEndPoint;
  * @return pdPASS or pdFAIL, depending on whether xSendEventStructToIPTask()
  *         succeeded.
  */
-    BaseType_t xSendDHCPEvent( struct xNetworkEndPoint * pxEndPoint );
+BaseType_t xSendDHCPEvent( struct xNetworkEndPoint * pxEndPoint );
 #endif
 
 #if ( ( ipconfigUSE_DHCPv6 == 1 ) || ( ipconfigUSE_DHCP == 1 ) )
 
 /* Returns the current state of a DHCP process. */
-    eDHCPState_t eGetDHCPState( const struct xNetworkEndPoint * pxEndPoint );
+eDHCPState_t eGetDHCPState( const struct xNetworkEndPoint * pxEndPoint );
 
 #endif
 
@@ -94,7 +94,7 @@ struct xNetworkEndPoint;
  *
  * @return The network buffer if the alignment is correct. Else a NULL is returned.
  */
-    NetworkBufferDescriptor_t * pxPacketBuffer_to_NetworkBuffer( const void * pvBuffer );
+NetworkBufferDescriptor_t * pxPacketBuffer_to_NetworkBuffer( const void * pvBuffer );
 #endif
 
 /**

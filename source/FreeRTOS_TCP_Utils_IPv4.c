@@ -57,34 +57,34 @@
  */
 void prvSocketSetMSS_IPV4( FreeRTOS_Socket_t * pxSocket )
 {
-    uint32_t ulMSS = ipconfigTCP_MSS;
-    const NetworkEndPoint_t * pxEndPoint = pxSocket->pxEndPoint;
+	uint32_t ulMSS = ipconfigTCP_MSS;
+	const NetworkEndPoint_t * pxEndPoint = pxSocket->pxEndPoint;
 
-    if( pxEndPoint != NULL )
-    {
-        /* Do not allow MSS smaller than tcpMINIMUM_SEGMENT_LENGTH. */
-        #if ( ipconfigTCP_MSS >= tcpMINIMUM_SEGMENT_LENGTH )
-        {
-            ulMSS = ipconfigTCP_MSS;
-        }
-        #else
-        {
-            ulMSS = tcpMINIMUM_SEGMENT_LENGTH;
-        }
-        #endif
+	if( pxEndPoint != NULL )
+	{
+		/* Do not allow MSS smaller than tcpMINIMUM_SEGMENT_LENGTH. */
+	#if ( ipconfigTCP_MSS >= tcpMINIMUM_SEGMENT_LENGTH )
+		{
+			ulMSS = ipconfigTCP_MSS;
+		}
+	#else
+		{
+			ulMSS = tcpMINIMUM_SEGMENT_LENGTH;
+		}
+	#endif
 
-        /* Check if the remote IP-address belongs to the same netmask. */
-        if( ( ( FreeRTOS_ntohl( pxSocket->u.xTCP.xRemoteIP.ulIP_IPv4 ) ^ pxEndPoint->ipv4_settings.ulIPAddress ) & pxEndPoint->ipv4_settings.ulNetMask ) != 0U )
-        {
-            /* Data for this peer will pass through a router, and maybe through
-             * the internet.  Limit the MSS to 1400 bytes or less. */
-            ulMSS = FreeRTOS_min_uint32( ( uint32_t ) tcpREDUCED_MSS_THROUGH_INTERNET, ulMSS );
-        }
-    }
+		/* Check if the remote IP-address belongs to the same netmask. */
+		if( ( ( FreeRTOS_ntohl( pxSocket->u.xTCP.xRemoteIP.ulIP_IPv4 ) ^ pxEndPoint->ipv4_settings.ulIPAddress ) & pxEndPoint->ipv4_settings.ulNetMask ) != 0U )
+		{
+			/* Data for this peer will pass through a router, and maybe through
+			 * the internet.  Limit the MSS to 1400 bytes or less. */
+			ulMSS = FreeRTOS_min_uint32( ( uint32_t ) tcpREDUCED_MSS_THROUGH_INTERNET, ulMSS );
+		}
+	}
 
-    FreeRTOS_debug_printf( ( "prvSocketSetMSS: %u bytes for %xip port %u\n", ( unsigned ) ulMSS, ( unsigned ) pxSocket->u.xTCP.xRemoteIP.ulIP_IPv4, pxSocket->u.xTCP.usRemotePort ) );
+	FreeRTOS_debug_printf( ( "prvSocketSetMSS: %u bytes for %xip port %u\n", ( unsigned ) ulMSS, ( unsigned ) pxSocket->u.xTCP.xRemoteIP.ulIP_IPv4, pxSocket->u.xTCP.usRemotePort ) );
 
-    pxSocket->u.xTCP.usMSS = ( uint16_t ) ulMSS;
+	pxSocket->u.xTCP.usMSS = ( uint16_t ) ulMSS;
 }
 /*-----------------------------------------------------------*/
 

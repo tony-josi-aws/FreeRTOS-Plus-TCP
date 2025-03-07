@@ -117,41 +117,41 @@
     #define TXFD_TTSAS     0x08000000 /* TX Time Stamp Available */
 
 /* Tx/Rx buffer descriptor structure */
-    struct eth_descriptor;
-    struct eth_descriptor
-    {
-        uint32_t status1;
-        uint8_t * buf;
-        uint32_t status2;
-        struct eth_descriptor * next;
-        #ifdef TIME_STAMPING
-            uint32_t backup1;
-            uint32_t backup2;
-            uint32_t reserved1;
-            uint32_t reserved2;
-        #endif
-    };
+struct eth_descriptor;
+struct eth_descriptor
+{
+	uint32_t status1;
+	uint8_t * buf;
+	uint32_t status2;
+	struct eth_descriptor * next;
+	#ifdef TIME_STAMPING
+	uint32_t backup1;
+	uint32_t backup2;
+	uint32_t reserved1;
+	uint32_t reserved2;
+	#endif
+};
 
     #ifdef TIME_STAMPING
 
-        #define ETH_TS_ENABLE()    do { EMAC->TSCTL = EMAC_TSCTL_TSEN_Msk; } while( 0 )
-        #define ETH_TS_START()     do { EMAC->TSCTL |= ( EMAC_TSCTL_TSMODE_Msk | EMAC_TSCTL_TSIEN_Msk ); } while( 0 )
-    s32_t ETH_settime( u32_t sec,
-                       u32_t nsec );
-    s32_t ETH_gettime( u32_t * sec,
-                       u32_t * nsec );
-    s32_t ETH_updatetime( u32_t neg,
-                          u32_t sec,
-                          u32_t nsec );
-    s32_t ETH_adjtimex( int ppm );
-    void ETH_setinc( void );
+	#define ETH_TS_ENABLE()    do { EMAC->TSCTL = EMAC_TSCTL_TSEN_Msk; } while( 0 )
+	#define ETH_TS_START()     do { EMAC->TSCTL |= ( EMAC_TSCTL_TSMODE_Msk | EMAC_TSCTL_TSIEN_Msk ); } while( 0 )
+s32_t ETH_settime( u32_t sec,
+                   u32_t nsec );
+s32_t ETH_gettime( u32_t * sec,
+                   u32_t * nsec );
+s32_t ETH_updatetime( u32_t neg,
+                      u32_t sec,
+                      u32_t nsec );
+s32_t ETH_adjtimex( int ppm );
+void ETH_setinc( void );
 
     #endif /* ifdef TIME_STAMPING */
 
     #ifdef NU_TRACE
-        #define NU_DEBUGF( x )    { printf x; }
+	#define NU_DEBUGF( x )    { printf x; }
     #else
-        #define NU_DEBUGF( x )
+	#define NU_DEBUGF( x )
     #endif
 
 void numaker_set_mac_addr( uint8_t * addr );

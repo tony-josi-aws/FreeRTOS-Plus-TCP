@@ -18,29 +18,29 @@
     #define __CORSTONE315_H__
 
     #ifdef __cplusplus
-    extern "C" {
+extern "C" {
     #endif
 
 /* ======================  Start of section using anonymous unions  ============== */
     #if   defined( __CC_ARM )
-        #pragma push
-        #pragma anon_unions
+	#pragma push
+	#pragma anon_unions
     #elif defined( __ICCARM__ )
-        #pragma language=extended
+	#pragma language=extended
     #elif defined( __ARMCC_VERSION ) && ( __ARMCC_VERSION >= 6010050 )
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wc11-extensions"
-        #pragma clang diagnostic ignored "-Wreserved-id-macro"
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wc11-extensions"
+	#pragma clang diagnostic ignored "-Wreserved-id-macro"
     #elif defined( __GNUC__ )
-        /* anonymous unions are enabled by default */
+/* anonymous unions are enabled by default */
     #elif defined( __TMS470__ )
-        /* anonymous unions are enabled by default */
+/* anonymous unions are enabled by default */
     #elif defined( __TASKING__ )
-        #pragma warning 586
+	#pragma warning 586
     #elif defined( __CSMC__ )
-        /* anonymous unions are enabled by default */
+/* anonymous unions are enabled by default */
     #else /* if   defined( __CC_ARM ) */
-        #warning Not supported compiler type
+	#warning Not supported compiler type
     #endif /* if   defined( __CC_ARM ) */
 
 
@@ -68,21 +68,21 @@
 
 /* =====================  End of section using anonymous unions  ================ */
     #if   defined( __CC_ARM )
-        #pragma pop
+	#pragma pop
     #elif defined( __ICCARM__ )
-        /* leave anonymous unions enabled */
+/* leave anonymous unions enabled */
     #elif ( __ARMCC_VERSION >= 6010050 )
-        #pragma clang diagnostic pop
+	#pragma clang diagnostic pop
     #elif defined( __GNUC__ )
-        /* anonymous unions are enabled by default */
+/* anonymous unions are enabled by default */
     #elif defined( __TMS470__ )
-        /* anonymous unions are enabled by default */
+/* anonymous unions are enabled by default */
     #elif defined( __TASKING__ )
-        #pragma warning restore
+	#pragma warning restore
     #elif defined( __CSMC__ )
-        /* anonymous unions are enabled by default */
+/* anonymous unions are enabled by default */
     #else /* if   defined( __CC_ARM ) */
-        #warning Not supported compiler type
+	#warning Not supported compiler type
     #endif /* if   defined( __CC_ARM ) */
 
     #ifdef __cplusplus

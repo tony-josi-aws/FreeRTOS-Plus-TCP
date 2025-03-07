@@ -56,8 +56,8 @@
  * Turns around an incoming ping request to convert it into a ping reply.
  */
 #if ( ipconfigREPLY_TO_INCOMING_PINGS == 1 )
-    static eFrameProcessingResult_t prvProcessICMPEchoRequest( ICMPPacket_t * const pxICMPPacket,
-                                                               const NetworkBufferDescriptor_t * const pxNetworkBuffer );
+static eFrameProcessingResult_t prvProcessICMPEchoRequest( ICMPPacket_t * const pxICMPPacket,
+                                                           const NetworkBufferDescriptor_t * const pxNetworkBuffer );
 #endif /* ipconfigREPLY_TO_INCOMING_PINGS */
 
 /*
@@ -65,7 +65,7 @@
  * vApplicationPingReplyHook() is called with the results.
  */
 #if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
-    static void prvProcessICMPEchoReply( ICMPPacket_t * const pxICMPPacket );
+static void prvProcessICMPEchoReply( ICMPPacket_t * const pxICMPPacket );
 #endif /* ipconfigSUPPORT_OUTGOING_PINGS */
 
 #if ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) || ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
@@ -79,50 +79,50 @@
  * @return eReleaseBuffer when the message buffer should be released, or eReturnEthernetFrame
  *                        when the packet should be returned.
  */
-    eFrameProcessingResult_t ProcessICMPPacket( const NetworkBufferDescriptor_t * const pxNetworkBuffer )
-    {
-        eFrameProcessingResult_t eReturn = eReleaseBuffer;
+eFrameProcessingResult_t ProcessICMPPacket( const NetworkBufferDescriptor_t * const pxNetworkBuffer )
+{
+	eFrameProcessingResult_t eReturn = eReleaseBuffer;
 
-        iptraceICMP_PACKET_RECEIVED();
+	iptraceICMP_PACKET_RECEIVED();
 
-        configASSERT( pxNetworkBuffer->xDataLength >= sizeof( ICMPPacket_t ) );
+	configASSERT( pxNetworkBuffer->xDataLength >= sizeof( ICMPPacket_t ) );
 
-        if( pxNetworkBuffer->xDataLength >= sizeof( ICMPPacket_t ) )
-        {
-            /* Map the buffer onto a ICMP-Packet struct to easily access the
-             * fields of ICMP packet. */
+	if( pxNetworkBuffer->xDataLength >= sizeof( ICMPPacket_t ) )
+	{
+		/* Map the buffer onto a ICMP-Packet struct to easily access the
+		 * fields of ICMP packet. */
 
-            /* MISRA Ref 11.3.1 [Misaligned access] */
+		/* MISRA Ref 11.3.1 [Misaligned access] */
 /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
-            /* coverity[misra_c_2012_rule_11_3_violation] */
-            ICMPPacket_t * pxICMPPacket = ( ( ICMPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
+		/* coverity[misra_c_2012_rule_11_3_violation] */
+		ICMPPacket_t * pxICMPPacket = ( ( ICMPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
 
-            switch( pxICMPPacket->xICMPHeader.ucTypeOfMessage )
-            {
-                case ipICMP_ECHO_REQUEST:
-                    #if ( ipconfigREPLY_TO_INCOMING_PINGS == 1 )
-                    {
-                        eReturn = prvProcessICMPEchoRequest( pxICMPPacket, pxNetworkBuffer );
-                    }
-                    #endif /* ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) */
-                    break;
+		switch( pxICMPPacket->xICMPHeader.ucTypeOfMessage )
+		{
+		case ipICMP_ECHO_REQUEST:
+		    #if ( ipconfigREPLY_TO_INCOMING_PINGS == 1 )
+			{
+				eReturn = prvProcessICMPEchoRequest( pxICMPPacket, pxNetworkBuffer );
+			}
+		    #endif /* ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) */
+			break;
 
-                case ipICMP_ECHO_REPLY:
-                    #if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
-                    {
-                        prvProcessICMPEchoReply( pxICMPPacket );
-                    }
-                    #endif /* ipconfigSUPPORT_OUTGOING_PINGS */
-                    break;
+		case ipICMP_ECHO_REPLY:
+		    #if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
+			{
+				prvProcessICMPEchoReply( pxICMPPacket );
+			}
+		    #endif /* ipconfigSUPPORT_OUTGOING_PINGS */
+			break;
 
-                default:
-                    /* Only ICMP echo packets are handled. */
-                    break;
-            }
-        }
+		default:
+			/* Only ICMP echo packets are handled. */
+			break;
+		}
+	}
 
-        return eReturn;
-    }
+	return eReturn;
+}
 
 #endif /* ( ipconfigREPLY_TO_INCOMING_PINGS == 1 ) || ( ipconfigSUPPORT_OUTGOING_PINGS == 1 ) */
 /*-----------------------------------------------------------*/
@@ -136,62 +136,62 @@
  * @param pxNetworkBuffer Pointer to the network buffer containing the ICMP packet.
  * @returns Function returns eReturnEthernetFrame.
  */
-    static eFrameProcessingResult_t prvProcessICMPEchoRequest( ICMPPacket_t * const pxICMPPacket,
-                                                               const NetworkBufferDescriptor_t * const pxNetworkBuffer )
-    {
-        ICMPHeader_t * pxICMPHeader;
-        IPHeader_t * pxIPHeader;
-        uint32_t ulIPAddress;
+static eFrameProcessingResult_t prvProcessICMPEchoRequest( ICMPPacket_t * const pxICMPPacket,
+                                                           const NetworkBufferDescriptor_t * const pxNetworkBuffer )
+{
+	ICMPHeader_t * pxICMPHeader;
+	IPHeader_t * pxIPHeader;
+	uint32_t ulIPAddress;
 
-        pxICMPHeader = &( pxICMPPacket->xICMPHeader );
-        pxIPHeader = &( pxICMPPacket->xIPHeader );
+	pxICMPHeader = &( pxICMPPacket->xICMPHeader );
+	pxIPHeader = &( pxICMPPacket->xIPHeader );
 
-        /* HT:endian: changed back */
-        iptraceSENDING_PING_REPLY( pxIPHeader->ulSourceIPAddress );
+	/* HT:endian: changed back */
+	iptraceSENDING_PING_REPLY( pxIPHeader->ulSourceIPAddress );
 
-        /* The checksum can be checked here - but a ping reply should be
-         * returned even if the checksum is incorrect so the other end can
-         * tell that the ping was received - even if the ping reply contains
-         * invalid data. */
-        pxICMPHeader->ucTypeOfMessage = ( uint8_t ) ipICMP_ECHO_REPLY;
-        ulIPAddress = pxIPHeader->ulDestinationIPAddress;
-        pxIPHeader->ulDestinationIPAddress = pxIPHeader->ulSourceIPAddress;
-        pxIPHeader->ulSourceIPAddress = ulIPAddress;
-        /* Update the TTL field. */
-        pxIPHeader->ucTimeToLive = ipconfigICMP_TIME_TO_LIVE;
+	/* The checksum can be checked here - but a ping reply should be
+	 * returned even if the checksum is incorrect so the other end can
+	 * tell that the ping was received - even if the ping reply contains
+	 * invalid data. */
+	pxICMPHeader->ucTypeOfMessage = ( uint8_t ) ipICMP_ECHO_REPLY;
+	ulIPAddress = pxIPHeader->ulDestinationIPAddress;
+	pxIPHeader->ulDestinationIPAddress = pxIPHeader->ulSourceIPAddress;
+	pxIPHeader->ulSourceIPAddress = ulIPAddress;
+	/* Update the TTL field. */
+	pxIPHeader->ucTimeToLive = ipconfigICMP_TIME_TO_LIVE;
 
-        /* The stack doesn't support fragments, so the fragment offset field must always be zero.
-         * The header was never memset to zero, so set both the fragment offset and fragmentation flags in one go.
-         */
-        #if ( ipconfigFORCE_IP_DONT_FRAGMENT != 0 )
-            pxIPHeader->usFragmentOffset = ipFRAGMENT_FLAGS_DONT_FRAGMENT;
-        #else
-            pxIPHeader->usFragmentOffset = 0U;
-        #endif
+	/* The stack doesn't support fragments, so the fragment offset field must always be zero.
+	 * The header was never memset to zero, so set both the fragment offset and fragmentation flags in one go.
+	 */
+	#if ( ipconfigFORCE_IP_DONT_FRAGMENT != 0 )
+	pxIPHeader->usFragmentOffset = ipFRAGMENT_FLAGS_DONT_FRAGMENT;
+	#else
+	pxIPHeader->usFragmentOffset = 0U;
+	#endif
 
-        #if ( ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM == 0 )
-        {
-            /* calculate the IP header checksum, in case the driver won't do that. */
-            pxIPHeader->usHeaderChecksum = 0x00U;
-            pxIPHeader->usHeaderChecksum = usGenerateChecksum( 0U, ( uint8_t * ) &( pxIPHeader->ucVersionHeaderLength ), uxIPHeaderSizePacket( pxNetworkBuffer ) );
-            pxIPHeader->usHeaderChecksum = ( uint16_t ) ~FreeRTOS_htons( pxIPHeader->usHeaderChecksum );
+	#if ( ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM == 0 )
+	{
+		/* calculate the IP header checksum, in case the driver won't do that. */
+		pxIPHeader->usHeaderChecksum = 0x00U;
+		pxIPHeader->usHeaderChecksum = usGenerateChecksum( 0U, ( uint8_t * ) &( pxIPHeader->ucVersionHeaderLength ), uxIPHeaderSizePacket( pxNetworkBuffer ) );
+		pxIPHeader->usHeaderChecksum = ( uint16_t ) ~FreeRTOS_htons( pxIPHeader->usHeaderChecksum );
 
-            /* calculate the ICMP checksum for an outgoing packet. */
-            ( void ) usGenerateProtocolChecksum( ( uint8_t * ) pxICMPPacket, pxNetworkBuffer->xDataLength, pdTRUE );
-        }
-        #else
-        {
-            /* Just to prevent compiler warnings about unused parameters. */
-            ( void ) pxNetworkBuffer;
+		/* calculate the ICMP checksum for an outgoing packet. */
+		( void ) usGenerateProtocolChecksum( ( uint8_t * ) pxICMPPacket, pxNetworkBuffer->xDataLength, pdTRUE );
+	}
+	#else
+	{
+		/* Just to prevent compiler warnings about unused parameters. */
+		( void ) pxNetworkBuffer;
 
-            /* Many EMAC peripherals will only calculate the ICMP checksum
-             * correctly if the field is nulled beforehand. */
-            pxICMPHeader->usChecksum = 0U;
-        }
-        #endif /* if ( ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM == 0 ) */
+		/* Many EMAC peripherals will only calculate the ICMP checksum
+		 * correctly if the field is nulled beforehand. */
+		pxICMPHeader->usChecksum = 0U;
+	}
+	#endif /* if ( ipconfigDRIVER_INCLUDED_TX_IP_CHECKSUM == 0 ) */
 
-        return eReturnEthernetFrame;
-    }
+	return eReturnEthernetFrame;
+}
 
 #endif /* ipconfigREPLY_TO_INCOMING_PINGS == 1 */
 /*-----------------------------------------------------------*/
@@ -203,45 +203,45 @@
  *
  * @param[in] pxICMPPacket The IP packet that contains the ICMP message.
  */
-    static void prvProcessICMPEchoReply( ICMPPacket_t * const pxICMPPacket )
-    {
-        ePingReplyStatus_t eStatus = eSuccess;
-        uint16_t usDataLength, usCount;
-        uint8_t * pucByte;
+static void prvProcessICMPEchoReply( ICMPPacket_t * const pxICMPPacket )
+{
+	ePingReplyStatus_t eStatus = eSuccess;
+	uint16_t usDataLength, usCount;
+	uint8_t * pucByte;
 
-        /* Find the total length of the IP packet. */
-        usDataLength = pxICMPPacket->xIPHeader.usLength;
-        usDataLength = FreeRTOS_ntohs( usDataLength );
+	/* Find the total length of the IP packet. */
+	usDataLength = pxICMPPacket->xIPHeader.usLength;
+	usDataLength = FreeRTOS_ntohs( usDataLength );
 
-        /* Remove the length of the IP headers to obtain the length of the ICMP
-         * message itself. */
-        usDataLength = ( uint16_t ) ( ( ( uint32_t ) usDataLength ) - ipSIZE_OF_IPv4_HEADER );
+	/* Remove the length of the IP headers to obtain the length of the ICMP
+	 * message itself. */
+	usDataLength = ( uint16_t ) ( ( ( uint32_t ) usDataLength ) - ipSIZE_OF_IPv4_HEADER );
 
-        /* Remove the length of the ICMP header, to obtain the length of
-         * data contained in the ping. */
-        usDataLength = ( uint16_t ) ( ( ( uint32_t ) usDataLength ) - ipSIZE_OF_ICMPv4_HEADER );
+	/* Remove the length of the ICMP header, to obtain the length of
+	 * data contained in the ping. */
+	usDataLength = ( uint16_t ) ( ( ( uint32_t ) usDataLength ) - ipSIZE_OF_ICMPv4_HEADER );
 
-        /* Checksum has already been checked before in prvProcessIPPacket */
+	/* Checksum has already been checked before in prvProcessIPPacket */
 
-        /* Find the first byte of the data within the ICMP packet. */
-        pucByte = ( uint8_t * ) pxICMPPacket;
-        pucByte = &( pucByte[ sizeof( ICMPPacket_t ) ] );
+	/* Find the first byte of the data within the ICMP packet. */
+	pucByte = ( uint8_t * ) pxICMPPacket;
+	pucByte = &( pucByte[ sizeof( ICMPPacket_t ) ] );
 
-        /* Check each byte. */
-        for( usCount = 0; usCount < usDataLength; usCount++ )
-        {
-            if( *pucByte != ( uint8_t ) ipECHO_DATA_FILL_BYTE )
-            {
-                eStatus = eInvalidData;
-                break;
-            }
+	/* Check each byte. */
+	for( usCount = 0; usCount < usDataLength; usCount++ )
+	{
+		if( *pucByte != ( uint8_t ) ipECHO_DATA_FILL_BYTE )
+		{
+			eStatus = eInvalidData;
+			break;
+		}
 
-            pucByte++;
-        }
+		pucByte++;
+	}
 
-        /* Call back into the application to pass it the result. */
-        vApplicationPingReplyHook( eStatus, pxICMPPacket->xICMPHeader.usIdentifier );
-    }
+	/* Call back into the application to pass it the result. */
+	vApplicationPingReplyHook( eStatus, pxICMPPacket->xICMPHeader.usIdentifier );
+}
 
 #endif /* if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 ) */
 /*-----------------------------------------------------------*/

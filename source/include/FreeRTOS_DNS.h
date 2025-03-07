@@ -49,7 +49,7 @@ extern const MACAddress_t xLLMNR_MacAddressIPv6;
 
 #if ( ( ipconfigUSE_LLMNR != 0 ) && ( ipconfigUSE_IPv6 != 0 ) )
 /* The LLMNR IPv6 address is ff02::1:3 */
-    extern const IPv6_Address_t ipLLMNR_IP_ADDR_IPv6;
+extern const IPv6_Address_t ipLLMNR_IP_ADDR_IPv6;
 #endif /* ( ( ipconfigUSE_LLMNR != 0 ) && ( ipconfigUSE_IPv6 != 0 ) ) */
 
 /* The MDNS MAC address is 01:00:5e:00:00:fc */
@@ -65,7 +65,7 @@ extern const MACAddress_t xMDNS_MacAddressIPv6;
 
 #if ( ( ipconfigUSE_MDNS != 0 ) && ( ipconfigUSE_IPv6 != 0 ) )
 /* The MDNS IPv6 address is ff02::1:3 */
-    extern const IPv6_Address_t ipMDNS_IP_ADDR_IPv6;
+extern const IPv6_Address_t ipMDNS_IP_ADDR_IPv6;
 #endif /* ( ( ipconfigUSE_MDNS != 0 ) && ( ipconfigUSE_IPv6 != 0 ) ) */
 
 /** @brief While doing integration tests, it is necessary to influence the choice
@@ -73,11 +73,11 @@ extern const MACAddress_t xMDNS_MacAddressIPv6;
  * addressed via IPv4 or IPv6 messages. */
 typedef enum xIPPreference
 {
-    xPreferenceNone,
-    xPreferenceIPv4
+	xPreferenceNone,
+	xPreferenceIPv4
     #if ( ipconfigUSE_IPv6 != 0 )
-        ,
-        xPreferenceIPv6
+	,
+	xPreferenceIPv6
     #endif
 } IPPreference_t;
 
@@ -97,7 +97,7 @@ uint32_t ulDNSHandlePacket( const NetworkBufferDescriptor_t * pxNetworkBuffer );
  * Note that LLMNR is a better protocol for name services on a LAN as it is
  * less polluted
  */
-    uint32_t ulNBNSHandlePacket( NetworkBufferDescriptor_t * pxNetworkBuffer );
+uint32_t ulNBNSHandlePacket( NetworkBufferDescriptor_t * pxNetworkBuffer );
 
 #endif /* ipconfigUSE_NBNS */
 
@@ -107,20 +107,20 @@ uint32_t ulDNSHandlePacket( const NetworkBufferDescriptor_t * pxNetworkBuffer );
  * Asynchronous version of gethostbyname()
  * xTimeout is in units of ms.
  */
-    uint32_t FreeRTOS_gethostbyname_a( const char * pcHostName,
-                                       FOnDNSEvent pCallback,
-                                       void * pvSearchID,
-                                       TickType_t uxTimeout );
-    void FreeRTOS_gethostbyname_cancel( void * pvSearchID );
+uint32_t FreeRTOS_gethostbyname_a( const char * pcHostName,
+                                   FOnDNSEvent pCallback,
+                                   void * pvSearchID,
+                                   TickType_t uxTimeout );
+void FreeRTOS_gethostbyname_cancel( void * pvSearchID );
 
 /* The asynchronous versions of FreeRTOS_getaddrinfo(). */
-    BaseType_t FreeRTOS_getaddrinfo_a( const char * pcName,                      /* The name of the node or device */
-                                       const char * pcService,                   /* Ignored for now. */
-                                       const struct freertos_addrinfo * pxHints, /* If not NULL: preferences. */
-                                       struct freertos_addrinfo ** ppxResult,    /* An allocated struct, containing the results. */
-                                       FOnDNSEvent pCallback,
-                                       void * pvSearchID,
-                                       TickType_t uxTimeout );
+BaseType_t FreeRTOS_getaddrinfo_a( const char * pcName,                          /* The name of the node or device */
+                                   const char * pcService,                       /* Ignored for now. */
+                                   const struct freertos_addrinfo * pxHints,     /* If not NULL: preferences. */
+                                   struct freertos_addrinfo ** ppxResult,        /* An allocated struct, containing the results. */
+                                   FOnDNSEvent pCallback,
+                                   void * pvSearchID,
+                                   TickType_t uxTimeout );
 
 #endif /* if ( ipconfigDNS_USE_CALLBACKS != 0 ) */
 
@@ -163,7 +163,7 @@ BaseType_t FreeRTOS_SetDNSIPPreference( IPPreference_t eIPPreference );
  * The function vDNSInitialise() initialises the DNS module.
  * It will be called "internally", by the IP-task.
  */
-    void vDNSInitialise( void );
+void vDNSInitialise( void );
 #endif /* ( ipconfigDNS_USE_CALLBACKS == 1 ) */
 
 /* *INDENT-OFF* */

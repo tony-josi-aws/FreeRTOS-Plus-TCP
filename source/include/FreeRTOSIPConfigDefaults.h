@@ -79,11 +79,11 @@
     #define ASSERT_CONCAT_( a, b )    a ## b
     #define ASSERT_CONCAT( a, b )     ASSERT_CONCAT_( a, b )
     #ifdef __COUNTER__
-        #define STATIC_ASSERT( e ) \
-    enum { ASSERT_CONCAT( static_assert_, __COUNTER__ ) = ( 1 / ( int ) ( !!( e ) ) ) }
+	#define STATIC_ASSERT( e ) \
+	enum { ASSERT_CONCAT( static_assert_, __COUNTER__ ) = ( 1 / ( int ) ( !!( e ) ) ) }
     #else
-        #define STATIC_ASSERT( e ) \
-    enum { ASSERT_CONCAT( assert_line_, __LINE__ ) = ( 1 / ( int ) ( !!( e ) ) ) }
+	#define STATIC_ASSERT( e ) \
+	enum { ASSERT_CONCAT( assert_line_, __LINE__ ) = ( 1 / ( int ) ( !!( e ) ) ) }
     #endif
 #endif /* ifdef static_assert */
 
@@ -94,9 +94,9 @@
  */
 
 #ifndef _static
-    /* suppressing the use of _static as it is used for other tools like cbmc */
-    /* coverity[misra_c_2012_rule_21_1_violation] */
-    /* coverity[misra_c_2012_rule_21_2_violation] */
+/* suppressing the use of _static as it is used for other tools like cbmc */
+/* coverity[misra_c_2012_rule_21_1_violation] */
+/* coverity[misra_c_2012_rule_21_2_violation] */
     #define _static    static
 #endif
 
@@ -1875,7 +1875,7 @@ STATIC_ASSERT( ipconfigUDP_MAX_SEND_BLOCK_TIME_TICKS <= portMAX_DELAY );
 
 #if ipconfigIS_ENABLED( ipconfigSELECT_USES_NOTIFY )
     #if ( configUSE_TASK_NOTIFICATIONS == 0 )
-        #error configUSE_TASK_NOTIFICATIONS must be 1 if ipconfigSELECT_USES_NOTIFY is enabled
+	#error configUSE_TASK_NOTIFICATIONS must be 1 if ipconfigSELECT_USES_NOTIFY is enabled
     #endif
 #endif
 
@@ -2334,9 +2334,9 @@ STATIC_ASSERT( ipconfigSOCK_DEFAULT_SEND_BLOCK_TIME <= portMAX_DELAY );
 
 #ifndef ipconfigMAXIMUM_DISCOVER_TX_PERIOD
     #ifdef _WINDOWS_
-        #define ipconfigMAXIMUM_DISCOVER_TX_PERIOD    pdMS_TO_TICKS( 999 )
+	#define ipconfigMAXIMUM_DISCOVER_TX_PERIOD    pdMS_TO_TICKS( 999 )
     #else
-        #define ipconfigMAXIMUM_DISCOVER_TX_PERIOD    pdMS_TO_TICKS( 30000 )
+	#define ipconfigMAXIMUM_DISCOVER_TX_PERIOD    pdMS_TO_TICKS( 30000 )
     #endif
 #endif
 
@@ -2766,15 +2766,15 @@ STATIC_ASSERT( ipconfigDNS_SEND_BLOCK_TIME_TICKS <= portMAX_DELAY );
  */
 
     #ifndef ipconfigARP_USE_CLASH_DETECTION
-        #define ipconfigARP_USE_CLASH_DETECTION    ipconfigENABLE
+	#define ipconfigARP_USE_CLASH_DETECTION    ipconfigENABLE
     #endif
 
     #if ( ( ipconfigARP_USE_CLASH_DETECTION != ipconfigDISABLE ) && ( ipconfigARP_USE_CLASH_DETECTION != ipconfigENABLE ) )
-        #error Invalid ipconfigARP_USE_CLASH_DETECTION configuration
+	#error Invalid ipconfigARP_USE_CLASH_DETECTION configuration
     #endif
 
     #if ( ipconfigIS_DISABLED( ipconfigARP_USE_CLASH_DETECTION ) )
-        #error When ipconfigDHCP_FALL_BACK_AUTO_IP is enabled, ipconfigARP_USE_CLASH_DETECTION must also be enabled
+	#error When ipconfigDHCP_FALL_BACK_AUTO_IP is enabled, ipconfigARP_USE_CLASH_DETECTION must also be enabled
     #endif
 
 /*-----------------------------------------------------------------------*/
@@ -2784,11 +2784,11 @@ STATIC_ASSERT( ipconfigDNS_SEND_BLOCK_TIME_TICKS <= portMAX_DELAY );
 /*-----------------------------------------------------------------------*/
 
     #ifndef ipconfigARP_USE_CLASH_DETECTION
-        #define ipconfigARP_USE_CLASH_DETECTION    ipconfigDISABLE
+	#define ipconfigARP_USE_CLASH_DETECTION    ipconfigDISABLE
     #endif
 
     #if ( ipconfigIS_ENABLED( ipconfigARP_USE_CLASH_DETECTION ) )
-        #error ipconfigARP_USE_CLASH_DETECTION is unused when ipconfigDHCP_FALL_BACK_AUTO_IP is disabled
+	#error ipconfigARP_USE_CLASH_DETECTION is unused when ipconfigDHCP_FALL_BACK_AUTO_IP is disabled
     #endif
 
 /*-----------------------------------------------------------------------*/
@@ -3169,9 +3169,9 @@ STATIC_ASSERT( ipconfigDNS_SEND_BLOCK_TIME_TICKS <= portMAX_DELAY );
 
 #ifndef FreeRTOS_debug_printf
     #if ( ( ipconfigHAS_DEBUG_PRINTF == 1 ) && defined( configPRINTF ) )
-        #define FreeRTOS_debug_printf( MSG )    do { configPRINTF( MSG ); } while( ipFALSE_BOOL )
+	#define FreeRTOS_debug_printf( MSG )    do { configPRINTF( MSG ); } while( ipFALSE_BOOL )
     #else
-        #define FreeRTOS_debug_printf( MSG )    do {} while( ipFALSE_BOOL )
+	#define FreeRTOS_debug_printf( MSG )    do {} while( ipFALSE_BOOL )
     #endif
 #endif
 
@@ -3205,9 +3205,9 @@ STATIC_ASSERT( ipconfigDNS_SEND_BLOCK_TIME_TICKS <= portMAX_DELAY );
 
 #ifndef FreeRTOS_printf
     #if ( ( ipconfigHAS_PRINTF == 1 ) && defined( configPRINTF ) )
-        #define FreeRTOS_printf( MSG )    do { configPRINTF( MSG ); } while( ipFALSE_BOOL )
+	#define FreeRTOS_printf( MSG )    do { configPRINTF( MSG ); } while( ipFALSE_BOOL )
     #else
-        #define FreeRTOS_printf( MSG )    do {} while( ipFALSE_BOOL )
+	#define FreeRTOS_printf( MSG )    do {} while( ipFALSE_BOOL )
     #endif
 #endif
 

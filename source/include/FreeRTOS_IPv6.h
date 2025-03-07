@@ -95,7 +95,7 @@ eFrameProcessingResult_t prvAllowIPPacketIPv6( const IPHeader_IPv6_t * const pxI
  * A loopback IP-address may only communicate internally with another
  * loopback IP-address.
  */
-    BaseType_t xBadIPv6Loopback( const IPHeader_IPv6_t * const pxIPv6Header );
+BaseType_t xBadIPv6Loopback( const IPHeader_IPv6_t * const pxIPv6Header );
 #endif /* ipconfigETHERNET_DRIVER_FILTERS_PACKETS == 0 */
 
 /*

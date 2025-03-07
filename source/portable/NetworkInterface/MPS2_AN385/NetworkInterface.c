@@ -100,18 +100,18 @@ NetworkInterface_t * pxMPS2_FillInterfaceDescriptor( BaseType_t xEMACIndex,
 
 static const struct smsc9220_eth_dev_cfg_t SMSC9220_ETH_DEV_CFG =
 {
-    .base = SMSC9220_BASE
+	.base = SMSC9220_BASE
 };
 
 static struct smsc9220_eth_dev_data_t SMSC9220_ETH_DEV_DATA =
 {
-    .state = 0
+	.state = 0
 };
 
 static const struct smsc9220_eth_dev_t SMSC9220_ETH_DEV =
 {
-    &( SMSC9220_ETH_DEV_CFG ),
-    &( SMSC9220_ETH_DEV_DATA )
+	&( SMSC9220_ETH_DEV_CFG ),
+	&( SMSC9220_ETH_DEV_DATA )
 };
 
 static TaskHandle_t xRxTaskHandle = NULL;
@@ -120,201 +120,201 @@ static TaskHandle_t xRxTaskHandle = NULL;
 
 static void prvWait_ms( uint32_t ulSleep_ms )
 {
-    vTaskDelay( pdMS_TO_TICKS( ulSleep_ms ) );
+	vTaskDelay( pdMS_TO_TICKS( ulSleep_ms ) );
 }
 /*-----------------------------------------------------------*/
 
 static void prvSetMACAddress( void )
 {
-    const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
-    uint32_t ucMACLow = 0;
-    uint32_t ucMACHigh = 0;
+	const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
+	uint32_t ucMACLow = 0;
+	uint32_t ucMACHigh = 0;
 
-    /* Using local variables to make sure the right alignment is used.  The MAC
-     * address is 6 bytes, hence the copy of 4 bytes followed by 2 bytes. */
-    memcpy( ( void * ) &ucMACLow, ( void * ) pxMyInterface->pxEndPoint->xMACAddress.ucBytes, 4 );
-    memcpy( ( void * ) &ucMACHigh, ( void * ) ( pxMyInterface->pxEndPoint->xMACAddress.ucBytes + 4 ), 2 );
+	/* Using local variables to make sure the right alignment is used.  The MAC
+	 * address is 6 bytes, hence the copy of 4 bytes followed by 2 bytes. */
+	memcpy( ( void * ) &ucMACLow, ( void * ) pxMyInterface->pxEndPoint->xMACAddress.ucBytes, 4 );
+	memcpy( ( void * ) &ucMACHigh, ( void * ) ( pxMyInterface->pxEndPoint->xMACAddress.ucBytes + 4 ), 2 );
 
-    if( smsc9220_mac_regwrite( dev, SMSC9220_MAC_REG_OFFSET_ADDRL, ucMACLow ) != 0 )
-    {
-        smsc9220_mac_regwrite( dev, SMSC9220_MAC_REG_OFFSET_ADDRH, ucMACHigh );
-    }
+	if( smsc9220_mac_regwrite( dev, SMSC9220_MAC_REG_OFFSET_ADDRL, ucMACLow ) != 0 )
+	{
+		smsc9220_mac_regwrite( dev, SMSC9220_MAC_REG_OFFSET_ADDRH, ucMACHigh );
+	}
 }
 /*-----------------------------------------------------------*/
 
 static void prvRxTask( void * pvParameters )
 {
-    const TickType_t xBlockTime = pdMS_TO_TICKS( 1500UL );
-    const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
-    IPStackEvent_t xRxEvent = { eNetworkRxEvent, NULL };
-    NetworkBufferDescriptor_t * pxNetworkBuffer = NULL;
-    uint32_t ulDataRead;
+	const TickType_t xBlockTime = pdMS_TO_TICKS( 1500UL );
+	const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
+	IPStackEvent_t xRxEvent = { eNetworkRxEvent, NULL };
+	NetworkBufferDescriptor_t * pxNetworkBuffer = NULL;
+	uint32_t ulDataRead;
 
-    ( void ) pvParameters;
+	( void ) pvParameters;
 
-    for( ; ; )
-    {
-        /* Wait for the Ethernet ISR to receive a packet. */
-        ulTaskNotifyTake( pdFALSE, xBlockTime );
+	for( ; ; )
+	{
+		/* Wait for the Ethernet ISR to receive a packet. */
+		ulTaskNotifyTake( pdFALSE, xBlockTime );
 
-        while( ( ulDataRead = prvLowLevelInput( &pxNetworkBuffer ) ) != 0UL )
-        {
-            xRxEvent.pvData = ( void * ) pxNetworkBuffer;
+		while( ( ulDataRead = prvLowLevelInput( &pxNetworkBuffer ) ) != 0UL )
+		{
+			xRxEvent.pvData = ( void * ) pxNetworkBuffer;
 
-            pxNetworkBuffer->pxInterface = pxMyInterface;
-            pxNetworkBuffer->pxEndPoint = FreeRTOS_MatchingEndpoint( pxMyInterface, pxNetworkBuffer->pucEthernetBuffer );
-            pxNetworkBuffer->pxEndPoint = pxNetworkEndPoints; /*temporary change for single end point */
+			pxNetworkBuffer->pxInterface = pxMyInterface;
+			pxNetworkBuffer->pxEndPoint = FreeRTOS_MatchingEndpoint( pxMyInterface, pxNetworkBuffer->pucEthernetBuffer );
+			pxNetworkBuffer->pxEndPoint = pxNetworkEndPoints; /*temporary change for single end point */
 
-            if( xSendEventStructToIPTask( &xRxEvent, ( TickType_t ) 0 ) == pdFAIL )
-            {
-                vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
-            }
-        }
+			if( xSendEventStructToIPTask( &xRxEvent, ( TickType_t ) 0 ) == pdFAIL )
+			{
+				vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
+			}
+		}
 
-        smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_STATUS_FIFO_LEVEL ); /*_RB_ Can this move up. */
-    }
+		smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_STATUS_FIFO_LEVEL ); /*_RB_ Can this move up. */
+	}
 }
 /*-----------------------------------------------------------*/
 
 static uint32_t prvLowLevelInput( NetworkBufferDescriptor_t ** pxNetworkBuffer )
 {
-    const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
-    const TickType_t xDescriptorWaitTime = pdMS_TO_TICKS( 250UL );
-    uint32_t ulMessageLength = 0, ulReceivedBytes = 0;
+	const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
+	const TickType_t xDescriptorWaitTime = pdMS_TO_TICKS( 250UL );
+	uint32_t ulMessageLength = 0, ulReceivedBytes = 0;
 
-    ulMessageLength = smsc9220_peek_next_packet_size( dev );
+	ulMessageLength = smsc9220_peek_next_packet_size( dev );
 
-    if( ulMessageLength != 0 )
-    {
-        *pxNetworkBuffer = pxGetNetworkBufferWithDescriptor( ulMessageLength,
-                                                             xDescriptorWaitTime );
+	if( ulMessageLength != 0 )
+	{
+		*pxNetworkBuffer = pxGetNetworkBufferWithDescriptor( ulMessageLength,
+		                                                     xDescriptorWaitTime );
 
-        if( *pxNetworkBuffer != NULL )
-        {
-            ( *pxNetworkBuffer )->xDataLength = ulMessageLength;
+		if( *pxNetworkBuffer != NULL )
+		{
+			( *pxNetworkBuffer )->xDataLength = ulMessageLength;
 
-            ulReceivedBytes = smsc9220_receive_by_chunks( dev,
-                                                          ( char * ) ( ( *pxNetworkBuffer )->pucEthernetBuffer ),
-                                                          ulMessageLength ); /* not used */
-            ( *pxNetworkBuffer )->xDataLength = ulReceivedBytes;
-        }
-        else
-        {
-            FreeRTOS_printf( ( "pxNetworkBuffer = NULL\n" ) );
-        }
-    }
+			ulReceivedBytes = smsc9220_receive_by_chunks( dev,
+			                                              ( char * ) ( ( *pxNetworkBuffer )->pucEthernetBuffer ),
+			                                              ulMessageLength ); /* not used */
+			( *pxNetworkBuffer )->xDataLength = ulReceivedBytes;
+		}
+		else
+		{
+			FreeRTOS_printf( ( "pxNetworkBuffer = NULL\n" ) );
+		}
+	}
 
-    return ulReceivedBytes;
+	return ulReceivedBytes;
 }
 /*-----------------------------------------------------------*/
 
 void EthernetISR( void )
 {
-    const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    uint32_t ulIRQStatus;
-    const uint32_t ulRXFifoStatusIRQBit = 1UL << SMSC9220_INTERRUPT_RX_STATUS_FIFO_LEVEL;
-    extern uint32_t get_irq_status( const struct smsc9220_eth_dev_t * dev );
+	const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
+	BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+	uint32_t ulIRQStatus;
+	const uint32_t ulRXFifoStatusIRQBit = 1UL << SMSC9220_INTERRUPT_RX_STATUS_FIFO_LEVEL;
+	extern uint32_t get_irq_status( const struct smsc9220_eth_dev_t * dev );
 
-    /* Should not enable this interrupt until after the handler task has been
-     * created. */
-    configASSERT( xRxTaskHandle );
+	/* Should not enable this interrupt until after the handler task has been
+	 * created. */
+	configASSERT( xRxTaskHandle );
 
-    ulIRQStatus = get_irq_status( dev );
+	ulIRQStatus = get_irq_status( dev );
 
-    if( ( ulIRQStatus & ulRXFifoStatusIRQBit ) != 0 )
-    {
-        /* Unblock the task that will process this interrupt. */
-        vTaskNotifyGiveFromISR( xRxTaskHandle, &xHigherPriorityTaskWoken );
-        smsc9220_clear_interrupt( dev, SMSC9220_INTERRUPT_RX_STATUS_FIFO_LEVEL );
+	if( ( ulIRQStatus & ulRXFifoStatusIRQBit ) != 0 )
+	{
+		/* Unblock the task that will process this interrupt. */
+		vTaskNotifyGiveFromISR( xRxTaskHandle, &xHigherPriorityTaskWoken );
+		smsc9220_clear_interrupt( dev, SMSC9220_INTERRUPT_RX_STATUS_FIFO_LEVEL );
 
-        /* Re-enabled by the task that handles the incoming packet. */ /*_RB_ Is this necessary? */
-        smsc9220_disable_interrupt( dev, SMSC9220_INTERRUPT_RX_STATUS_FIFO_LEVEL );
-    }
+		/* Re-enabled by the task that handles the incoming packet. */ /*_RB_ Is this necessary? */
+		smsc9220_disable_interrupt( dev, SMSC9220_INTERRUPT_RX_STATUS_FIFO_LEVEL );
+	}
 
-    smsc9220_clear_all_interrupts( dev );
+	smsc9220_clear_all_interrupts( dev );
 
-    portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
+	portYIELD_FROM_ISR( xHigherPriorityTaskWoken );
 }
 /*-----------------------------------------------------------*/
 
 static BaseType_t xMPS2_NetworkInterfaceInitialise( NetworkInterface_t * pxInterface )
 {
-    const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
-    const uint32_t ulEthernetIRQ = 13UL;
-    BaseType_t xReturn = pdFAIL;
-    enum smsc9220_error_t err;
+	const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
+	const uint32_t ulEthernetIRQ = 13UL;
+	BaseType_t xReturn = pdFAIL;
+	enum smsc9220_error_t err;
 
-    ( void ) pxInterface;
+	( void ) pxInterface;
 
-    if( xRxTaskHandle == NULL )
-    {
-        /* Task has not been created before. */
-        xReturn = xTaskCreate( prvRxTask,
-                               "EMAC",
-                               nwRX_TASK_STACK_SIZE,
-                               NULL,
-                               nwETHERNET_RX_HANDLER_TASK_PRIORITY,
-                               &xRxTaskHandle );
-        configASSERT( xReturn != pdFALSE );
-    }
+	if( xRxTaskHandle == NULL )
+	{
+		/* Task has not been created before. */
+		xReturn = xTaskCreate( prvRxTask,
+		                       "EMAC",
+		                       nwRX_TASK_STACK_SIZE,
+		                       NULL,
+		                       nwETHERNET_RX_HANDLER_TASK_PRIORITY,
+		                       &xRxTaskHandle );
+		configASSERT( xReturn != pdFALSE );
+	}
 
-    if( xReturn == pdPASS )
-    {
-        err = smsc9220_init( dev, prvWait_ms );
+	if( xReturn == pdPASS )
+	{
+		err = smsc9220_init( dev, prvWait_ms );
 
-        if( err != SMSC9220_ERROR_NONE )
-        {
-            FreeRTOS_debug_printf( ( "%s: %d\n", "smsc9220_init failed", err ) );
-            xReturn = pdFAIL;
-        }
-        else
-        {
-            /* Disable the Ethernet interrupt in the NVIC. */
-            nwNVIC_ICER = ( uint32_t ) ( 1UL << ( ulEthernetIRQ & 0x1FUL ) );
+		if( err != SMSC9220_ERROR_NONE )
+		{
+			FreeRTOS_debug_printf( ( "%s: %d\n", "smsc9220_init failed", err ) );
+			xReturn = pdFAIL;
+		}
+		else
+		{
+			/* Disable the Ethernet interrupt in the NVIC. */
+			nwNVIC_ICER = ( uint32_t ) ( 1UL << ( ulEthernetIRQ & 0x1FUL ) );
 
-            smsc9220_disable_all_interrupts( dev );
-            smsc9220_clear_all_interrupts( dev );
+			smsc9220_disable_all_interrupts( dev );
+			smsc9220_clear_all_interrupts( dev );
 
-            smsc9220_set_fifo_level_irq( dev, SMSC9220_FIFO_LEVEL_IRQ_RX_STATUS_POS,
-                                         SMSC9220_FIFO_LEVEL_IRQ_LEVEL_MIN );
-            smsc9220_set_fifo_level_irq( dev, SMSC9220_FIFO_LEVEL_IRQ_TX_STATUS_POS,
-                                         SMSC9220_FIFO_LEVEL_IRQ_LEVEL_MIN );
-            smsc9220_set_fifo_level_irq( dev, SMSC9220_FIFO_LEVEL_IRQ_TX_DATA_POS,
-                                         SMSC9220_FIFO_LEVEL_IRQ_LEVEL_MAX );
-            prvSetMACAddress();
+			smsc9220_set_fifo_level_irq( dev, SMSC9220_FIFO_LEVEL_IRQ_RX_STATUS_POS,
+			                             SMSC9220_FIFO_LEVEL_IRQ_LEVEL_MIN );
+			smsc9220_set_fifo_level_irq( dev, SMSC9220_FIFO_LEVEL_IRQ_TX_STATUS_POS,
+			                             SMSC9220_FIFO_LEVEL_IRQ_LEVEL_MIN );
+			smsc9220_set_fifo_level_irq( dev, SMSC9220_FIFO_LEVEL_IRQ_TX_DATA_POS,
+			                             SMSC9220_FIFO_LEVEL_IRQ_LEVEL_MAX );
+			prvSetMACAddress();
 
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_GPIO0 );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_GPIO1 );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_GPIO2 );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_STATUS_FIFO_LEVEL );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_STATUS_FIFO_FULL );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_DROPPED_FRAME );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_STATUS_FIFO_LEVEL );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_STATUS_FIFO_FULL );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_DATA_FIFO_AVAILABLE );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_DATA_FIFO_OVERRUN );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_ERROR );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_ERROR );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_WATCHDOG_TIMEOUT );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_STATUS_OVERFLOW );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_POWER_MANAGEMENT );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_PHY );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_GP_TIMER );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_DMA );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_IOC );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_DROPPED_FRAME_HALF );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_STOPPED );
-            smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_STOPPED );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_GPIO0 );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_GPIO1 );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_GPIO2 );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_STATUS_FIFO_LEVEL );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_STATUS_FIFO_FULL );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_DROPPED_FRAME );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_STATUS_FIFO_LEVEL );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_STATUS_FIFO_FULL );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_DATA_FIFO_AVAILABLE );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_DATA_FIFO_OVERRUN );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_ERROR );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_ERROR );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_WATCHDOG_TIMEOUT );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_STATUS_OVERFLOW );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_POWER_MANAGEMENT );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_PHY );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_GP_TIMER );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_DMA );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_IOC );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_DROPPED_FRAME_HALF );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_RX_STOPPED );
+			smsc9220_enable_interrupt( dev, SMSC9220_INTERRUPT_TX_STOPPED );
 
-            /* Enable the Ethernet interrupt in the NVIC. */
-            nwNVIC_ISER = ( uint32_t ) ( 1UL << ( ulEthernetIRQ & 0x1FUL ) );
+			/* Enable the Ethernet interrupt in the NVIC. */
+			nwNVIC_ISER = ( uint32_t ) ( 1UL << ( ulEthernetIRQ & 0x1FUL ) );
 
-            xReturn = pdPASS;
-        }
-    }
+			xReturn = pdPASS;
+		}
+	}
 
-    return xReturn;
+	return xReturn;
 }
 /*-----------------------------------------------------------*/
 
@@ -322,78 +322,78 @@ static BaseType_t xMPS2_NetworkInterfaceOutput( NetworkInterface_t * pxInterface
                                                 NetworkBufferDescriptor_t * const pxNetworkBuffer,
                                                 BaseType_t xReleaseAfterSend )
 {
-    const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
-    enum smsc9220_error_t error = SMSC9220_ERROR_NONE;
-    BaseType_t xReturn = pdFAIL, x;
+	const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
+	enum smsc9220_error_t error = SMSC9220_ERROR_NONE;
+	BaseType_t xReturn = pdFAIL, x;
 
-    ( void ) pxInterface;
+	( void ) pxInterface;
 
-    for( x = 0; x < niMAX_TX_ATTEMPTS; x++ )
-    {
-        if( pxNetworkBuffer->xDataLength < SMSC9220_ETH_MAX_FRAME_SIZE )
-        {
-            error = smsc9220_send_by_chunks( dev,
-                                             pxNetworkBuffer->xDataLength,
-                                             true,
-                                             ( char * ) ( pxNetworkBuffer->pucEthernetBuffer ),
-                                             pxNetworkBuffer->xDataLength );
+	for( x = 0; x < niMAX_TX_ATTEMPTS; x++ )
+	{
+		if( pxNetworkBuffer->xDataLength < SMSC9220_ETH_MAX_FRAME_SIZE )
+		{
+			error = smsc9220_send_by_chunks( dev,
+			                                 pxNetworkBuffer->xDataLength,
+			                                 true,
+			                                 ( char * ) ( pxNetworkBuffer->pucEthernetBuffer ),
+			                                 pxNetworkBuffer->xDataLength );
 
-            if( error == SMSC9220_ERROR_NONE )
-            {
-                xReturn = pdPASS;
-                break;
-            }
-            else
-            {
-                xReturn = pdFAIL;
-                FreeRTOS_debug_printf( ( "Error send by chunks: %d\n",
-                                         error ) );
-            }
-        }
-        else
-        {
-            xReturn = pdFAIL;
-            FreeRTOS_debug_printf( ( "Packet size too large:%d\n",
-                                     pxNetworkBuffer->xDataLength ) );
-            break;
-        }
-    }
+			if( error == SMSC9220_ERROR_NONE )
+			{
+				xReturn = pdPASS;
+				break;
+			}
+			else
+			{
+				xReturn = pdFAIL;
+				FreeRTOS_debug_printf( ( "Error send by chunks: %d\n",
+				                         error ) );
+			}
+		}
+		else
+		{
+			xReturn = pdFAIL;
+			FreeRTOS_debug_printf( ( "Packet size too large:%d\n",
+			                         pxNetworkBuffer->xDataLength ) );
+			break;
+		}
+	}
 
-    if( xReleaseAfterSend == pdTRUE )
-    {
-        vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
-    }
+	if( xReleaseAfterSend == pdTRUE )
+	{
+		vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
+	}
 
-    return xReturn;
+	return xReturn;
 }
 /*-----------------------------------------------------------*/
 
 void vNetworkInterfaceAllocateRAMToBuffers( NetworkBufferDescriptor_t pxNetworkBuffers[ ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS ] )
 {
-    /* FIX ME if you want to use BufferAllocation_1.c, which uses statically
-     * allocated network buffers. */
+	/* FIX ME if you want to use BufferAllocation_1.c, which uses statically
+	 * allocated network buffers. */
 
-    /* Hard force an assert as this driver cannot be used with BufferAllocation_1.c
-     * without implementing this function. */
-    configASSERT( xRxTaskHandle == ( TaskHandle_t ) 1 );
-    ( void ) pxNetworkBuffers;
+	/* Hard force an assert as this driver cannot be used with BufferAllocation_1.c
+	 * without implementing this function. */
+	configASSERT( xRxTaskHandle == ( TaskHandle_t ) 1 );
+	( void ) pxNetworkBuffers;
 }
 /*-----------------------------------------------------------*/
 
 
 static BaseType_t xMPS2_GetPhyLinkStatus( NetworkInterface_t * pxInterface )
 {
-    const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
-    uint32_t ulPHYBasicStatusValue;
-    BaseType_t xLinkStatusUp;
+	const struct smsc9220_eth_dev_t * dev = &SMSC9220_ETH_DEV;
+	uint32_t ulPHYBasicStatusValue;
+	BaseType_t xLinkStatusUp;
 
-    ( void ) pxInterface;
-    /* Get current status */
-    smsc9220_phy_regread( dev, SMSC9220_PHY_REG_OFFSET_BSTATUS,
-                          &ulPHYBasicStatusValue );
-    xLinkStatusUp = ( bool ) ( ulPHYBasicStatusValue &
-                               ( 1ul << ( PHY_REG_BSTATUS_LINK_STATUS_INDEX ) ) );
-    return xLinkStatusUp;
+	( void ) pxInterface;
+	/* Get current status */
+	smsc9220_phy_regread( dev, SMSC9220_PHY_REG_OFFSET_BSTATUS,
+	                      &ulPHYBasicStatusValue );
+	xLinkStatusUp = ( bool ) ( ulPHYBasicStatusValue &
+	                           ( 1ul << ( PHY_REG_BSTATUS_LINK_STATUS_INDEX ) ) );
+	return xLinkStatusUp;
 }
 
 /*-----------------------------------------------------------*/
@@ -403,11 +403,11 @@ static BaseType_t xMPS2_GetPhyLinkStatus( NetworkInterface_t * pxInterface )
 /* Do not call the following function directly. It is there for downward compatibility.
  * The function FreeRTOS_IPInit() will call it to initialice the interface and end-point
  * objects.  See the description in FreeRTOS_Routing.h. */
-    NetworkInterface_t * pxFillInterfaceDescriptor( BaseType_t xEMACIndex,
-                                                    NetworkInterface_t * pxInterface )
-    {
-        return pxMPS2_FillInterfaceDescriptor( xEMACIndex, pxInterface );
-    }
+NetworkInterface_t * pxFillInterfaceDescriptor( BaseType_t xEMACIndex,
+                                                NetworkInterface_t * pxInterface )
+{
+	return pxMPS2_FillInterfaceDescriptor( xEMACIndex, pxInterface );
+}
 
 #endif
 /*-----------------------------------------------------------*/
@@ -415,25 +415,25 @@ static BaseType_t xMPS2_GetPhyLinkStatus( NetworkInterface_t * pxInterface )
 NetworkInterface_t * pxMPS2_FillInterfaceDescriptor( BaseType_t xEMACIndex,
                                                      NetworkInterface_t * pxInterface )
 {
-    static char pcName[ 17 ];
+	static char pcName[ 17 ];
 
 /* This function pxFillInterfaceDescriptor() adds a network-interface.
  * Make sure that the object pointed to by 'pxInterface'
  * is declared static or global, and that it will remain to exist. */
 
-    pxMyInterface = pxInterface;
+	pxMyInterface = pxInterface;
 
-    snprintf( pcName, sizeof( pcName ), "eth%ld", xEMACIndex );
+	snprintf( pcName, sizeof( pcName ), "eth%ld", xEMACIndex );
 
-    memset( pxInterface, '\0', sizeof( *pxInterface ) );
-    pxInterface->pcName = pcName;                    /* Just for logging, debugging. */
-    pxInterface->pvArgument = ( void * ) xEMACIndex; /* Has only meaning for the driver functions. */
-    pxInterface->pfInitialise = xMPS2_NetworkInterfaceInitialise;
-    pxInterface->pfOutput = xMPS2_NetworkInterfaceOutput;
-    pxInterface->pfGetPhyLinkStatus = xMPS2_GetPhyLinkStatus;
+	memset( pxInterface, '\0', sizeof( *pxInterface ) );
+	pxInterface->pcName = pcName;                /* Just for logging, debugging. */
+	pxInterface->pvArgument = ( void * ) xEMACIndex; /* Has only meaning for the driver functions. */
+	pxInterface->pfInitialise = xMPS2_NetworkInterfaceInitialise;
+	pxInterface->pfOutput = xMPS2_NetworkInterfaceOutput;
+	pxInterface->pfGetPhyLinkStatus = xMPS2_GetPhyLinkStatus;
 
-    FreeRTOS_AddNetworkInterface( pxInterface );
+	FreeRTOS_AddNetworkInterface( pxInterface );
 
-    return pxInterface;
+	return pxInterface;
 }
 /*-----------------------------------------------------------*/

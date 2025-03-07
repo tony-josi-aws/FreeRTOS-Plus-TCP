@@ -48,7 +48,7 @@ BaseType_t prvTCPSocketIsActive( eIPTCPState_t eStatus );
  * returned.
  */
 #if ( ipconfigTCP_HANG_PROTECTION == 1 )
-    BaseType_t prvTCPStatusAgeCheck( FreeRTOS_Socket_t * pxSocket );
+BaseType_t prvTCPStatusAgeCheck( FreeRTOS_Socket_t * pxSocket );
 #endif
 
 /*

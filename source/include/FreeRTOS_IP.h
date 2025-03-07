@@ -161,16 +161,16 @@ extern uint32_t ulApplicationGetNextSequenceNumber( uint32_t ulSourceAddress,
  */
 typedef struct xNETWORK_BUFFER
 {
-    ListItem_t xBufferListItem;                /**< Used to reference the buffer form the free buffer list or a socket. */
-    IP_Address_t xIPAddress;                   /**< Source or destination IP address, depending on usage scenario. */
-    uint8_t * pucEthernetBuffer;               /**< Pointer to the start of the Ethernet frame. */
-    size_t xDataLength;                        /**< Starts by holding the total Ethernet frame length, then the UDP/TCP payload length. */
-    struct xNetworkInterface * pxInterface;    /**< The interface on which the packet was received. */
-    struct xNetworkEndPoint * pxEndPoint;      /**< The end-point through which this packet shall be sent. */
-    uint16_t usPort;                           /**< Source or destination port, depending on usage scenario. */
-    uint16_t usBoundPort;                      /**< The port to which a transmitting socket is bound. */
+	ListItem_t xBufferListItem;            /**< Used to reference the buffer form the free buffer list or a socket. */
+	IP_Address_t xIPAddress;               /**< Source or destination IP address, depending on usage scenario. */
+	uint8_t * pucEthernetBuffer;           /**< Pointer to the start of the Ethernet frame. */
+	size_t xDataLength;                    /**< Starts by holding the total Ethernet frame length, then the UDP/TCP payload length. */
+	struct xNetworkInterface * pxInterface; /**< The interface on which the packet was received. */
+	struct xNetworkEndPoint * pxEndPoint;  /**< The end-point through which this packet shall be sent. */
+	uint16_t usPort;                       /**< Source or destination port, depending on usage scenario. */
+	uint16_t usBoundPort;                  /**< The port to which a transmitting socket is bound. */
     #if ( ipconfigUSE_LINKED_RX_MESSAGES != 0 )
-        struct xNETWORK_BUFFER * pxNextBuffer; /**< Possible optimisation for expert users - requires network driver support. */
+	struct xNETWORK_BUFFER * pxNextBuffer; /**< Possible optimisation for expert users - requires network driver support. */
     #endif
 
 #define ul_IPAddress     xIPAddress.xIP_IPv4
@@ -184,7 +184,7 @@ typedef struct xNETWORK_BUFFER
  */
 struct xMAC_ADDRESS
 {
-    uint8_t ucBytes[ ipMAC_ADDRESS_LENGTH_BYTES ]; /**< Byte array of the MAC address */
+	uint8_t ucBytes[ ipMAC_ADDRESS_LENGTH_BYTES ]; /**< Byte array of the MAC address */
 }
 #include "pack_struct_end.h"
 
@@ -192,17 +192,17 @@ typedef struct xMAC_ADDRESS MACAddress_t;
 
 typedef enum eNETWORK_EVENTS
 {
-    eNetworkUp,  /* The network is configured. */
-    eNetworkDown /* The network connection has been lost. */
+	eNetworkUp, /* The network is configured. */
+	eNetworkDown /* The network connection has been lost. */
 } eIPCallbackEvent_t;
 
 /* MISRA check: some modules refer to this typedef even though
  * ipconfigSUPPORT_OUTGOING_PINGS is not enabled. */
 typedef enum ePING_REPLY_STATUS
 {
-    eSuccess = 0,     /**< A correct reply has been received for an outgoing ping. */
-    eInvalidChecksum, /**< A reply was received for an outgoing ping but the checksum of the reply was incorrect. */
-    eInvalidData      /**< A reply was received to an outgoing ping but the payload of the reply was not correct. */
+	eSuccess = 0, /**< A correct reply has been received for an outgoing ping. */
+	eInvalidChecksum, /**< A reply was received for an outgoing ping but the checksum of the reply was incorrect. */
+	eInvalidData  /**< A reply was received to an outgoing ping but the payload of the reply was not correct. */
 } ePingReplyStatus_t;
 
 /**
@@ -210,12 +210,12 @@ typedef enum ePING_REPLY_STATUS
  */
 typedef struct xIP_TIMER
 {
-    uint32_t
-        bActive : 1,            /**< This timer is running and must be processed. */
-        bExpired : 1;           /**< Timer has expired and a task must be processed. */
-    TimeOut_t xTimeOut;         /**< The timeout value. */
-    TickType_t ulRemainingTime; /**< The amount of time remaining. */
-    TickType_t ulReloadTime;    /**< The value of reload time. */
+	uint32_t
+	        bActive : 1,    /**< This timer is running and must be processed. */
+	        bExpired : 1;   /**< Timer has expired and a task must be processed. */
+	TimeOut_t xTimeOut;     /**< The timeout value. */
+	TickType_t ulRemainingTime; /**< The amount of time remaining. */
+	TickType_t ulReloadTime; /**< The value of reload time. */
 } IPTimer_t;
 
 
@@ -225,20 +225,20 @@ typedef struct xIP_TIMER
 /* FreeRTOS_htons / FreeRTOS_htonl: some platforms might have built-in versions
  * using a single instruction so allow these versions to be overridden. */
     #ifndef FreeRTOS_htons
-        #define FreeRTOS_htons( usIn )    ( ( uint16_t ) ( ( ( usIn ) << 8U ) | ( ( usIn ) >> 8U ) ) )
+	#define FreeRTOS_htons( usIn )    ( ( uint16_t ) ( ( ( usIn ) << 8U ) | ( ( usIn ) >> 8U ) ) )
     #endif
 
     #ifndef FreeRTOS_htonl
-        #define FreeRTOS_htonl( ulIn )                             \
-    (                                                              \
-        ( uint32_t )                                               \
-        (                                                          \
-            ( ( ( ( uint32_t ) ( ulIn ) ) ) << 24 ) |              \
-            ( ( ( ( uint32_t ) ( ulIn ) ) & 0x0000ff00U ) << 8 ) | \
-            ( ( ( ( uint32_t ) ( ulIn ) ) & 0x00ff0000U ) >> 8 ) | \
-            ( ( ( ( uint32_t ) ( ulIn ) ) ) >> 24 )                \
-        )                                                          \
-    )
+	#define FreeRTOS_htonl( ulIn )                             \
+	(                                                              \
+		( uint32_t )                                               \
+		(                                                          \
+			( ( ( ( uint32_t ) ( ulIn ) ) ) << 24 ) |              \
+			( ( ( ( uint32_t ) ( ulIn ) ) & 0x0000ff00U ) << 8 ) | \
+			( ( ( ( uint32_t ) ( ulIn ) ) & 0x00ff0000U ) >> 8 ) | \
+			( ( ( ( uint32_t ) ( ulIn ) ) ) >> 24 )                \
+		)                                                          \
+	)
     #endif /* ifndef FreeRTOS_htonl */
 
 #else /* ipconfigBYTE_ORDER */
@@ -332,32 +332,32 @@ struct xNetworkInterface;
 /* Do not call the following function directly. It is there for downward compatibility.
  * The function FreeRTOS_IPInit() will call it to initialise the interface and end-point
  * objects.  See the description in FreeRTOS_Routing.h. */
-    struct xNetworkInterface * pxFillInterfaceDescriptor( BaseType_t xEMACIndex,
-                                                          struct xNetworkInterface * pxInterface );
+struct xNetworkInterface * pxFillInterfaceDescriptor( BaseType_t xEMACIndex,
+                                                      struct xNetworkInterface * pxInterface );
 
 /* The following function is only provided to allow backward compatibility
  * with the earlier version of FreeRTOS+TCP which had a single interface only. */
-    BaseType_t FreeRTOS_IPInit( const uint8_t ucIPAddress[ ipIP_ADDRESS_LENGTH_BYTES ],
-                                const uint8_t ucNetMask[ ipIP_ADDRESS_LENGTH_BYTES ],
-                                const uint8_t ucGatewayAddress[ ipIP_ADDRESS_LENGTH_BYTES ],
-                                const uint8_t ucDNSServerAddress[ ipIP_ADDRESS_LENGTH_BYTES ],
-                                const uint8_t ucMACAddress[ ipMAC_ADDRESS_LENGTH_BYTES ] );
+BaseType_t FreeRTOS_IPInit( const uint8_t ucIPAddress[ ipIP_ADDRESS_LENGTH_BYTES ],
+                            const uint8_t ucNetMask[ ipIP_ADDRESS_LENGTH_BYTES ],
+                            const uint8_t ucGatewayAddress[ ipIP_ADDRESS_LENGTH_BYTES ],
+                            const uint8_t ucDNSServerAddress[ ipIP_ADDRESS_LENGTH_BYTES ],
+                            const uint8_t ucMACAddress[ ipMAC_ADDRESS_LENGTH_BYTES ] );
 
 /* The following 2 functions also assume that there is only 1 network endpoint/interface.
  * The new function are called: FreeRTOS_GetEndPointConfiguration() and
  * FreeRTOS_SetEndPointConfiguration() */
-    void FreeRTOS_GetAddressConfiguration( uint32_t * pulIPAddress,
-                                           uint32_t * pulNetMask,
-                                           uint32_t * pulGatewayAddress,
-                                           uint32_t * pulDNSServerAddress );
+void FreeRTOS_GetAddressConfiguration( uint32_t * pulIPAddress,
+                                       uint32_t * pulNetMask,
+                                       uint32_t * pulGatewayAddress,
+                                       uint32_t * pulDNSServerAddress );
 
-    void FreeRTOS_SetAddressConfiguration( const uint32_t * pulIPAddress,
-                                           const uint32_t * pulNetMask,
-                                           const uint32_t * pulGatewayAddress,
-                                           const uint32_t * pulDNSServerAddress );
+void FreeRTOS_SetAddressConfiguration( const uint32_t * pulIPAddress,
+                                       const uint32_t * pulNetMask,
+                                       const uint32_t * pulGatewayAddress,
+                                       const uint32_t * pulDNSServerAddress );
 
-    void * FreeRTOS_GetUDPPayloadBuffer( size_t uxRequestedSizeBytes,
-                                         TickType_t uxBlockTimeTicks );
+void * FreeRTOS_GetUDPPayloadBuffer( size_t uxRequestedSizeBytes,
+                                     TickType_t uxBlockTimeTicks );
 
 #endif /* if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 ) */
 
@@ -394,23 +394,23 @@ void FreeRTOS_ReleaseUDPPayloadBuffer( void const * pvBuffer );
 const uint8_t * FreeRTOS_GetMACAddress( void );
 void FreeRTOS_UpdateMACAddress( const uint8_t ucMACAddress[ ipMAC_ADDRESS_LENGTH_BYTES ] );
 #if ( ipconfigUSE_NETWORK_EVENT_HOOK == 1 )
-    /* This function shall be defined by the application. */
+/* This function shall be defined by the application. */
     #if ( ipconfigIPv4_BACKWARD_COMPATIBLE == 1 )
-        void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent );
+void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent );
     #else
-        void vApplicationIPNetworkEventHook_Multi( eIPCallbackEvent_t eNetworkEvent,
-                                                   struct xNetworkEndPoint * pxEndPoint );
+void vApplicationIPNetworkEventHook_Multi( eIPCallbackEvent_t eNetworkEvent,
+                                           struct xNetworkEndPoint * pxEndPoint );
     #endif
 #endif
 #if ( ipconfigSUPPORT_OUTGOING_PINGS == 1 )
-    void vApplicationPingReplyHook( ePingReplyStatus_t eStatus,
-                                    uint16_t usIdentifier );
+void vApplicationPingReplyHook( ePingReplyStatus_t eStatus,
+                                uint16_t usIdentifier );
 #endif
 
 BaseType_t FreeRTOS_IsNetworkUp( void );
 
 #if ( ipconfigCHECK_IP_QUEUE_SPACE != 0 )
-    UBaseType_t uxGetMinimumIPQueueSpace( void );
+UBaseType_t uxGetMinimumIPQueueSpace( void );
 #endif
 
 BaseType_t xIsNetworkDownEventPending( void );
@@ -422,7 +422,7 @@ BaseType_t xIsNetworkDownEventPending( void );
  * because of inactivity
  */
 #if ( ( ipconfigHAS_DEBUG_PRINTF != 0 ) || ( ipconfigHAS_PRINTF != 0 ) )
-    const char * FreeRTOS_GetTCPStateName( UBaseType_t ulState );
+const char * FreeRTOS_GetTCPStateName( UBaseType_t ulState );
 #endif
 
 #if ( ipconfigDHCP_REGISTER_HOSTNAME == 1 )
@@ -432,7 +432,7 @@ BaseType_t xIsNetworkDownEventPending( void );
  * name. If this option is used the callback below must be provided by the
  * application writer to return a const string, denoting the device's name. */
 /* Typically this function is defined in a user module. */
-    const char * pcApplicationHostnameHook( void );
+const char * pcApplicationHostnameHook( void );
 
 #endif /* ipconfigDHCP_REGISTER_HOSTNAME */
 
@@ -483,7 +483,7 @@ extern NetworkBufferDescriptor_t * pxNDWaitingNetworkBuffer;
 #endif /* ipconfigENABLE_BACKWARD_COMPATIBILITY */
 
 #if ( ipconfigHAS_PRINTF != 0 )
-    extern void vPrintResourceStats( void );
+extern void vPrintResourceStats( void );
 #else
     #define vPrintResourceStats()    do {} while( ipFALSE_BOOL )     /**< ipconfigHAS_PRINTF is not defined. Define vPrintResourceStats to a do-while( 0 ). */
 #endif

@@ -81,38 +81,38 @@ SemaphoreHandle_t xEMACRxEventSemaphore = NULL;
 
 BaseType_t xNetworkInterfaceInitialise( void )
 {
-    BaseType_t xStatus, xReturn;
+	BaseType_t xStatus, xReturn;
 
-    /* Initialise the MAC. */
-    vInitEmac();
+	/* Initialise the MAC. */
+	vInitEmac();
 
-    while( lEMACWaitForLink() != pdPASS )
-    {
-        vTaskDelay( 20 );
-    }
+	while( lEMACWaitForLink() != pdPASS )
+	{
+		vTaskDelay( 20 );
+	}
 
-    vSemaphoreCreateBinary( xEMACRxEventSemaphore );
-    configASSERT( xEMACRxEventSemaphore );
+	vSemaphoreCreateBinary( xEMACRxEventSemaphore );
+	configASSERT( xEMACRxEventSemaphore );
 
-    /* The handler task is created at the highest possible priority to
-     * ensure the interrupt handler can return directly to it. */
-    xTaskCreate( vEMACHandlerTask, "EMAC", configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL );
-    xReturn = pdPASS;
+	/* The handler task is created at the highest possible priority to
+	 * ensure the interrupt handler can return directly to it. */
+	xTaskCreate( vEMACHandlerTask, "EMAC", configMINIMAL_STACK_SIZE, NULL, configMAX_PRIORITIES - 1, NULL );
+	xReturn = pdPASS;
 
-    return xReturn;
+	return xReturn;
 }
 /*-----------------------------------------------------------*/
 
 BaseType_t xNetworkInterfaceOutput( NetworkBufferDescriptor_t * const pxNetworkBuffer )
 {
-    extern void vEMACCopyWrite( uint8_t * pucBuffer,
-                                uint16_t usLength );
+	extern void vEMACCopyWrite( uint8_t * pucBuffer,
+	                            uint16_t usLength );
 
-    vEMACCopyWrite( pxNetworkBuffer->pucBuffer, pxNetworkBuffer->xDataLength );
+	vEMACCopyWrite( pxNetworkBuffer->pucBuffer, pxNetworkBuffer->xDataLength );
 
-    /* Finished with the network buffer. */
-    vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
+	/* Finished with the network buffer. */
+	vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
 
-    return pdTRUE;
+	return pdTRUE;
 }
 /*-----------------------------------------------------------*/

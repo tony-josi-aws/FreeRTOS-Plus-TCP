@@ -39,7 +39,7 @@
  * For logging and debugging: make a string showing the TCP flags.
  */
 #if ( ipconfigHAS_DEBUG_PRINTF != 0 )
-    const char * prvTCPFlagMeaning( UBaseType_t xFlags );
+const char * prvTCPFlagMeaning( UBaseType_t xFlags );
 #endif /* ipconfigHAS_DEBUG_PRINTF != 0 */
 
 /*

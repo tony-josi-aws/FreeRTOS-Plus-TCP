@@ -82,8 +82,8 @@ int phy_detected[ 2 ] = { ETH0_PHY_ADDRESS, ETH1_PHY_ADDRESS };
 #define ADVERTISE_100FULL                      0x0100 /* Try for 100mbps full-duplex */
 
 #define ADVERTISE_100_AND_10                 \
-    ( ADVERTISE_10FULL | ADVERTISE_100FULL | \
-      ADVERTISE_10HALF | ADVERTISE_100HALF )
+	( ADVERTISE_10FULL | ADVERTISE_100FULL | \
+	  ADVERTISE_10HALF | ADVERTISE_100HALF )
 #define ADVERTISE_100                          ( ADVERTISE_100FULL | ADVERTISE_100HALF )
 #define ADVERTISE_10                           ( ADVERTISE_10FULL | ADVERTISE_10HALF )
 
@@ -161,507 +161,507 @@ int phy_detected[ 2 ] = { ETH0_PHY_ADDRESS, ETH1_PHY_ADDRESS };
 
 static int detect_phy( XEmacPs * xemacpsp )
 {
-    u16 id_lower, id_upper;
-    u32 phy_addr;
+	u16 id_lower, id_upper;
+	u32 phy_addr;
 
-    for( phy_addr = 0; phy_addr < PHY_ADDRESS_COUNT; phy_addr++ )
-    {
-        XEmacPs_PhyRead( xemacpsp, phy_addr, PHY_DETECT_REG, &id_lower );
+	for( phy_addr = 0; phy_addr < PHY_ADDRESS_COUNT; phy_addr++ )
+	{
+		XEmacPs_PhyRead( xemacpsp, phy_addr, PHY_DETECT_REG, &id_lower );
 
-        if( ( id_lower != 0xFFFF ) &&
-            ( ( id_lower & PHY_DETECT_MASK ) == PHY_DETECT_MASK ) )
-        {
-            /* Found a valid PHY address */
-            FreeRTOS_printf( ( "XEmacPs detect_phy: PHY detected at address %d.\n", ( unsigned ) phy_addr ) );
-            phy_detected[ xemacpsp->Config.DeviceId ] = phy_addr;
-            return phy_addr;
-        }
-    }
+		if( ( id_lower != 0xFFFF ) &&
+		    ( ( id_lower & PHY_DETECT_MASK ) == PHY_DETECT_MASK ) )
+		{
+			/* Found a valid PHY address */
+			FreeRTOS_printf( ( "XEmacPs detect_phy: PHY detected at address %d.\n", ( unsigned ) phy_addr ) );
+			phy_detected[ xemacpsp->Config.DeviceId ] = phy_addr;
+			return phy_addr;
+		}
+	}
 
-    FreeRTOS_printf( ( "XEmacPs detect_phy: No PHY detected.  Assuming a PHY at address 0\n" ) );
+	FreeRTOS_printf( ( "XEmacPs detect_phy: No PHY detected.  Assuming a PHY at address 0\n" ) );
 
-    /* default to zero */
-    return 0;
+	/* default to zero */
+	return 0;
 }
 
 #ifdef PEEP
-    unsigned get_IEEE_phy_speed( XEmacPs * xemacpsp )
-    {
-        u16 control;
-        u16 status;
-        u16 partner_capabilities;
-        u16 partner_capabilities_1000;
-        u16 phylinkspeed;
-        u32 phy_addr = detect_phy( xemacpsp );
+unsigned get_IEEE_phy_speed( XEmacPs * xemacpsp )
+{
+	u16 control;
+	u16 status;
+	u16 partner_capabilities;
+	u16 partner_capabilities_1000;
+	u16 phylinkspeed;
+	u32 phy_addr = detect_phy( xemacpsp );
 
-        XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_1000_ADVERTISE_REG_OFFSET,
-                          ADVERTISE_1000 );
-        /* Advertise PHY speed of 100 and 10 Mbps */
-        XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG,
-                          ADVERTISE_100_AND_10 );
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_1000_ADVERTISE_REG_OFFSET,
+	                  ADVERTISE_1000 );
+	/* Advertise PHY speed of 100 and 10 Mbps */
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG,
+	                  ADVERTISE_100_AND_10 );
 
-        XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET,
-                         &control );
-        control |= ( IEEE_CTRL_AUTONEGOTIATE_ENABLE |
-                     IEEE_STAT_AUTONEGOTIATE_RESTART );
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET,
+	                 &control );
+	control |= ( IEEE_CTRL_AUTONEGOTIATE_ENABLE |
+	             IEEE_STAT_AUTONEGOTIATE_RESTART );
 
-        XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, control );
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, control );
 
-        /* Read PHY control and status registers is successful. */
-        XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, &control );
-        XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_STATUS_REG_OFFSET, &status );
+	/* Read PHY control and status registers is successful. */
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, &control );
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_STATUS_REG_OFFSET, &status );
 
-        if( ( control & IEEE_CTRL_AUTONEGOTIATE_ENABLE ) && ( status &
-                                                              IEEE_STAT_AUTONEGOTIATE_CAPABLE ) )
-        {
-            while( !( status & IEEE_STAT_AUTONEGOTIATE_COMPLETE ) )
-            {
-                XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_STATUS_REG_OFFSET,
-                                 &status );
-            }
+	if( ( control & IEEE_CTRL_AUTONEGOTIATE_ENABLE ) && ( status &
+	                                                      IEEE_STAT_AUTONEGOTIATE_CAPABLE ) )
+	{
+		while( !( status & IEEE_STAT_AUTONEGOTIATE_COMPLETE ) )
+		{
+			XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_STATUS_REG_OFFSET,
+			                 &status );
+		}
 
-            XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_PARTNER_ABILITIES_1_REG_OFFSET,
-                             &partner_capabilities );
+		XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_PARTNER_ABILITIES_1_REG_OFFSET,
+		                 &partner_capabilities );
 
-            if( status & IEEE_STAT_1GBPS_EXTENSIONS )
-            {
-                XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_PARTNER_ABILITIES_3_REG_OFFSET,
-                                 &partner_capabilities_1000 );
+		if( status & IEEE_STAT_1GBPS_EXTENSIONS )
+		{
+			XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_PARTNER_ABILITIES_3_REG_OFFSET,
+			                 &partner_capabilities_1000 );
 
-                if( partner_capabilities_1000 & IEEE_AN3_ABILITY_MASK_1GBPS )
-                {
-                    return 1000;
-                }
-            }
+			if( partner_capabilities_1000 & IEEE_AN3_ABILITY_MASK_1GBPS )
+			{
+				return 1000;
+			}
+		}
 
-            if( partner_capabilities & IEEE_AN1_ABILITY_MASK_100MBPS )
-            {
-                return 100;
-            }
+		if( partner_capabilities & IEEE_AN1_ABILITY_MASK_100MBPS )
+		{
+			return 100;
+		}
 
-            if( partner_capabilities & IEEE_AN1_ABILITY_MASK_10MBPS )
-            {
-                return 10;
-            }
+		if( partner_capabilities & IEEE_AN1_ABILITY_MASK_10MBPS )
+		{
+			return 10;
+		}
 
-            FreeRTOS_printf( ( "%s: unknown PHY link speed, setting TEMAC speed to be 10 Mbps\n",
-                               __FUNCTION__ ) );
-            return 10;
-        }
-        else
-        {
-            /* Update TEMAC speed accordingly */
-            if( status & IEEE_STAT_1GBPS_EXTENSIONS )
-            {
-                /* Get commanded link speed */
-                phylinkspeed = control & IEEE_CTRL_1GBPS_LINKSPEED_MASK;
+		FreeRTOS_printf( ( "%s: unknown PHY link speed, setting TEMAC speed to be 10 Mbps\n",
+		                   __FUNCTION__ ) );
+		return 10;
+	}
+	else
+	{
+		/* Update TEMAC speed accordingly */
+		if( status & IEEE_STAT_1GBPS_EXTENSIONS )
+		{
+			/* Get commanded link speed */
+			phylinkspeed = control & IEEE_CTRL_1GBPS_LINKSPEED_MASK;
 
-                switch( phylinkspeed )
-                {
-                    case ( IEEE_CTRL_LINKSPEED_1000M ):
-                        return 1000;
+			switch( phylinkspeed )
+			{
+			case ( IEEE_CTRL_LINKSPEED_1000M ):
+				return 1000;
 
-                    case ( IEEE_CTRL_LINKSPEED_100M ):
-                        return 100;
+			case ( IEEE_CTRL_LINKSPEED_100M ):
+				return 100;
 
-                    case ( IEEE_CTRL_LINKSPEED_10M ):
-                        return 10;
+			case ( IEEE_CTRL_LINKSPEED_10M ):
+				return 10;
 
-                    default:
-                        FreeRTOS_printf( ( "%s: unknown PHY link speed (%d), setting TEMAC speed to be 10 Mbps\n",
-                                           __FUNCTION__, phylinkspeed ) );
-                        return 10;
-                }
-            }
-            else
-            {
-                return ( control & IEEE_CTRL_LINKSPEED_MASK ) ? 100 : 10;
-            }
-        }
-    }
+			default:
+				FreeRTOS_printf( ( "%s: unknown PHY link speed (%d), setting TEMAC speed to be 10 Mbps\n",
+				                   __FUNCTION__, phylinkspeed ) );
+				return 10;
+			}
+		}
+		else
+		{
+			return ( control & IEEE_CTRL_LINKSPEED_MASK ) ? 100 : 10;
+		}
+	}
+}
 
 #else /* Zynq */
-    unsigned get_IEEE_phy_speed( XEmacPs * xemacpsp )
-    {
-        u16 temp;
-        u16 control;
-        u16 status;
-        u16 partner_capabilities;
+unsigned get_IEEE_phy_speed( XEmacPs * xemacpsp )
+{
+	u16 temp;
+	u16 control;
+	u16 status;
+	u16 partner_capabilities;
 
-        #if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
-            u32 phy_addr = XPAR_PCSPMA_SGMII_PHYADDR;
-        #else
-            /* PHY addresses hardcoded ETH0=1 and ETH1=2. */
-            u32 phy_addr = detect_phy( xemacpsp );
-        #endif
-        FreeRTOS_printf( ( "Start PHY autonegotiation \n" ) );
+	#if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
+	u32 phy_addr = XPAR_PCSPMA_SGMII_PHYADDR;
+	#else
+	/* PHY addresses hardcoded ETH0=1 and ETH1=2. */
+	u32 phy_addr = detect_phy( xemacpsp );
+	#endif
+	FreeRTOS_printf( ( "Start PHY autonegotiation \n" ) );
 
-        #if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
-        #else
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_PAGE_ADDRESS_REGISTER, 2 );
-            XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_MAC, &control );
-            control |= IEEE_RGMII_TXRX_CLOCK_DELAYED_MASK;
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_MAC, control );
+	#if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
+	#else
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_PAGE_ADDRESS_REGISTER, 2 );
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_MAC, &control );
+	control |= IEEE_RGMII_TXRX_CLOCK_DELAYED_MASK;
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_MAC, control );
 
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_PAGE_ADDRESS_REGISTER, 0 );
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_PAGE_ADDRESS_REGISTER, 0 );
 
-            XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG, &control );
-            control |= IEEE_ASYMMETRIC_PAUSE_MASK;
-            control |= IEEE_PAUSE_MASK;
-            control |= ADVERTISE_100;
-            control |= ADVERTISE_10;
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG, control );
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG, &control );
+	control |= IEEE_ASYMMETRIC_PAUSE_MASK;
+	control |= IEEE_PAUSE_MASK;
+	control |= ADVERTISE_100;
+	control |= ADVERTISE_10;
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG, control );
 
-            XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_1000_ADVERTISE_REG_OFFSET,
-                             &control );
-            control |= ADVERTISE_1000;
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_1000_ADVERTISE_REG_OFFSET,
-                              control );
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_1000_ADVERTISE_REG_OFFSET,
+	                 &control );
+	control |= ADVERTISE_1000;
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_1000_ADVERTISE_REG_OFFSET,
+	                  control );
 
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_PAGE_ADDRESS_REGISTER, 0 );
-            XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_COPPER_SPECIFIC_CONTROL_REG,
-                             &control );
-            control |= ( 7 << 12 ); /* max number of gigabit attempts */
-            control |= ( 1 << 11 ); /* enable downshift */
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_COPPER_SPECIFIC_CONTROL_REG,
-                              control );
-        #endif /* if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1 */
-        XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, &control );
-        control |= IEEE_CTRL_AUTONEGOTIATE_ENABLE;
-        control |= IEEE_STAT_AUTONEGOTIATE_RESTART;
-        #if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
-            control &= IEEE_CTRL_ISOLATE_DISABLE;
-        #endif
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_PAGE_ADDRESS_REGISTER, 0 );
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_COPPER_SPECIFIC_CONTROL_REG,
+	                 &control );
+	control |= ( 7 << 12 );     /* max number of gigabit attempts */
+	control |= ( 1 << 11 );     /* enable downshift */
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_COPPER_SPECIFIC_CONTROL_REG,
+	                  control );
+	#endif /* if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1 */
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, &control );
+	control |= IEEE_CTRL_AUTONEGOTIATE_ENABLE;
+	control |= IEEE_STAT_AUTONEGOTIATE_RESTART;
+	#if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
+	control &= IEEE_CTRL_ISOLATE_DISABLE;
+	#endif
 
-        XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, control );
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, control );
 
 
-        #if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
-        #else
-            XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, &control );
-            control |= IEEE_CTRL_RESET_MASK;
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, control );
+	#if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
+	#else
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, &control );
+	control |= IEEE_CTRL_RESET_MASK;
+	XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, control );
 
-            while( 1 )
-            {
-                XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, &control );
+	while( 1 )
+	{
+		XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, &control );
 
-                if( control & IEEE_CTRL_RESET_MASK )
-                {
-                    continue;
-                }
-                else
-                {
-                    break;
-                }
-            }
-        #endif /* if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1 */
-        FreeRTOS_printf( ( "Waiting for PHY to complete autonegotiation.\n" ) );
+		if( control & IEEE_CTRL_RESET_MASK )
+		{
+			continue;
+		}
+		else
+		{
+			break;
+		}
+	}
+	#endif /* if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1 */
+	FreeRTOS_printf( ( "Waiting for PHY to complete autonegotiation.\n" ) );
 
-        XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_STATUS_REG_OFFSET, &status );
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_STATUS_REG_OFFSET, &status );
 
-        while( !( status & IEEE_STAT_AUTONEGOTIATE_COMPLETE ) )
-        {
-            vTaskDelay( MINIMUM_SLEEP_TIME );
-            #if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
-            #else
-                XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_COPPER_SPECIFIC_STATUS_REG_2,
-                                 &temp );
+	while( !( status & IEEE_STAT_AUTONEGOTIATE_COMPLETE ) )
+	{
+		vTaskDelay( MINIMUM_SLEEP_TIME );
+	    #if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
+	    #else
+		XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_COPPER_SPECIFIC_STATUS_REG_2,
+		                 &temp );
 
-                if( temp & IEEE_AUTONEG_ERROR_MASK )
-                {
-                    FreeRTOS_printf( ( "Auto negotiation error \n" ) );
-                }
-            #endif
-            XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_STATUS_REG_OFFSET,
-                             &status );
-        }
+		if( temp & IEEE_AUTONEG_ERROR_MASK )
+		{
+			FreeRTOS_printf( ( "Auto negotiation error \n" ) );
+		}
+	    #endif
+		XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_STATUS_REG_OFFSET,
+		                 &status );
+	}
 
-        FreeRTOS_printf( ( "autonegotiation complete \n" ) );
+	FreeRTOS_printf( ( "autonegotiation complete \n" ) );
 
-        #if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
-        #else
-            XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_SPECIFIC_STATUS_REG, &partner_capabilities );
-        #endif
+	#if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
+	#else
+	XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_SPECIFIC_STATUS_REG, &partner_capabilities );
+	#endif
 
-        #if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
-            FreeRTOS_printf( ( "Waiting for Link to be up; Polling for SGMII core Reg \n" ) );
-            XEmacPs_PhyRead( xemacpsp, phy_addr, 5, &temp );
+	#if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1
+	FreeRTOS_printf( ( "Waiting for Link to be up; Polling for SGMII core Reg \n" ) );
+	XEmacPs_PhyRead( xemacpsp, phy_addr, 5, &temp );
 
-            while( !( temp & 0x8000 ) )
-            {
-                XEmacPs_PhyRead( xemacpsp, phy_addr, 5, &temp );
-            }
+	while( !( temp & 0x8000 ) )
+	{
+		XEmacPs_PhyRead( xemacpsp, phy_addr, 5, &temp );
+	}
 
-            if( ( temp & 0x0C00 ) == 0x0800 )
-            {
-                XEmacPs_PhyRead( xemacpsp, phy_addr, 0, &temp );
-                return 1000;
-            }
-            else if( ( temp & 0x0C00 ) == 0x0400 )
-            {
-                XEmacPs_PhyRead( xemacpsp, phy_addr, 0, &temp );
-                return 100;
-            }
-            else if( ( temp & 0x0C00 ) == 0x0000 )
-            {
-                XEmacPs_PhyRead( xemacpsp, phy_addr, 0, &temp );
-                return 10;
-            }
-            else
-            {
-                FreeRTOS_printf( ( "get_IEEE_phy_speed(): Invalid speed bit value, Deafulting to Speed = 10 Mbps\n" ) );
-                XEmacPs_PhyRead( xemacpsp, phy_addr, 0, &temp );
-                XEmacPs_PhyWrite( xemacpsp, phy_addr, 0, 0x0100 );
-                return 10;
-            }
-        #else /* if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1 */
-            if( ( ( partner_capabilities >> 14 ) & 3 ) == 2 ) /* 1000Mbps */
-            {
-                return 1000;
-            }
-            else if( ( ( partner_capabilities >> 14 ) & 3 ) == 1 ) /* 100Mbps */
-            {
-                return 100;
-            }
-            else /* 10Mbps */
-            {
-                return 10;
-            }
-        #endif /* if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1 */
-    }
+	if( ( temp & 0x0C00 ) == 0x0800 )
+	{
+		XEmacPs_PhyRead( xemacpsp, phy_addr, 0, &temp );
+		return 1000;
+	}
+	else if( ( temp & 0x0C00 ) == 0x0400 )
+	{
+		XEmacPs_PhyRead( xemacpsp, phy_addr, 0, &temp );
+		return 100;
+	}
+	else if( ( temp & 0x0C00 ) == 0x0000 )
+	{
+		XEmacPs_PhyRead( xemacpsp, phy_addr, 0, &temp );
+		return 10;
+	}
+	else
+	{
+		FreeRTOS_printf( ( "get_IEEE_phy_speed(): Invalid speed bit value, Deafulting to Speed = 10 Mbps\n" ) );
+		XEmacPs_PhyRead( xemacpsp, phy_addr, 0, &temp );
+		XEmacPs_PhyWrite( xemacpsp, phy_addr, 0, 0x0100 );
+		return 10;
+	}
+	#else /* if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1 */
+	if( ( ( partner_capabilities >> 14 ) & 3 ) == 2 )     /* 1000Mbps */
+	{
+		return 1000;
+	}
+	else if( ( ( partner_capabilities >> 14 ) & 3 ) == 1 )     /* 100Mbps */
+	{
+		return 100;
+	}
+	else     /* 10Mbps */
+	{
+		return 10;
+	}
+	#endif /* if XPAR_GIGE_PCS_PMA_CORE_PRESENT == 1 */
+}
 #endif /* Zynq */
 
 unsigned configure_IEEE_phy_speed( XEmacPs * xemacpsp,
                                    unsigned speed )
 {
-    u16 control;
-    u32 phy_addr;
-    int i;
+	u16 control;
+	u32 phy_addr;
+	int i;
 
-    for( i = 0; i < 2; i++ )
-    {
-        phy_addr = phy_detected[ i ]; /* Both PHYs are connected to ETH0 */
+	for( i = 0; i < 2; i++ )
+	{
+		phy_addr = phy_detected[ i ]; /* Both PHYs are connected to ETH0 */
 
-        XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_PAGE_ADDRESS_REGISTER, 2 );
-        XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_MAC, &control );
-        control |= IEEE_RGMII_TXRX_CLOCK_DELAYED_MASK;
-        XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_MAC, control );
+		XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_PAGE_ADDRESS_REGISTER, 2 );
+		XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_MAC, &control );
+		control |= IEEE_RGMII_TXRX_CLOCK_DELAYED_MASK;
+		XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_MAC, control );
 
-        XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_PAGE_ADDRESS_REGISTER, 0 );
+		XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_PAGE_ADDRESS_REGISTER, 0 );
 
-        XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG, &control );
-        control |= IEEE_ASYMMETRIC_PAUSE_MASK;
-        control |= IEEE_PAUSE_MASK;
-        XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG, control );
+		XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG, &control );
+		control |= IEEE_ASYMMETRIC_PAUSE_MASK;
+		control |= IEEE_PAUSE_MASK;
+		XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG, control );
 
-        XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, &control );
-        control &= ~IEEE_CTRL_LINKSPEED_1000M;
-        control &= ~IEEE_CTRL_LINKSPEED_100M;
-        control &= ~IEEE_CTRL_LINKSPEED_10M;
+		XEmacPs_PhyRead( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET, &control );
+		control &= ~IEEE_CTRL_LINKSPEED_1000M;
+		control &= ~IEEE_CTRL_LINKSPEED_100M;
+		control &= ~IEEE_CTRL_LINKSPEED_10M;
 
-        if( speed == 1000 )
-        {
-            control |= IEEE_CTRL_LINKSPEED_1000M;
-        }
+		if( speed == 1000 )
+		{
+			control |= IEEE_CTRL_LINKSPEED_1000M;
+		}
 
-        else if( speed == 100 )
-        {
-            control |= IEEE_CTRL_LINKSPEED_100M;
-            /* Dont advertise PHY speed of 1000 Mbps */
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_1000_ADVERTISE_REG_OFFSET, 0 );
-            /* Dont advertise PHY speed of 10 Mbps */
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG,
-                              ADVERTISE_100 );
-        }
+		else if( speed == 100 )
+		{
+			control |= IEEE_CTRL_LINKSPEED_100M;
+			/* Dont advertise PHY speed of 1000 Mbps */
+			XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_1000_ADVERTISE_REG_OFFSET, 0 );
+			/* Dont advertise PHY speed of 10 Mbps */
+			XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG,
+			                  ADVERTISE_100 );
+		}
 
-        else if( speed == 10 )
-        {
-            control |= IEEE_CTRL_LINKSPEED_10M;
-            /* Dont advertise PHY speed of 1000 Mbps */
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_1000_ADVERTISE_REG_OFFSET,
-                              0 );
-            /* Dont advertise PHY speed of 100 Mbps */
-            XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG,
-                              ADVERTISE_10 );
-        }
+		else if( speed == 10 )
+		{
+			control |= IEEE_CTRL_LINKSPEED_10M;
+			/* Dont advertise PHY speed of 1000 Mbps */
+			XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_1000_ADVERTISE_REG_OFFSET,
+			                  0 );
+			/* Dont advertise PHY speed of 100 Mbps */
+			XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_AUTONEGO_ADVERTISE_REG,
+			                  ADVERTISE_10 );
+		}
 
-        XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET,
-                          control | IEEE_CTRL_RESET_MASK );
-        {
-            volatile int wait;
+		XEmacPs_PhyWrite( xemacpsp, phy_addr, IEEE_CONTROL_REG_OFFSET,
+		                  control | IEEE_CTRL_RESET_MASK );
+		{
+			volatile int wait;
 
-            for( wait = 0; wait < 100000; wait++ )
-            {
-            }
-        }
-    }
+			for( wait = 0; wait < 100000; wait++ )
+			{
+			}
+		}
+	}
 
-    return 0;
+	return 0;
 }
 
 static void SetUpSLCRDivisors( int mac_baseaddr,
                                int speed )
 {
-    volatile u32 slcrBaseAddress;
+	volatile u32 slcrBaseAddress;
 
     #ifndef PEEP
-        u32 SlcrDiv0;
-        u32 SlcrDiv1 = 0;
-        u32 SlcrTxClkCntrl;
+	u32 SlcrDiv0;
+	u32 SlcrDiv1 = 0;
+	u32 SlcrTxClkCntrl;
     #endif
 
-    *( volatile unsigned int * ) ( SLCR_UNLOCK_ADDR ) = SLCR_UNLOCK_KEY_VALUE;
+	*( volatile unsigned int * ) ( SLCR_UNLOCK_ADDR ) = SLCR_UNLOCK_KEY_VALUE;
 
-    if( ( unsigned long ) mac_baseaddr == EMAC0_BASE_ADDRESS )
-    {
-        slcrBaseAddress = SLCR_GEM0_CLK_CTRL_ADDR;
-    }
-    else
-    {
-        slcrBaseAddress = SLCR_GEM1_CLK_CTRL_ADDR;
-    }
+	if( ( unsigned long ) mac_baseaddr == EMAC0_BASE_ADDRESS )
+	{
+		slcrBaseAddress = SLCR_GEM0_CLK_CTRL_ADDR;
+	}
+	else
+	{
+		slcrBaseAddress = SLCR_GEM1_CLK_CTRL_ADDR;
+	}
 
     #ifdef PEEP
-        if( speed == 1000 )
-        {
-            *( volatile unsigned int * ) ( slcrBaseAddress ) =
-                SLCR_GEM_1G_CLK_CTRL_VALUE;
-        }
-        else if( speed == 100 )
-        {
-            *( volatile unsigned int * ) ( slcrBaseAddress ) =
-                SLCR_GEM_100M_CLK_CTRL_VALUE;
-        }
-        else
-        {
-            *( volatile unsigned int * ) ( slcrBaseAddress ) =
-                SLCR_GEM_10M_CLK_CTRL_VALUE;
-        }
+	if( speed == 1000 )
+	{
+		*( volatile unsigned int * ) ( slcrBaseAddress ) =
+			SLCR_GEM_1G_CLK_CTRL_VALUE;
+	}
+	else if( speed == 100 )
+	{
+		*( volatile unsigned int * ) ( slcrBaseAddress ) =
+			SLCR_GEM_100M_CLK_CTRL_VALUE;
+	}
+	else
+	{
+		*( volatile unsigned int * ) ( slcrBaseAddress ) =
+			SLCR_GEM_10M_CLK_CTRL_VALUE;
+	}
     #else /* ifdef PEEP */
-        if( speed == 1000 )
-        {
-            if( ( unsigned long ) mac_baseaddr == EMAC0_BASE_ADDRESS )
-            {
-                #ifdef XPAR_PS7_ETHERNET_0_ENET_SLCR_1000MBPS_DIV0
-                    SlcrDiv0 = XPAR_PS7_ETHERNET_0_ENET_SLCR_1000MBPS_DIV0;
-                    SlcrDiv1 = XPAR_PS7_ETHERNET_0_ENET_SLCR_1000MBPS_DIV1;
-                #endif
-            }
-            else
-            {
-                #ifdef XPAR_PS7_ETHERNET_1_ENET_SLCR_1000MBPS_DIV0
-                    SlcrDiv0 = XPAR_PS7_ETHERNET_1_ENET_SLCR_1000MBPS_DIV0;
-                    SlcrDiv1 = XPAR_PS7_ETHERNET_1_ENET_SLCR_1000MBPS_DIV1;
-                #endif
-            }
-        }
-        else if( speed == 100 )
-        {
-            if( ( unsigned long ) mac_baseaddr == EMAC0_BASE_ADDRESS )
-            {
-                #ifdef XPAR_PS7_ETHERNET_0_ENET_SLCR_100MBPS_DIV0
-                    SlcrDiv0 = XPAR_PS7_ETHERNET_0_ENET_SLCR_100MBPS_DIV0;
-                    SlcrDiv1 = XPAR_PS7_ETHERNET_0_ENET_SLCR_100MBPS_DIV1;
-                #endif
-            }
-            else
-            {
-                #ifdef XPAR_PS7_ETHERNET_1_ENET_SLCR_100MBPS_DIV0
-                    SlcrDiv0 = XPAR_PS7_ETHERNET_1_ENET_SLCR_100MBPS_DIV0;
-                    SlcrDiv1 = XPAR_PS7_ETHERNET_1_ENET_SLCR_100MBPS_DIV1;
-                #endif
-            }
-        }
-        else
-        {
-            if( ( unsigned long ) mac_baseaddr == EMAC0_BASE_ADDRESS )
-            {
-                #ifdef XPAR_PS7_ETHERNET_0_ENET_SLCR_10MBPS_DIV0
-                    SlcrDiv0 = XPAR_PS7_ETHERNET_0_ENET_SLCR_10MBPS_DIV0;
-                    SlcrDiv1 = XPAR_PS7_ETHERNET_0_ENET_SLCR_10MBPS_DIV1;
-                #endif
-            }
-            else
-            {
-                #ifdef XPAR_PS7_ETHERNET_1_ENET_SLCR_10MBPS_DIV0
-                    SlcrDiv0 = XPAR_PS7_ETHERNET_1_ENET_SLCR_10MBPS_DIV0;
-                    SlcrDiv1 = XPAR_PS7_ETHERNET_1_ENET_SLCR_10MBPS_DIV1;
-                #endif
-            }
-        }
+	if( speed == 1000 )
+	{
+		if( ( unsigned long ) mac_baseaddr == EMAC0_BASE_ADDRESS )
+		{
+		#ifdef XPAR_PS7_ETHERNET_0_ENET_SLCR_1000MBPS_DIV0
+			SlcrDiv0 = XPAR_PS7_ETHERNET_0_ENET_SLCR_1000MBPS_DIV0;
+			SlcrDiv1 = XPAR_PS7_ETHERNET_0_ENET_SLCR_1000MBPS_DIV1;
+		#endif
+		}
+		else
+		{
+		#ifdef XPAR_PS7_ETHERNET_1_ENET_SLCR_1000MBPS_DIV0
+			SlcrDiv0 = XPAR_PS7_ETHERNET_1_ENET_SLCR_1000MBPS_DIV0;
+			SlcrDiv1 = XPAR_PS7_ETHERNET_1_ENET_SLCR_1000MBPS_DIV1;
+		#endif
+		}
+	}
+	else if( speed == 100 )
+	{
+		if( ( unsigned long ) mac_baseaddr == EMAC0_BASE_ADDRESS )
+		{
+		#ifdef XPAR_PS7_ETHERNET_0_ENET_SLCR_100MBPS_DIV0
+			SlcrDiv0 = XPAR_PS7_ETHERNET_0_ENET_SLCR_100MBPS_DIV0;
+			SlcrDiv1 = XPAR_PS7_ETHERNET_0_ENET_SLCR_100MBPS_DIV1;
+		#endif
+		}
+		else
+		{
+		#ifdef XPAR_PS7_ETHERNET_1_ENET_SLCR_100MBPS_DIV0
+			SlcrDiv0 = XPAR_PS7_ETHERNET_1_ENET_SLCR_100MBPS_DIV0;
+			SlcrDiv1 = XPAR_PS7_ETHERNET_1_ENET_SLCR_100MBPS_DIV1;
+		#endif
+		}
+	}
+	else
+	{
+		if( ( unsigned long ) mac_baseaddr == EMAC0_BASE_ADDRESS )
+		{
+		#ifdef XPAR_PS7_ETHERNET_0_ENET_SLCR_10MBPS_DIV0
+			SlcrDiv0 = XPAR_PS7_ETHERNET_0_ENET_SLCR_10MBPS_DIV0;
+			SlcrDiv1 = XPAR_PS7_ETHERNET_0_ENET_SLCR_10MBPS_DIV1;
+		#endif
+		}
+		else
+		{
+		#ifdef XPAR_PS7_ETHERNET_1_ENET_SLCR_10MBPS_DIV0
+			SlcrDiv0 = XPAR_PS7_ETHERNET_1_ENET_SLCR_10MBPS_DIV0;
+			SlcrDiv1 = XPAR_PS7_ETHERNET_1_ENET_SLCR_10MBPS_DIV1;
+		#endif
+		}
+	}
 
-        SlcrTxClkCntrl = *( volatile unsigned int * ) ( slcrBaseAddress );
-        SlcrTxClkCntrl &= EMACPS_SLCR_DIV_MASK;
-        SlcrTxClkCntrl |= ( SlcrDiv1 << 20 );
-        SlcrTxClkCntrl |= ( SlcrDiv0 << 8 );
-        *( volatile unsigned int * ) ( slcrBaseAddress ) = SlcrTxClkCntrl;
+	SlcrTxClkCntrl = *( volatile unsigned int * ) ( slcrBaseAddress );
+	SlcrTxClkCntrl &= EMACPS_SLCR_DIV_MASK;
+	SlcrTxClkCntrl |= ( SlcrDiv1 << 20 );
+	SlcrTxClkCntrl |= ( SlcrDiv0 << 8 );
+	*( volatile unsigned int * ) ( slcrBaseAddress ) = SlcrTxClkCntrl;
     #endif /* ifdef PEEP */
-    *( volatile unsigned int * ) ( SLCR_LOCK_ADDR ) = SLCR_LOCK_KEY_VALUE;
+	*( volatile unsigned int * ) ( SLCR_LOCK_ADDR ) = SLCR_LOCK_KEY_VALUE;
 }
 
 
 unsigned link_speed;
 unsigned Phy_Setup( XEmacPs * xemacpsp )
 {
-    unsigned long conv_present = 0;
-    unsigned long convspeeddupsetting = 0;
-    unsigned long convphyaddr = 0;
+	unsigned long conv_present = 0;
+	unsigned long convspeeddupsetting = 0;
+	unsigned long convphyaddr = 0;
 
     #ifdef XPAR_GMII2RGMIICON_0N_ETH0_ADDR
-        convphyaddr = XPAR_GMII2RGMIICON_0N_ETH0_ADDR;
-        conv_present = 1;
+	convphyaddr = XPAR_GMII2RGMIICON_0N_ETH0_ADDR;
+	conv_present = 1;
     #else
-        #ifdef XPAR_GMII2RGMIICON_0N_ETH1_ADDR
-            convphyaddr = XPAR_GMII2RGMIICON_0N_ETH1_ADDR;
-            conv_present = 1;
-        #endif
+	#ifdef XPAR_GMII2RGMIICON_0N_ETH1_ADDR
+	convphyaddr = XPAR_GMII2RGMIICON_0N_ETH1_ADDR;
+	conv_present = 1;
+	#endif
     #endif
 
     #ifdef  ipconfigNIC_LINKSPEED_AUTODETECT
-        link_speed = get_IEEE_phy_speed( xemacpsp );
+	link_speed = get_IEEE_phy_speed( xemacpsp );
 
-        if( link_speed == 1000 )
-        {
-            SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 1000 );
-            convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED1000_FD;
-        }
-        else if( link_speed == 100 )
-        {
-            SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 100 );
-            convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED100_FD;
-        }
-        else
-        {
-            SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 10 );
-            convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED10_FD;
-        }
+	if( link_speed == 1000 )
+	{
+		SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 1000 );
+		convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED1000_FD;
+	}
+	else if( link_speed == 100 )
+	{
+		SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 100 );
+		convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED100_FD;
+	}
+	else
+	{
+		SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 10 );
+		convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED10_FD;
+	}
     #elif   defined( ipconfigNIC_LINKSPEED1000 )
-        SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 1000 );
-        link_speed = 1000;
-        configure_IEEE_phy_speed( xemacpsp, link_speed );
-        convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED1000_FD;
-        vTaskDelay( MINIMUM_SLEEP_TIME );
+	SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 1000 );
+	link_speed = 1000;
+	configure_IEEE_phy_speed( xemacpsp, link_speed );
+	convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED1000_FD;
+	vTaskDelay( MINIMUM_SLEEP_TIME );
     #elif   defined( ipconfigNIC_LINKSPEED100 )
-        SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 100 );
-        link_speed = 100;
-        configure_IEEE_phy_speed( xemacpsp, link_speed );
-        convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED100_FD;
-        vTaskDelay( MINIMUM_SLEEP_TIME );
+	SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 100 );
+	link_speed = 100;
+	configure_IEEE_phy_speed( xemacpsp, link_speed );
+	convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED100_FD;
+	vTaskDelay( MINIMUM_SLEEP_TIME );
     #elif   defined( ipconfigNIC_LINKSPEED10 )
-        SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 10 );
-        link_speed = 10;
-        configure_IEEE_phy_speed( xemacpsp, link_speed );
-        convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED10_FD;
-        vTaskDelay( MINIMUM_SLEEP_TIME );
+	SetUpSLCRDivisors( xemacpsp->Config.BaseAddress, 10 );
+	link_speed = 10;
+	configure_IEEE_phy_speed( xemacpsp, link_speed );
+	convspeeddupsetting = XEMACPS_GMII2RGMII_SPEED10_FD;
+	vTaskDelay( MINIMUM_SLEEP_TIME );
     #endif /* ifdef  ipconfigNIC_LINKSPEED_AUTODETECT */
 
-    if( conv_present )
-    {
-        XEmacPs_PhyWrite( xemacpsp, convphyaddr,
-                          XEMACPS_GMII2RGMII_REG_NUM, convspeeddupsetting );
-    }
+	if( conv_present )
+	{
+		XEmacPs_PhyWrite( xemacpsp, convphyaddr,
+		                  XEMACPS_GMII2RGMII_REG_NUM, convspeeddupsetting );
+	}
 
-    FreeRTOS_printf( ( "link speed: %d\n", link_speed ) );
-    return link_speed;
+	FreeRTOS_printf( ( "link speed: %d\n", link_speed ) );
+	return link_speed;
 }

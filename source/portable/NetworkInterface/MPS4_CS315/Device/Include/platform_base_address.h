@@ -219,8 +219,8 @@
 
 /* Memory map addresses exempt from memory attribution by both the SAU and IDAU */
 #define CORSTONE315_EWIC_BASE              0xE0047000 /* External Wakeup Interrupt Controller
-                                                       * Access from Non-secure software is only allowed
-                                                       * if AIRCR.BFHFNMINS is set to 1 */
+	                                               * Access from Non-secure software is only allowed
+	                                               * if AIRCR.BFHFNMINS is set to 1 */
 
 /* Memory size definitions */
 #define ITCM_SIZE                          ( 0x00008000 ) /* 32 kB */

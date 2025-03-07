@@ -236,8 +236,8 @@
 #define   RX_RUNT_ERROR                  ( 0x0002 ) /* Received frame was damaged by a collision */
 #define   RX_BAD_CRC                     ( 0x0001 ) /* Received frame has a CRC error */
 #define   RX_ERRORS                                             \
-    ( RX_BAD_CRC | RX_TOO_LONG | RX_RUNT_ERROR | RX_PHY_ERROR | \
-      RX_ICMP_ERROR | RX_IP_ERROR | RX_TCP_ERROR | RX_UDP_ERROR )
+	( RX_BAD_CRC | RX_TOO_LONG | RX_RUNT_ERROR | RX_PHY_ERROR | \
+	  RX_ICMP_ERROR | RX_IP_ERROR | RX_TCP_ERROR | RX_UDP_ERROR )
 
 #define REG_RX_FHR_BYTE_CNT              ( 0x7E )   /* RXFHBCR */
 #define   RX_BYTE_CNT_MASK               ( 0x0FFF ) /* Received frame byte size mask */

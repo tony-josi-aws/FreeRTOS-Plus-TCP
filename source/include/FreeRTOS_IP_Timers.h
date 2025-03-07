@@ -82,22 +82,22 @@ void vIPSetTCPTimerExpiredState( BaseType_t xExpiredState );
 /**
  * Sets the reload time of an ARP timer and restarts it.
  */
-    void vARPTimerReload( TickType_t xTime );
+void vARPTimerReload( TickType_t xTime );
 
 /*
  * Start an ARP Resolution timer.
  */
-    void vIPTimerStartARPResolution( TickType_t xTime );
+void vIPTimerStartARPResolution( TickType_t xTime );
 
 /*
  * Enable/disable the ARP timer.
  */
-    void vIPSetARPTimerEnableState( BaseType_t xEnableState );
+void vIPSetARPTimerEnableState( BaseType_t xEnableState );
 
 /*
  * Enable or disable the ARP resolution timer.
  */
-    void vIPSetARPResolutionTimerEnableState( BaseType_t xEnableState );
+void vIPSetARPResolutionTimerEnableState( BaseType_t xEnableState );
 #endif /* if ipconfigIS_ENABLED( ipconfigUSE_IPv4 ) */
 
 #if ipconfigIS_ENABLED( ipconfigUSE_IPv6 )
@@ -105,22 +105,22 @@ void vIPSetTCPTimerExpiredState( BaseType_t xExpiredState );
 /**
  * Sets the reload time of an ND timer and restarts it.
  */
-    void vNDTimerReload( TickType_t xTime );
+void vNDTimerReload( TickType_t xTime );
 
 /*
  * Start an ND Resolution timer.
  */
-    void vIPTimerStartNDResolution( TickType_t xTime );
+void vIPTimerStartNDResolution( TickType_t xTime );
 
 /*
  * Enable/disable the ND timer.
  */
-    void vIPSetNDTimerEnableState( BaseType_t xEnableState );
+void vIPSetNDTimerEnableState( BaseType_t xEnableState );
 
 /*
  * Enable or disable the ARP resolution timer.
  */
-    void vIPSetNDResolutionTimerEnableState( BaseType_t xEnableState );
+void vIPSetNDResolutionTimerEnableState( BaseType_t xEnableState );
 #endif /* if ipconfigIS_ENABLED( ipconfigUSE_IPv6 ) */
 
 #if ( ipconfigUSE_DHCP == 1 ) || ( ipconfigUSE_RA == 1 )
@@ -130,8 +130,8 @@ void vIPSetTCPTimerExpiredState( BaseType_t xExpiredState );
  * @param[in] pxEndPoint: The end-point for which the timer will be called.
  * @param[in] xEnableState: pdTRUE - enable timer; pdFALSE - disable timer.
  */
-    void vIPSetDHCP_RATimerEnableState( NetworkEndPoint_t * pxEndPoint,
-                                        BaseType_t xEnableState );
+void vIPSetDHCP_RATimerEnableState( NetworkEndPoint_t * pxEndPoint,
+                                    BaseType_t xEnableState );
 #endif /* ( ipconfigUSE_DHCP == 1 ) || ( ipconfigUSE_RA == 1 ) */
 
 #if ( ipconfigDNS_USE_CALLBACKS != 0 )
@@ -140,7 +140,7 @@ void vIPSetTCPTimerExpiredState( BaseType_t xExpiredState );
  * @brief Enable/disable the DNS timer.
  * @param[in] xEnableState: pdTRUE - enable timer; pdFALSE - disable timer.
  */
-    void vIPSetDNSTimerEnableState( BaseType_t xEnableState );
+void vIPSetDNSTimerEnableState( BaseType_t xEnableState );
 #endif /* ipconfigDNS_USE_CALLBACKS != 0 */
 
 /**
@@ -149,8 +149,8 @@ void vIPSetTCPTimerExpiredState( BaseType_t xExpiredState );
 void vTCPTimerReload( TickType_t xTime );
 
 #if ( ipconfigUSE_DHCP == 1 ) || ( ipconfigUSE_RA == 1 )
-    void vDHCP_RATimerReload( NetworkEndPoint_t * pxEndPoint,
-                              TickType_t uxClockTicks );
+void vDHCP_RATimerReload( NetworkEndPoint_t * pxEndPoint,
+                          TickType_t uxClockTicks );
 #endif /* ( ipconfigUSE_DHCP == 1 ) || ( ipconfigUSE_RA == 1 ) */
 
 #if ( ipconfigDNS_USE_CALLBACKS != 0 )
@@ -158,7 +158,7 @@ void vTCPTimerReload( TickType_t xTime );
 /**
  * Reload the DNS timer.
  */
-    void vDNSTimerReload( uint32_t ulCheckTime );
+void vDNSTimerReload( uint32_t ulCheckTime );
 #endif /* ipconfigDNS_USE_CALLBACKS != 0 */
 
 /**

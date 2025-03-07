@@ -69,116 +69,116 @@
 BaseType_t FreeRTOS_inet_pton4( const char * pcSource,
                                 void * pvDestination )
 {
-    const uint32_t ulDecimalBase = 10U;
-    uint8_t ucOctet[ socketMAX_IP_ADDRESS_OCTETS ];
-    uint32_t ulReturn = 0U, ulValue;
-    UBaseType_t uxOctetNumber;
-    BaseType_t xResult = pdPASS;
-    const char * pcIPAddress = pcSource;
-    const void * pvCopySource;
+	const uint32_t ulDecimalBase = 10U;
+	uint8_t ucOctet[ socketMAX_IP_ADDRESS_OCTETS ];
+	uint32_t ulReturn = 0U, ulValue;
+	UBaseType_t uxOctetNumber;
+	BaseType_t xResult = pdPASS;
+	const char * pcIPAddress = pcSource;
+	const void * pvCopySource;
 
-    ( void ) memset( pvDestination, 0, sizeof( ulReturn ) );
+	( void ) memset( pvDestination, 0, sizeof( ulReturn ) );
 
-    /* Translate "192.168.2.100" to a 32-bit number, network-endian. */
-    for( uxOctetNumber = 0U; uxOctetNumber < socketMAX_IP_ADDRESS_OCTETS; uxOctetNumber++ )
-    {
-        ulValue = 0U;
+	/* Translate "192.168.2.100" to a 32-bit number, network-endian. */
+	for( uxOctetNumber = 0U; uxOctetNumber < socketMAX_IP_ADDRESS_OCTETS; uxOctetNumber++ )
+	{
+		ulValue = 0U;
 
-        if( pcIPAddress[ 0 ] == '0' )
-        {
-            /* Test for the sequence "0[0-9]", which would make it an octal representation. */
-            if( ( pcIPAddress[ 1 ] >= '0' ) && ( pcIPAddress[ 1 ] <= '9' ) )
-            {
-                FreeRTOS_printf( ( "Octal representation of IP-addresses is not supported." ) );
-                /* Don't support octal numbers. */
-                xResult = pdFAIL;
-                break;
-            }
-        }
+		if( pcIPAddress[ 0 ] == '0' )
+		{
+			/* Test for the sequence "0[0-9]", which would make it an octal representation. */
+			if( ( pcIPAddress[ 1 ] >= '0' ) && ( pcIPAddress[ 1 ] <= '9' ) )
+			{
+				FreeRTOS_printf( ( "Octal representation of IP-addresses is not supported." ) );
+				/* Don't support octal numbers. */
+				xResult = pdFAIL;
+				break;
+			}
+		}
 
-        while( ( *pcIPAddress >= '0' ) && ( *pcIPAddress <= '9' ) )
-        {
-            BaseType_t xChar;
+		while( ( *pcIPAddress >= '0' ) && ( *pcIPAddress <= '9' ) )
+		{
+			BaseType_t xChar;
 
-            /* Move previous read characters into the next decimal
-             * position. */
-            ulValue *= ulDecimalBase;
+			/* Move previous read characters into the next decimal
+			 * position. */
+			ulValue *= ulDecimalBase;
 
-            /* Add the binary value of the ascii character. */
-            xChar = ( BaseType_t ) pcIPAddress[ 0 ];
-            xChar = xChar - ( BaseType_t ) '0';
-            ulValue += ( uint32_t ) xChar;
+			/* Add the binary value of the ascii character. */
+			xChar = ( BaseType_t ) pcIPAddress[ 0 ];
+			xChar = xChar - ( BaseType_t ) '0';
+			ulValue += ( uint32_t ) xChar;
 
-            /* Move to next character in the string. */
-            pcIPAddress++;
-        }
+			/* Move to next character in the string. */
+			pcIPAddress++;
+		}
 
-        /* Check characters were read. */
-        if( pcIPAddress == pcSource )
-        {
-            xResult = pdFAIL;
-        }
+		/* Check characters were read. */
+		if( pcIPAddress == pcSource )
+		{
+			xResult = pdFAIL;
+		}
 
-        /* Check the value fits in an 8-bit number. */
-        if( ulValue > 0xffU )
-        {
-            xResult = pdFAIL;
-        }
-        else
-        {
-            ucOctet[ uxOctetNumber ] = ( uint8_t ) ulValue;
+		/* Check the value fits in an 8-bit number. */
+		if( ulValue > 0xffU )
+		{
+			xResult = pdFAIL;
+		}
+		else
+		{
+			ucOctet[ uxOctetNumber ] = ( uint8_t ) ulValue;
 
-            /* Check the next character is as expected. */
-            if( uxOctetNumber < ( socketMAX_IP_ADDRESS_OCTETS - 1U ) )
-            {
-                if( *pcIPAddress != '.' )
-                {
-                    xResult = pdFAIL;
-                }
-                else
-                {
-                    /* Move past the dot. */
-                    pcIPAddress++;
-                }
-            }
-        }
+			/* Check the next character is as expected. */
+			if( uxOctetNumber < ( socketMAX_IP_ADDRESS_OCTETS - 1U ) )
+			{
+				if( *pcIPAddress != '.' )
+				{
+					xResult = pdFAIL;
+				}
+				else
+				{
+					/* Move past the dot. */
+					pcIPAddress++;
+				}
+			}
+		}
 
-        if( xResult == pdFAIL )
-        {
-            /* No point going on. */
-            break;
-        }
-    }
+		if( xResult == pdFAIL )
+		{
+			/* No point going on. */
+			break;
+		}
+	}
 
-    if( *pcIPAddress != ( char ) 0 )
-    {
-        /* Expected the end of the string. */
-        xResult = pdFAIL;
-    }
+	if( *pcIPAddress != ( char ) 0 )
+	{
+		/* Expected the end of the string. */
+		xResult = pdFAIL;
+	}
 
-    if( uxOctetNumber != socketMAX_IP_ADDRESS_OCTETS )
-    {
-        /* Didn't read enough octets. */
-        xResult = pdFAIL;
-    }
+	if( uxOctetNumber != socketMAX_IP_ADDRESS_OCTETS )
+	{
+		/* Didn't read enough octets. */
+		xResult = pdFAIL;
+	}
 
-    if( xResult == pdPASS )
-    {
-        /* lint: ucOctet has been set because xResult == pdPASS. */
-        ulReturn = FreeRTOS_inet_addr_quick( ucOctet[ 0 ], ucOctet[ 1 ], ucOctet[ 2 ], ucOctet[ 3 ] );
-    }
-    else
-    {
-        ulReturn = 0U;
-    }
+	if( xResult == pdPASS )
+	{
+		/* lint: ucOctet has been set because xResult == pdPASS. */
+		ulReturn = FreeRTOS_inet_addr_quick( ucOctet[ 0 ], ucOctet[ 1 ], ucOctet[ 2 ], ucOctet[ 3 ] );
+	}
+	else
+	{
+		ulReturn = 0U;
+	}
 
-    if( xResult == pdPASS )
-    {
-        pvCopySource = ( const void * ) &ulReturn;
-        ( void ) memcpy( pvDestination, pvCopySource, sizeof( ulReturn ) );
-    }
+	if( xResult == pdPASS )
+	{
+		pvCopySource = ( const void * ) &ulReturn;
+		( void ) memcpy( pvDestination, pvCopySource, sizeof( ulReturn ) );
+	}
 
-    return xResult;
+	return xResult;
 }
 /*-----------------------------------------------------------*/
 
@@ -199,24 +199,24 @@ const char * FreeRTOS_inet_ntop4( const void * pvSource,
                                   char * pcDestination,
                                   socklen_t uxSize )
 {
-    uint32_t ulIPAddress;
-    void * pvCopyDest;
-    const char * pcReturn;
+	uint32_t ulIPAddress;
+	void * pvCopyDest;
+	const char * pcReturn;
 
-    if( uxSize < 16U )
-    {
-        /* There must be space for "255.255.255.255". */
-        pcReturn = NULL;
-    }
-    else
-    {
-        pvCopyDest = ( void * ) &ulIPAddress;
-        ( void ) memcpy( pvCopyDest, pvSource, sizeof( ulIPAddress ) );
-        ( void ) FreeRTOS_inet_ntoa( ulIPAddress, pcDestination );
-        pcReturn = pcDestination;
-    }
+	if( uxSize < 16U )
+	{
+		/* There must be space for "255.255.255.255". */
+		pcReturn = NULL;
+	}
+	else
+	{
+		pvCopyDest = ( void * ) &ulIPAddress;
+		( void ) memcpy( pvCopyDest, pvSource, sizeof( ulIPAddress ) );
+		( void ) FreeRTOS_inet_ntoa( ulIPAddress, pcDestination );
+		pcReturn = pcDestination;
+	}
 
-    return pcReturn;
+	return pcReturn;
 }
 
 /**
@@ -229,21 +229,21 @@ const char * FreeRTOS_inet_ntop4( const void * pvSource,
 void * xSend_UDP_Update_IPv4( NetworkBufferDescriptor_t * pxNetworkBuffer,
                               const struct freertos_sockaddr * pxDestinationAddress )
 {
-    UDPPacket_t * pxUDPPacket;
+	UDPPacket_t * pxUDPPacket;
 
-    if( ( pxNetworkBuffer != NULL ) && ( pxDestinationAddress != NULL ) )
-    {
-        /* MISRA Ref 11.3.1 [Misaligned access] */
-        /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
-        /* coverity[misra_c_2012_rule_11_3_violation] */
-        pxUDPPacket = ( ( UDPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
+	if( ( pxNetworkBuffer != NULL ) && ( pxDestinationAddress != NULL ) )
+	{
+		/* MISRA Ref 11.3.1 [Misaligned access] */
+		/* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+		/* coverity[misra_c_2012_rule_11_3_violation] */
+		pxUDPPacket = ( ( UDPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
 
-        pxNetworkBuffer->xIPAddress.ulIP_IPv4 = pxDestinationAddress->sin_address.ulIP_IPv4;
-        /* Map the UDP packet onto the start of the frame. */
-        pxUDPPacket->xEthernetHeader.usFrameType = ipIPv4_FRAME_TYPE;
-    }
+		pxNetworkBuffer->xIPAddress.ulIP_IPv4 = pxDestinationAddress->sin_address.ulIP_IPv4;
+		/* Map the UDP packet onto the start of the frame. */
+		pxUDPPacket->xEthernetHeader.usFrameType = ipIPv4_FRAME_TYPE;
+	}
 
-    return NULL;
+	return NULL;
 }
 
 /**
@@ -256,18 +256,18 @@ void * xSend_UDP_Update_IPv4( NetworkBufferDescriptor_t * pxNetworkBuffer,
 size_t xRecv_Update_IPv4( const NetworkBufferDescriptor_t * pxNetworkBuffer,
                           struct freertos_sockaddr * pxSourceAddress )
 {
-    size_t uxPayloadOffset = 0;
+	size_t uxPayloadOffset = 0;
 
-    if( ( pxNetworkBuffer != NULL ) && ( pxSourceAddress != NULL ) )
-    {
-        pxSourceAddress->sin_family = ( uint8_t ) FREERTOS_AF_INET;
-        pxSourceAddress->sin_address.ulIP_IPv4 = pxNetworkBuffer->xIPAddress.ulIP_IPv4;
-        pxSourceAddress->sin_port = pxNetworkBuffer->usPort;
-    }
+	if( ( pxNetworkBuffer != NULL ) && ( pxSourceAddress != NULL ) )
+	{
+		pxSourceAddress->sin_family = ( uint8_t ) FREERTOS_AF_INET;
+		pxSourceAddress->sin_address.ulIP_IPv4 = pxNetworkBuffer->xIPAddress.ulIP_IPv4;
+		pxSourceAddress->sin_port = pxNetworkBuffer->usPort;
+	}
 
-    uxPayloadOffset = ipUDP_PAYLOAD_OFFSET_IPv4;
+	uxPayloadOffset = ipUDP_PAYLOAD_OFFSET_IPv4;
 
-    return uxPayloadOffset;
+	return uxPayloadOffset;
 }
 
 /*-----------------------------------------------------------*/

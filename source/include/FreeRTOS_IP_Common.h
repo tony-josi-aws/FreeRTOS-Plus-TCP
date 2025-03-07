@@ -36,23 +36,23 @@
 
 struct xIPv6_Address
 {
-    uint8_t ucBytes[ 16 ];
+	uint8_t ucBytes[ 16 ];
 };
 
 typedef struct xIPv6_Address IPv6_Address_t;
 
 typedef union IP_Address
 {
-    uint32_t ulIP_IPv4;      /**< IPv4 address */
-    IPv6_Address_t xIP_IPv6; /**< IPv6 address */
+	uint32_t ulIP_IPv4;  /**< IPv4 address */
+	IPv6_Address_t xIP_IPv6; /**< IPv6 address */
 } IP_Address_t;
 
 /** @brief A struct that can hold either an IPv4 or an IPv6 address. */
 typedef struct xxIPv46_Address
 {
-    /* A struct that can hold either an IPv4 or an IPv6 address. */
-    IP_Address_t xIPAddress; /**< IP address contains either IPv4 or IPv6. */
-    BaseType_t xIs_IPv6;     /**< pdTRUE if IPv6 address. */
+	/* A struct that can hold either an IPv4 or an IPv6 address. */
+	IP_Address_t xIPAddress; /**< IP address contains either IPv4 or IPv6. */
+	BaseType_t xIs_IPv6; /**< pdTRUE if IPv6 address. */
 } IPv46_Address_t;
 
 struct xNetworkEndPoint;

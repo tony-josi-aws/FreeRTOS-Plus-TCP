@@ -66,34 +66,34 @@
  */
 void vProcessGeneratedUDPPacket( NetworkBufferDescriptor_t * const pxNetworkBuffer )
 {
-    const UDPPacket_t * pxUDPPacket;
+	const UDPPacket_t * pxUDPPacket;
 
-    if( pxNetworkBuffer != NULL )
-    {
-        /* Map the UDP packet onto the start of the frame. */
+	if( pxNetworkBuffer != NULL )
+	{
+		/* Map the UDP packet onto the start of the frame. */
 
-        /* MISRA Ref 11.3.1 [Misaligned access] */
-        /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
-        /* coverity[misra_c_2012_rule_11_3_violation] */
-        pxUDPPacket = ( ( UDPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
+		/* MISRA Ref 11.3.1 [Misaligned access] */
+		/* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+		/* coverity[misra_c_2012_rule_11_3_violation] */
+		pxUDPPacket = ( ( UDPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
 
-        switch( pxUDPPacket->xEthernetHeader.usFrameType )
-        {
-            #if ( ipconfigUSE_IPv4 != 0 )
-                case ipIPv4_FRAME_TYPE:
-                    vProcessGeneratedUDPPacket_IPv4( pxNetworkBuffer );
-                    break;
-            #endif
-            #if ( ipconfigUSE_IPv6 != 0 )
-                case ipIPv6_FRAME_TYPE:
-                    vProcessGeneratedUDPPacket_IPv6( pxNetworkBuffer );
-                    break;
-            #endif
-            default:
-                /* do nothing, coverity happy */
-                break;
-        }
-    }
+		switch( pxUDPPacket->xEthernetHeader.usFrameType )
+		{
+	    #if ( ipconfigUSE_IPv4 != 0 )
+		case ipIPv4_FRAME_TYPE:
+			vProcessGeneratedUDPPacket_IPv4( pxNetworkBuffer );
+			break;
+	    #endif
+	    #if ( ipconfigUSE_IPv6 != 0 )
+		case ipIPv6_FRAME_TYPE:
+			vProcessGeneratedUDPPacket_IPv6( pxNetworkBuffer );
+			break;
+	    #endif
+		default:
+			/* do nothing, coverity happy */
+			break;
+		}
+	}
 }
 /*-----------------------------------------------------------*/
 
@@ -111,39 +111,39 @@ BaseType_t xProcessReceivedUDPPacket( NetworkBufferDescriptor_t * pxNetworkBuffe
                                       uint16_t usPort,
                                       BaseType_t * pxIsWaitingForResolution )
 {
-    /* Returning pdPASS means that the packet was consumed, released. */
-    BaseType_t xReturn = pdFAIL;
-    const UDPPacket_t * pxUDPPacket;
+	/* Returning pdPASS means that the packet was consumed, released. */
+	BaseType_t xReturn = pdFAIL;
+	const UDPPacket_t * pxUDPPacket;
 
-    configASSERT( pxNetworkBuffer != NULL );
-    configASSERT( pxNetworkBuffer->pucEthernetBuffer != NULL );
+	configASSERT( pxNetworkBuffer != NULL );
+	configASSERT( pxNetworkBuffer->pucEthernetBuffer != NULL );
 
-    /* Map the ethernet buffer to the UDPPacket_t struct for easy access to the fields. */
+	/* Map the ethernet buffer to the UDPPacket_t struct for easy access to the fields. */
 
-    /* MISRA Ref 11.3.1 [Misaligned access] */
-    /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
-    /* coverity[misra_c_2012_rule_11_3_violation] */
-    pxUDPPacket = ( ( const UDPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
+	/* MISRA Ref 11.3.1 [Misaligned access] */
+	/* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-113 */
+	/* coverity[misra_c_2012_rule_11_3_violation] */
+	pxUDPPacket = ( ( const UDPPacket_t * ) pxNetworkBuffer->pucEthernetBuffer );
 
-    switch( pxUDPPacket->xEthernetHeader.usFrameType )
-    {
-        #if ( ipconfigUSE_IPv4 != 0 )
-            case ipIPv4_FRAME_TYPE:
-                xReturn = xProcessReceivedUDPPacket_IPv4( pxNetworkBuffer,
-                                                          usPort, pxIsWaitingForResolution );
-                break;
-        #endif
-        #if ( ipconfigUSE_IPv6 != 0 )
-            case ipIPv6_FRAME_TYPE:
-                xReturn = xProcessReceivedUDPPacket_IPv6( pxNetworkBuffer,
-                                                          usPort, pxIsWaitingForResolution );
-                break;
-        #endif
-        default:
-            /* do nothing, coverity happy */
-            break;
-    }
+	switch( pxUDPPacket->xEthernetHeader.usFrameType )
+	{
+	#if ( ipconfigUSE_IPv4 != 0 )
+	case ipIPv4_FRAME_TYPE:
+		xReturn = xProcessReceivedUDPPacket_IPv4( pxNetworkBuffer,
+		                                          usPort, pxIsWaitingForResolution );
+		break;
+	#endif
+	#if ( ipconfigUSE_IPv6 != 0 )
+	case ipIPv6_FRAME_TYPE:
+		xReturn = xProcessReceivedUDPPacket_IPv6( pxNetworkBuffer,
+		                                          usPort, pxIsWaitingForResolution );
+		break;
+	#endif
+	default:
+		/* do nothing, coverity happy */
+		break;
+	}
 
-    return xReturn;
+	return xReturn;
 }
 /*-----------------------------------------------------------*/

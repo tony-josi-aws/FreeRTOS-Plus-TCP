@@ -40,13 +40,13 @@
 
 struct InternalNetworkMiddlewareData
 {
-    uint8_t ucIPAddress[ ipIP_ADDRESS_LENGTH_BYTES ];
-    uint8_t ucNetMask[ ipIP_ADDRESS_LENGTH_BYTES ];
-    uint8_t ucGatewayAddress[ ipIP_ADDRESS_LENGTH_BYTES ];
-    uint8_t ucDNSServerAddress[ ipIP_ADDRESS_LENGTH_BYTES ];
-    BaseType_t resetNetworkTaskRunning;
-    uint32_t resetNetworkTaskEveryXSeconds;
-    char deviceName[ MAX_NAME_LLMNR ];
+	uint8_t ucIPAddress[ ipIP_ADDRESS_LENGTH_BYTES ];
+	uint8_t ucNetMask[ ipIP_ADDRESS_LENGTH_BYTES ];
+	uint8_t ucGatewayAddress[ ipIP_ADDRESS_LENGTH_BYTES ];
+	uint8_t ucDNSServerAddress[ ipIP_ADDRESS_LENGTH_BYTES ];
+	BaseType_t resetNetworkTaskRunning;
+	uint32_t resetNetworkTaskEveryXSeconds;
+	char deviceName[ MAX_NAME_LLMNR ];
 }; /* end */
 
 void vPublicSetupFreeRTOSTasks( const struct InternalNetworkMiddlewareData data );

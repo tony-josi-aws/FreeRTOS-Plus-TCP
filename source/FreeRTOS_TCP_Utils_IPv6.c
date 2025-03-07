@@ -57,56 +57,56 @@
  */
 void prvSocketSetMSS_IPV6( FreeRTOS_Socket_t * pxSocket )
 {
-    uint32_t ulMSS = ipconfigTCP_MSS;
+	uint32_t ulMSS = ipconfigTCP_MSS;
 
     #if ( ipconfigHAS_DEBUG_PRINTF == 1 )
-        char cIPv6Address[ 40 ];
+	char cIPv6Address[ 40 ];
     #endif
 
-    const NetworkEndPoint_t * pxEndPoint = NULL;
+	const NetworkEndPoint_t * pxEndPoint = NULL;
 
-    do
-    {
-        if( pxSocket == NULL )
-        {
-            /* If NULL socket handler, skip all following steps. */
-            FreeRTOS_debug_printf( ( "prvSocketSetMSS_IPV6: NULL socket handler\n" ) );
+	do
+	{
+		if( pxSocket == NULL )
+		{
+			/* If NULL socket handler, skip all following steps. */
+			FreeRTOS_debug_printf( ( "prvSocketSetMSS_IPV6: NULL socket handler\n" ) );
 
-            break;
-        }
+			break;
+		}
 
-        pxEndPoint = pxSocket->pxEndPoint;
+		pxEndPoint = pxSocket->pxEndPoint;
 
-        if( pxEndPoint != NULL )
-        {
-            IPv6_Type_t eType;
+		if( pxEndPoint != NULL )
+		{
+			IPv6_Type_t eType;
 
-            /* Compared to IPv4, an IPv6 header is 20 bytes longer.
-             * It must be subtracted from the MSS. */
-            size_t uxDifference = ipSIZE_OF_IPv6_HEADER - ipSIZE_OF_IPv4_HEADER;
+			/* Compared to IPv4, an IPv6 header is 20 bytes longer.
+			 * It must be subtracted from the MSS. */
+			size_t uxDifference = ipSIZE_OF_IPv6_HEADER - ipSIZE_OF_IPv4_HEADER;
 
-            /* Because ipconfigTCP_MSS is guaranteed not less than tcpMINIMUM_SEGMENT_LENGTH by FreeRTOSIPConfigDefaults.h,
-             * it's unnecessary to check if xSocket->u.xTCP.usMSS is greater than difference. */
-            ulMSS = ( uint32_t ) ( ipconfigTCP_MSS - uxDifference );
-            eType = xIPv6_GetIPType( &( pxSocket->u.xTCP.xRemoteIP.xIP_IPv6 ) );
+			/* Because ipconfigTCP_MSS is guaranteed not less than tcpMINIMUM_SEGMENT_LENGTH by FreeRTOSIPConfigDefaults.h,
+			 * it's unnecessary to check if xSocket->u.xTCP.usMSS is greater than difference. */
+			ulMSS = ( uint32_t ) ( ipconfigTCP_MSS - uxDifference );
+			eType = xIPv6_GetIPType( &( pxSocket->u.xTCP.xRemoteIP.xIP_IPv6 ) );
 
-            if( eType == eIPv6_Global )
-            {
-                /* The packet will travel through Internet, make the MSS
-                 * smaller. */
-                ulMSS = FreeRTOS_min_uint32( ( uint32_t ) tcpREDUCED_MSS_THROUGH_INTERNET, ulMSS );
-            }
-        }
+			if( eType == eIPv6_Global )
+			{
+				/* The packet will travel through Internet, make the MSS
+				 * smaller. */
+				ulMSS = FreeRTOS_min_uint32( ( uint32_t ) tcpREDUCED_MSS_THROUGH_INTERNET, ulMSS );
+			}
+		}
 
-        #if ( ipconfigHAS_DEBUG_PRINTF == 1 )
-        {
-            ( void ) FreeRTOS_inet_ntop( FREERTOS_AF_INET6, ( const void * ) pxSocket->u.xTCP.xRemoteIP.xIP_IPv6.ucBytes, cIPv6Address, sizeof( cIPv6Address ) );
-            FreeRTOS_debug_printf( ( "prvSocketSetMSS: %u bytes for %s ip port %u\n", ( unsigned ) ulMSS, cIPv6Address, pxSocket->u.xTCP.usRemotePort ) );
-        }
-        #endif
+	#if ( ipconfigHAS_DEBUG_PRINTF == 1 )
+		{
+			( void ) FreeRTOS_inet_ntop( FREERTOS_AF_INET6, ( const void * ) pxSocket->u.xTCP.xRemoteIP.xIP_IPv6.ucBytes, cIPv6Address, sizeof( cIPv6Address ) );
+			FreeRTOS_debug_printf( ( "prvSocketSetMSS: %u bytes for %s ip port %u\n", ( unsigned ) ulMSS, cIPv6Address, pxSocket->u.xTCP.usRemotePort ) );
+		}
+	#endif
 
-        pxSocket->u.xTCP.usMSS = ( uint16_t ) ulMSS;
-    } while( ipFALSE_BOOL );
+		pxSocket->u.xTCP.usMSS = ( uint16_t ) ulMSS;
+	} while( ipFALSE_BOOL );
 }
 /*-----------------------------------------------------------*/
 

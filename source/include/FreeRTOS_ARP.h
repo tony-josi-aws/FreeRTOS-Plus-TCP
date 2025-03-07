@@ -55,21 +55,21 @@ struct xNetworkEndPoint;
  */
 typedef struct xARP_CACHE_TABLE_ROW
 {
-    uint32_t ulIPAddress;     /**< The IP address of an ARP cache entry. */
-    MACAddress_t xMACAddress; /**< The MAC address of an ARP cache entry. */
-    uint8_t ucAge;            /**< A value that is periodically decremented but can also be refreshed by active communication.  The ARP cache entry is removed if the value reaches zero. */
-    uint8_t ucValid;          /**< pdTRUE: xMACAddress is valid, pdFALSE: waiting for ARP reply */
-    struct xNetworkEndPoint
-    * pxEndPoint;             /**< The end-point on which the MAC address was last seen. */
+	uint32_t ulIPAddress; /**< The IP address of an ARP cache entry. */
+	MACAddress_t xMACAddress; /**< The MAC address of an ARP cache entry. */
+	uint8_t ucAge;        /**< A value that is periodically decremented but can also be refreshed by active communication.  The ARP cache entry is removed if the value reaches zero. */
+	uint8_t ucValid;      /**< pdTRUE: xMACAddress is valid, pdFALSE: waiting for ARP reply */
+	struct xNetworkEndPoint
+	* pxEndPoint;         /**< The end-point on which the MAC address was last seen. */
 } ARPCacheRow_t;
 
 /** @brief A structure used internally in FreeRTOS_ARP.c.
  * It is used as a parameter for the function prvFindCacheEntry().*/
 typedef struct xCacheLocation
 {
-    BaseType_t xIpEntry;  /**< The index of the matching IP-address. */
-    BaseType_t xMacEntry; /**< The index of the matching MAC-address. */
-    BaseType_t xUseEntry; /**< The index of the first free location. */
+	BaseType_t xIpEntry; /**< The index of the matching IP-address. */
+	BaseType_t xMacEntry; /**< The index of the matching MAC-address. */
+	BaseType_t xUseEntry; /**< The index of the first free location. */
 } CacheLocation_t;
 
 /**
@@ -90,10 +90,10 @@ void vARPRefreshCacheEntry( const MACAddress_t * pxMACAddress,
                             struct xNetworkEndPoint * pxEndPoint );
 
 #if ( ipconfigARP_USE_CLASH_DETECTION != 0 )
-    /* Becomes non-zero if another device responded to a gratuitous ARP message. */
-    extern BaseType_t xARPHadIPClash;
-    /* MAC-address of the other device containing the same IP-address. */
-    extern MACAddress_t xARPClashMacAddress;
+/* Becomes non-zero if another device responded to a gratuitous ARP message. */
+extern BaseType_t xARPHadIPClash;
+/* MAC-address of the other device containing the same IP-address. */
+extern MACAddress_t xARPClashMacAddress;
 #endif /* ipconfigARP_USE_CLASH_DETECTION */
 
 #if ( ipconfigUSE_ARP_REMOVE_ENTRY != 0 )
@@ -102,7 +102,7 @@ void vARPRefreshCacheEntry( const MACAddress_t * pxMACAddress,
  * In some rare cases, it might be useful to remove a ARP cache entry of a
  * known MAC address to make sure it gets refreshed.
  */
-    uint32_t ulARPRemoveCacheEntryByMac( const MACAddress_t * pxMACAddress );
+uint32_t ulARPRemoveCacheEntryByMac( const MACAddress_t * pxMACAddress );
 
 #endif /* ipconfigUSE_ARP_REMOVE_ENTRY != 0 */
 
@@ -126,9 +126,9 @@ eResolutionLookupResult_t eARPGetCacheEntry( uint32_t * pulIPAddress,
 #if ( ipconfigUSE_ARP_REVERSED_LOOKUP != 0 )
 
 /* Lookup an IP-address if only the MAC-address is known */
-    eResolutionLookupResult_t eARPGetCacheEntryByMac( const MACAddress_t * const pxMACAddress,
-                                                      uint32_t * pulIPAddress,
-                                                      struct xNetworkInterface ** ppxInterface );
+eResolutionLookupResult_t eARPGetCacheEntryByMac( const MACAddress_t * const pxMACAddress,
+                                                  uint32_t * pulIPAddress,
+                                                  struct xNetworkInterface ** ppxInterface );
 
 #endif
 
@@ -170,7 +170,7 @@ void FreeRTOS_ClearARP( const struct xNetworkEndPoint * pxEndPoint );
 
 /* Show all valid ARP entries */
 #if ( ipconfigHAS_PRINTF != 0 ) || ( ipconfigHAS_DEBUG_PRINTF != 0 )
-    void FreeRTOS_PrintARPCache( void );
+void FreeRTOS_PrintARPCache( void );
 #endif
 
 /* *INDENT-OFF* */

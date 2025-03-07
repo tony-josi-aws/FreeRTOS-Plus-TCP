@@ -46,15 +46,15 @@
 #include <wmlog.h>
 
 #define net_e( ... ) \
-    wmlog_e( "freertos_tcp", ## __VA_ARGS__ )
+	wmlog_e( "freertos_tcp", ## __VA_ARGS__ )
 #define net_w( ... ) \
-    wmlog_w( "freertos_tcp", ## __VA_ARGS__ )
+	wmlog_w( "freertos_tcp", ## __VA_ARGS__ )
 #define net_d( ... ) \
-    wmlog( "freertos_tcp", ## __VA_ARGS__ )
+	wmlog( "freertos_tcp", ## __VA_ARGS__ )
 
 #if 0 /*this is lwip structure. */
     #define MAX_INTERFACES_SUPPORTED    3
-    static struct netif * netif_arr[ MAX_INTERFACES_SUPPORTED ];
+static struct netif * netif_arr[ MAX_INTERFACES_SUPPORTED ];
 #endif
 
 /* If ipconfigETHERNET_DRIVER_FILTERS_FRAME_TYPES is set to 1, then the Ethernet
@@ -89,12 +89,12 @@
 
 enum if_state_t
 {
-    INTERFACE_DOWN = 0,
-    INTERFACE_UP,
+	INTERFACE_DOWN = 0,
+	INTERFACE_UP,
 };
 struct ip_addr
 {
-    u32_t addr;
+	u32_t addr;
 };
 
 #define MLAN_BSS_TYPE_STA    0
@@ -114,43 +114,43 @@ static volatile uint32_t xInterfaceState = INTERFACE_DOWN;
 static int process_data_packet( const t_u8 * databuf,
                                 const t_u16 datalen )
 {
-    int interface = BSS_TYPE_STA;
-    t_u8 * payload = NULL;
-    t_u16 payload_len = 0;
-    const TickType_t xDescriptorWaitTime = pdMS_TO_TICKS( 250 );
+	int interface = BSS_TYPE_STA;
+	t_u8 * payload = NULL;
+	t_u16 payload_len = 0;
+	const TickType_t xDescriptorWaitTime = pdMS_TO_TICKS( 250 );
 
-    NetworkBufferDescriptor_t * pxNetworkBuffer;
-    IPStackEvent_t xRxEvent = { eNetworkRxEvent, NULL };
+	NetworkBufferDescriptor_t * pxNetworkBuffer;
+	IPStackEvent_t xRxEvent = { eNetworkRxEvent, NULL };
 
-    payload = ( t_u8 * ) mlan_get_payload( databuf, &payload_len, &interface );
+	payload = ( t_u8 * ) mlan_get_payload( databuf, &payload_len, &interface );
 
-    if( eConsiderFrameForProcessing( payload ) != eProcessBuffer )
-    {
-        net_d( "Dropping packet\r\n" );
-        return WM_SUCCESS;
-    }
+	if( eConsiderFrameForProcessing( payload ) != eProcessBuffer )
+	{
+		net_d( "Dropping packet\r\n" );
+		return WM_SUCCESS;
+	}
 
-    pxNetworkBuffer = pxGetNetworkBufferWithDescriptor( /*payload_len*/ datalen, xDescriptorWaitTime );
+	pxNetworkBuffer = pxGetNetworkBufferWithDescriptor( /*payload_len*/ datalen, xDescriptorWaitTime );
 
-    if( pxNetworkBuffer != NULL )
-    {
-        /* Set the packet size, in case a larger buffer was returned. */
-        pxNetworkBuffer->xDataLength = payload_len;
+	if( pxNetworkBuffer != NULL )
+	{
+		/* Set the packet size, in case a larger buffer was returned. */
+		pxNetworkBuffer->xDataLength = payload_len;
 
-        /* Copy the packet data. */
-        memcpy( pxNetworkBuffer->pucEthernetBuffer, payload, payload_len );
+		/* Copy the packet data. */
+		memcpy( pxNetworkBuffer->pucEthernetBuffer, payload, payload_len );
 
-        xRxEvent.pvData = ( void * ) pxNetworkBuffer;
+		xRxEvent.pvData = ( void * ) pxNetworkBuffer;
 
-        if( xSendEventStructToIPTask( &xRxEvent, xDescriptorWaitTime ) == pdFAIL )
-        {
-            wmprintf( "Failed to enqueue packet to network stack %p, len %d", payload, payload_len );
-            vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
-            return WM_FAIL;
-        }
-    }
+		if( xSendEventStructToIPTask( &xRxEvent, xDescriptorWaitTime ) == pdFAIL )
+		{
+			wmprintf( "Failed to enqueue packet to network stack %p, len %d", payload, payload_len );
+			vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
+			return WM_FAIL;
+		}
+	}
 
-    return WM_SUCCESS;
+	return WM_SUCCESS;
 }
 
 /* Callback function called from the wifi module */
@@ -158,90 +158,90 @@ void handle_data_packet( const t_u8 interface,
                          const t_u8 * rcvdata,
                          const t_u16 datalen )
 {
-    if( interface == BSS_TYPE_STA )
-    {
-        process_data_packet( rcvdata, datalen );
-    }
+	if( interface == BSS_TYPE_STA )
+	{
+		process_data_packet( rcvdata, datalen );
+	}
 }
 
 BaseType_t xNetworkInterfaceInitialise( void )
 {
-    uint8_t ret;
-    mac_addr_t mac_addr;
+	uint8_t ret;
+	mac_addr_t mac_addr;
 
-    ret = wifi_get_device_mac_addr( &mac_addr );
+	ret = wifi_get_device_mac_addr( &mac_addr );
 
-    if( ret != WM_SUCCESS )
-    {
-        net_d( "Failed to get mac address" );
-    }
+	if( ret != WM_SUCCESS )
+	{
+		net_d( "Failed to get mac address" );
+	}
 
-    FreeRTOS_UpdateMACAddress( mac_addr.mac );
+	FreeRTOS_UpdateMACAddress( mac_addr.mac );
 
-    return ( xInterfaceState == INTERFACE_UP && ret == WM_SUCCESS ) ? pdTRUE : pdFALSE;
+	return ( xInterfaceState == INTERFACE_UP && ret == WM_SUCCESS ) ? pdTRUE : pdFALSE;
 }
 
 void vNetworkInterfaceAllocateRAMToBuffers( NetworkBufferDescriptor_t pxNetworkBuffers[ ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS ] )
 {
-    /* FIX ME. */
+	/* FIX ME. */
 }
 
 BaseType_t xGetPhyLinkStatus( void )
 {
-    /* FIX ME. */
-    return pdFALSE;
+	/* FIX ME. */
+	return pdFALSE;
 }
 void vNetworkNotifyIFDown()
 {
-    IPStackEvent_t xRxEvent = { eNetworkDownEvent, NULL };
+	IPStackEvent_t xRxEvent = { eNetworkDownEvent, NULL };
 
-    xInterfaceState = INTERFACE_DOWN;
+	xInterfaceState = INTERFACE_DOWN;
 
-    if( xSendEventStructToIPTask( &xRxEvent, 0 ) != pdPASS )
-    {
-        /* Could not send the message, so it is still pending. */
-        net_e( "Could not send network down event" );
-    }
-    else
-    {
-        /* Message was sent so it is not pending. */
-        net_d( "Sent network down event" );
-    }
+	if( xSendEventStructToIPTask( &xRxEvent, 0 ) != pdPASS )
+	{
+		/* Could not send the message, so it is still pending. */
+		net_e( "Could not send network down event" );
+	}
+	else
+	{
+		/* Message was sent so it is not pending. */
+		net_d( "Sent network down event" );
+	}
 }
 
 void vNetworkNotifyIFUp()
 {
-    xInterfaceState = INTERFACE_UP;
+	xInterfaceState = INTERFACE_UP;
 }
 
 BaseType_t xNetworkInterfaceOutput( NetworkBufferDescriptor_t * const pxNetworkBuffer,
                                     BaseType_t xReleaseAfterSend )
 {
-    uint8_t pkt_len;
+	uint8_t pkt_len;
 
-    if( ( pxNetworkBuffer == NULL ) ||
-        ( pxNetworkBuffer->pucEthernetBuffer == NULL ) ||
-        ( pxNetworkBuffer->xDataLength == 0 ) )
-    {
-        net_d( "Incorrect params" );
-        return pdFALSE;
-    }
+	if( ( pxNetworkBuffer == NULL ) ||
+	    ( pxNetworkBuffer->pucEthernetBuffer == NULL ) ||
+	    ( pxNetworkBuffer->xDataLength == 0 ) )
+	{
+		net_d( "Incorrect params" );
+		return pdFALSE;
+	}
 
-    memset( outbuf, 0x00, sizeof( outbuf ) );
-    pkt_len = 22 + 4; /* sizeof(TxPD) + INTF_HEADER_LEN */
-    memcpy( ( u8_t * ) outbuf + pkt_len, ( u8_t * ) pxNetworkBuffer->pucEthernetBuffer,
-            pxNetworkBuffer->xDataLength );
-    int ret = wifi_low_level_output( BSS_TYPE_STA, outbuf + pkt_len, pxNetworkBuffer->xDataLength );
+	memset( outbuf, 0x00, sizeof( outbuf ) );
+	pkt_len = 22 + 4; /* sizeof(TxPD) + INTF_HEADER_LEN */
+	memcpy( ( u8_t * ) outbuf + pkt_len, ( u8_t * ) pxNetworkBuffer->pucEthernetBuffer,
+	        pxNetworkBuffer->xDataLength );
+	int ret = wifi_low_level_output( BSS_TYPE_STA, outbuf + pkt_len, pxNetworkBuffer->xDataLength );
 
-    if( ret != WM_SUCCESS )
-    {
-        net_e( "Failed output %p, length %d, error %d \r\n", pxNetworkBuffer->pucEthernetBuffer, pxNetworkBuffer->xDataLength, ret );
-    }
+	if( ret != WM_SUCCESS )
+	{
+		net_e( "Failed output %p, length %d, error %d \r\n", pxNetworkBuffer->pucEthernetBuffer, pxNetworkBuffer->xDataLength, ret );
+	}
 
-    if( xReleaseAfterSend != pdFALSE )
-    {
-        vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
-    }
+	if( xReleaseAfterSend != pdFALSE )
+	{
+		vReleaseNetworkBufferAndDescriptor( pxNetworkBuffer );
+	}
 
-    return ret == WM_SUCCESS ? pdTRUE : pdFALSE;
+	return ret == WM_SUCCESS ? pdTRUE : pdFALSE;
 }

@@ -99,8 +99,8 @@ static SemaphoreHandle_t xNetworkBufferSemaphore = NULL;
 /* */
 
 /* MAC packet acknowledgment, once MAC is done with it */
-    static bool PIC32_MacPacketAcknowledge( TCPIP_MAC_PACKET * pPkt,
-                                            const void * param );
+static bool PIC32_MacPacketAcknowledge( TCPIP_MAC_PACKET * pPkt,
+                                        const void * param );
 
 /* allocates a MAC packet that holds a data buffer that can be used by both: */
 /*  - the FreeRTOSIP (NetworkBufferDescriptor_t->pucEthernetBuffer) */
@@ -115,34 +115,34 @@ static SemaphoreHandle_t xNetworkBufferSemaphore = NULL;
 /*          - the sizeof(TCPIP_MAC_ETHERNET_HEADER) */
 /*       These are added by the MAC packet allocation! */
 /* */
-    static uint8_t * PIC32_PktAlloc( uint16_t pktLen,
-                                     uint16_t segLoadLen,
-                                     TCPIP_MAC_PACKET_ACK_FUNC ackF,
-                                     TCPIP_MAC_PACKET ** pPtrPkt )
-    {
-        uint8_t * pBuff = 0;
+static uint8_t * PIC32_PktAlloc( uint16_t pktLen,
+                                 uint16_t segLoadLen,
+                                 TCPIP_MAC_PACKET_ACK_FUNC ackF,
+                                 TCPIP_MAC_PACKET ** pPtrPkt )
+{
+	uint8_t * pBuff = 0;
 
-        /* allocate standard packet */
-        TCPIP_MAC_PACKET * pPkt = TCPIP_PKT_PacketAlloc( pktLen, segLoadLen, 0 );
+	/* allocate standard packet */
+	TCPIP_MAC_PACKET * pPkt = TCPIP_PKT_PacketAlloc( pktLen, segLoadLen, 0 );
 
-        /* set the MAC packet pointer in the packet */
-        if( pPkt != 0 )
-        {
-            pBuff = pPkt->pDSeg->segLoad;
-            TCPIP_MAC_PACKET ** ppkt = ( TCPIP_MAC_PACKET ** ) ( pBuff - PIC32_BUFFER_PKT_PTR_OSSET );
-            configASSERT( ( ( uint32_t ) ppkt & ( sizeof( uint32_t ) - 1 ) ) == 0 );
-            *ppkt = pPkt; /* store the packet it comes from */
-            pPkt->ackFunc = ackF;
-            pPkt->ackParam = 0;
-        }
+	/* set the MAC packet pointer in the packet */
+	if( pPkt != 0 )
+	{
+		pBuff = pPkt->pDSeg->segLoad;
+		TCPIP_MAC_PACKET ** ppkt = ( TCPIP_MAC_PACKET ** ) ( pBuff - PIC32_BUFFER_PKT_PTR_OSSET );
+		configASSERT( ( ( uint32_t ) ppkt & ( sizeof( uint32_t ) - 1 ) ) == 0 );
+		*ppkt = pPkt; /* store the packet it comes from */
+		pPkt->ackFunc = ackF;
+		pPkt->ackParam = 0;
+	}
 
-        if( pPtrPkt != 0 )
-        {
-            *pPtrPkt = pPkt;
-        }
+	if( pPtrPkt != 0 )
+	{
+		*pPtrPkt = pPkt;
+	}
 
-        return pBuff;
-    }
+	return pBuff;
+}
 
 
 
@@ -151,63 +151,63 @@ static SemaphoreHandle_t xNetworkBufferSemaphore = NULL;
 /* at the beginning of the data buffer */
 /* see NetworkBufferAllocate */
 /* Note: flags parameter is ignored since that's used in the Harmony stack only */
-    TCPIP_MAC_PACKET * PIC32_MacPacketAllocate( uint16_t pktLen,
-                                                uint16_t segLoadLen,
-                                                TCPIP_MAC_PACKET_FLAGS flags )
-    {
-        TCPIP_MAC_PACKET * pPkt;
+TCPIP_MAC_PACKET * PIC32_MacPacketAllocate( uint16_t pktLen,
+                                            uint16_t segLoadLen,
+                                            TCPIP_MAC_PACKET_FLAGS flags )
+{
+	TCPIP_MAC_PACKET * pPkt;
 
-        PIC32_PktAlloc( pktLen, segLoadLen, 0, &pPkt );
+	PIC32_PktAlloc( pktLen, segLoadLen, 0, &pPkt );
 
-        return pPkt;
-    }
+	return pPkt;
+}
 
 /* standard PIC32 MAC packet acknowledgment */
 /* function called once MAC is done with it */
-    static bool PIC32_MacPacketAcknowledge( TCPIP_MAC_PACKET * pPkt,
-                                            const void * param )
-    {
-        configASSERT( ( pPkt != 0 ) );
+static bool PIC32_MacPacketAcknowledge( TCPIP_MAC_PACKET * pPkt,
+                                        const void * param )
+{
+	configASSERT( ( pPkt != 0 ) );
 
-        TCPIP_PKT_PacketFree( pPkt );
+	TCPIP_PKT_PacketFree( pPkt );
 
-        return false;
-    }
+	return false;
+}
 
 /* associates the current MAC packet with a network descriptor */
 /* mainly for RX packet */
-    void PIC32_MacAssociate( TCPIP_MAC_PACKET * pRxPkt,
-                             NetworkBufferDescriptor_t * pxBufferDescriptor,
-                             size_t pktLength )
-    {
-        uint8_t * pPktBuff = pRxPkt->pDSeg->segLoad;
+void PIC32_MacAssociate( TCPIP_MAC_PACKET * pRxPkt,
+                         NetworkBufferDescriptor_t * pxBufferDescriptor,
+                         size_t pktLength )
+{
+	uint8_t * pPktBuff = pRxPkt->pDSeg->segLoad;
 
-        pxBufferDescriptor->pucEthernetBuffer = pPktBuff;
-        pxBufferDescriptor->xDataLength = pktLength;
+	pxBufferDescriptor->pucEthernetBuffer = pPktBuff;
+	pxBufferDescriptor->xDataLength = pktLength;
 
-        /* make sure this is a properly allocated packet */
-        TCPIP_MAC_PACKET ** ppkt = ( TCPIP_MAC_PACKET ** ) ( pPktBuff - PIC32_BUFFER_PKT_PTR_OSSET );
+	/* make sure this is a properly allocated packet */
+	TCPIP_MAC_PACKET ** ppkt = ( TCPIP_MAC_PACKET ** ) ( pPktBuff - PIC32_BUFFER_PKT_PTR_OSSET );
 
-        configASSERT( ( ( uint32_t ) ppkt & ( sizeof( uint32_t ) - 1 ) ) == 0 );
+	configASSERT( ( ( uint32_t ) ppkt & ( sizeof( uint32_t ) - 1 ) ) == 0 );
 
-        if( *ppkt != pRxPkt )
-        {
-            configASSERT( false );
-        }
+	if( *ppkt != pRxPkt )
+	{
+		configASSERT( false );
+	}
 
-        /* set the proper descriptor info */
-        NetworkBufferDescriptor_t ** ppDcpt = ( NetworkBufferDescriptor_t ** ) ( pPktBuff - ipBUFFER_PADDING );
+	/* set the proper descriptor info */
+	NetworkBufferDescriptor_t ** ppDcpt = ( NetworkBufferDescriptor_t ** ) ( pPktBuff - ipBUFFER_PADDING );
 
-        configASSERT( ( ( uint32_t ) ppDcpt & ( sizeof( uint32_t ) - 1 ) ) == 0 );
-        *ppDcpt = pxBufferDescriptor;
-    }
+	configASSERT( ( ( uint32_t ) ppDcpt & ( sizeof( uint32_t ) - 1 ) ) == 0 );
+	*ppDcpt = pxBufferDescriptor;
+}
 
 /* debug functionality */
-    void PIC32_MacPacketOrphan( TCPIP_MAC_PACKET * pPkt )
-    {
-        TCPIP_PKT_PacketFree( pPkt );
-        configASSERT( false );
-    }
+void PIC32_MacPacketOrphan( TCPIP_MAC_PACKET * pPkt )
+{
+	TCPIP_PKT_PacketFree( pPkt );
+	configASSERT( false );
+}
 
 /* FreeRTOS allocation functions */
 
@@ -220,32 +220,32 @@ static SemaphoreHandle_t xNetworkBufferSemaphore = NULL;
 /*       or the sizeof(TCPIP_MAC_ETHERNET_HEADER) */
 /*       These are added by the MAC packet allocation! */
 /* */
-    uint8_t * NetworkBufferAllocate( size_t reqLength )
-    {
-        return PIC32_PktAlloc( sizeof( TCPIP_MAC_PACKET ), reqLength, PIC32_MacPacketAcknowledge, 0 );
-    }
+uint8_t * NetworkBufferAllocate( size_t reqLength )
+{
+	return PIC32_PktAlloc( sizeof( TCPIP_MAC_PACKET ), reqLength, PIC32_MacPacketAcknowledge, 0 );
+}
 
 /* deallocates a network buffer previously allocated */
 /* with NetworkBufferAllocate */
-    void NetworkBufferFree( uint8_t * pNetworkBuffer )
-    {
-        if( pNetworkBuffer != 0 )
-        {
-            TCPIP_MAC_PACKET ** ppkt = ( TCPIP_MAC_PACKET ** ) ( pNetworkBuffer - PIC32_BUFFER_PKT_PTR_OSSET );
-            configASSERT( ( ( uint32_t ) ppkt & ( sizeof( uint32_t ) - 1 ) ) == 0 );
-            TCPIP_MAC_PACKET * pPkt = *ppkt;
-            configASSERT( ( pPkt != 0 ) );
+void NetworkBufferFree( uint8_t * pNetworkBuffer )
+{
+	if( pNetworkBuffer != 0 )
+	{
+		TCPIP_MAC_PACKET ** ppkt = ( TCPIP_MAC_PACKET ** ) ( pNetworkBuffer - PIC32_BUFFER_PKT_PTR_OSSET );
+		configASSERT( ( ( uint32_t ) ppkt & ( sizeof( uint32_t ) - 1 ) ) == 0 );
+		TCPIP_MAC_PACKET * pPkt = *ppkt;
+		configASSERT( ( pPkt != 0 ) );
 
-            if( pPkt->ackFunc != 0 )
-            {
-                ( *pPkt->ackFunc )( pPkt, pPkt->ackParam );
-            }
-            else
-            { /* ??? */
-                PIC32_MacPacketOrphan( pPkt );
-            }
-        }
-    }
+		if( pPkt->ackFunc != 0 )
+		{
+			( *pPkt->ackFunc )( pPkt, pPkt->ackParam );
+		}
+		else
+		{ /* ??? */
+			PIC32_MacPacketOrphan( pPkt );
+		}
+	}
+}
 
 #endif /* #ifdef PIC32_USE_ETHERNET */
 
@@ -253,125 +253,125 @@ static SemaphoreHandle_t xNetworkBufferSemaphore = NULL;
 
 BaseType_t xNetworkBuffersInitialise( void )
 {
-    BaseType_t xReturn, x;
+	BaseType_t xReturn, x;
 
-    /* Only initialise the buffers and their associated kernel objects if they
-     * have not been initialised before. */
-    if( xNetworkBufferSemaphore == NULL )
-    {
-        xNetworkBufferSemaphore = xSemaphoreCreateCounting( ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS, ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS );
-        configASSERT( xNetworkBufferSemaphore );
+	/* Only initialise the buffers and their associated kernel objects if they
+	 * have not been initialised before. */
+	if( xNetworkBufferSemaphore == NULL )
+	{
+		xNetworkBufferSemaphore = xSemaphoreCreateCounting( ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS, ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS );
+		configASSERT( xNetworkBufferSemaphore );
 
-        if( xNetworkBufferSemaphore != NULL )
-        {
-            #if ( configQUEUE_REGISTRY_SIZE > 0 )
-            {
-                vQueueAddToRegistry( xNetworkBufferSemaphore, "NetBufSem" );
-            }
-            #endif /* configQUEUE_REGISTRY_SIZE */
+		if( xNetworkBufferSemaphore != NULL )
+		{
+	    #if ( configQUEUE_REGISTRY_SIZE > 0 )
+			{
+				vQueueAddToRegistry( xNetworkBufferSemaphore, "NetBufSem" );
+			}
+	    #endif /* configQUEUE_REGISTRY_SIZE */
 
-            /* If the trace recorder code is included name the semaphore for viewing
-             * in FreeRTOS+Trace.  */
-            #if ( ipconfigINCLUDE_EXAMPLE_FREERTOS_PLUS_TRACE_CALLS == 1 )
-            {
-                extern QueueHandle_t xNetworkEventQueue;
-                vTraceSetQueueName( xNetworkEventQueue, "IPStackEvent" );
-                vTraceSetQueueName( xNetworkBufferSemaphore, "NetworkBufferCount" );
-            }
-            #endif /*  ipconfigINCLUDE_EXAMPLE_FREERTOS_PLUS_TRACE_CALLS == 1 */
+			/* If the trace recorder code is included name the semaphore for viewing
+			 * in FreeRTOS+Trace.  */
+	    #if ( ipconfigINCLUDE_EXAMPLE_FREERTOS_PLUS_TRACE_CALLS == 1 )
+			{
+				extern QueueHandle_t xNetworkEventQueue;
+				vTraceSetQueueName( xNetworkEventQueue, "IPStackEvent" );
+				vTraceSetQueueName( xNetworkBufferSemaphore, "NetworkBufferCount" );
+			}
+	    #endif /*  ipconfigINCLUDE_EXAMPLE_FREERTOS_PLUS_TRACE_CALLS == 1 */
 
-            vListInitialise( &xFreeBuffersList );
+			vListInitialise( &xFreeBuffersList );
 
-            /* Initialise all the network buffers.  No storage is allocated to
-             * the buffers yet. */
-            for( x = 0; x < ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS; x++ )
-            {
-                /* Initialise and set the owner of the buffer list items. */
-                xNetworkBufferDescriptors[ x ].pucEthernetBuffer = NULL;
-                vListInitialiseItem( &( xNetworkBufferDescriptors[ x ].xBufferListItem ) );
-                listSET_LIST_ITEM_OWNER( &( xNetworkBufferDescriptors[ x ].xBufferListItem ), &xNetworkBufferDescriptors[ x ] );
+			/* Initialise all the network buffers.  No storage is allocated to
+			 * the buffers yet. */
+			for( x = 0; x < ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS; x++ )
+			{
+				/* Initialise and set the owner of the buffer list items. */
+				xNetworkBufferDescriptors[ x ].pucEthernetBuffer = NULL;
+				vListInitialiseItem( &( xNetworkBufferDescriptors[ x ].xBufferListItem ) );
+				listSET_LIST_ITEM_OWNER( &( xNetworkBufferDescriptors[ x ].xBufferListItem ), &xNetworkBufferDescriptors[ x ] );
 
-                /* Currently, all buffers are available for use. */
-                vListInsert( &xFreeBuffersList, &( xNetworkBufferDescriptors[ x ].xBufferListItem ) );
-            }
+				/* Currently, all buffers are available for use. */
+				vListInsert( &xFreeBuffersList, &( xNetworkBufferDescriptors[ x ].xBufferListItem ) );
+			}
 
-            uxMinimumFreeNetworkBuffers = ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS;
-        }
-    }
+			uxMinimumFreeNetworkBuffers = ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS;
+		}
+	}
 
-    if( xNetworkBufferSemaphore == NULL )
-    {
-        xReturn = pdFAIL;
-    }
-    else
-    {
-        xReturn = pdPASS;
-    }
+	if( xNetworkBufferSemaphore == NULL )
+	{
+		xReturn = pdFAIL;
+	}
+	else
+	{
+		xReturn = pdPASS;
+	}
 
-    return xReturn;
+	return xReturn;
 }
 /*-----------------------------------------------------------*/
 
 uint8_t * pucGetNetworkBuffer( size_t * pxRequestedSizeBytes )
 {
-    uint8_t * pucEthernetBuffer;
-    size_t xSize = *pxRequestedSizeBytes;
+	uint8_t * pucEthernetBuffer;
+	size_t xSize = *pxRequestedSizeBytes;
 
-    if( xSize < baMINIMAL_BUFFER_SIZE )
-    {
-        /* Buffers must be at least large enough to hold a TCP-packet with
-         * headers, or an ARP packet, in case TCP is not included. */
-        xSize = baMINIMAL_BUFFER_SIZE;
-    }
+	if( xSize < baMINIMAL_BUFFER_SIZE )
+	{
+		/* Buffers must be at least large enough to hold a TCP-packet with
+		 * headers, or an ARP packet, in case TCP is not included. */
+		xSize = baMINIMAL_BUFFER_SIZE;
+	}
 
-    /* Round up xSize to the nearest multiple of N bytes,
-     * where N equals 'sizeof( size_t )'. */
-    if( ( xSize & ( sizeof( size_t ) - 1u ) ) != 0u )
-    {
-        xSize = ( xSize | ( sizeof( size_t ) - 1u ) ) + 1u;
-    }
+	/* Round up xSize to the nearest multiple of N bytes,
+	 * where N equals 'sizeof( size_t )'. */
+	if( ( xSize & ( sizeof( size_t ) - 1u ) ) != 0u )
+	{
+		xSize = ( xSize | ( sizeof( size_t ) - 1u ) ) + 1u;
+	}
 
-    *pxRequestedSizeBytes = xSize;
+	*pxRequestedSizeBytes = xSize;
 
-    /* Allocate a buffer large enough to store the requested Ethernet frame size
-     * and a pointer to a network buffer structure (hence the addition of
-     * ipBUFFER_PADDING bytes). */
+	/* Allocate a buffer large enough to store the requested Ethernet frame size
+	 * and a pointer to a network buffer structure (hence the addition of
+	 * ipBUFFER_PADDING bytes). */
 
     #ifdef PIC32_USE_ETHERNET
-        pucEthernetBuffer = NetworkBufferAllocate( xSize - sizeof( TCPIP_MAC_ETHERNET_HEADER ) );
+	pucEthernetBuffer = NetworkBufferAllocate( xSize - sizeof( TCPIP_MAC_ETHERNET_HEADER ) );
     #else
-        pucEthernetBuffer = ( uint8_t * ) pvPortMalloc( xSize + ipBUFFER_PADDING );
+	pucEthernetBuffer = ( uint8_t * ) pvPortMalloc( xSize + ipBUFFER_PADDING );
     #endif /* #ifdef PIC32_USE_ETHERNET */
 
-    configASSERT( pucEthernetBuffer );
+	configASSERT( pucEthernetBuffer );
 
-    if( pucEthernetBuffer != NULL )
-    {
-        /* Enough space is left at the start of the buffer to place a pointer to
-         * the network buffer structure that references this Ethernet buffer.
-         * Return a pointer to the start of the Ethernet buffer itself. */
-        #ifndef PIC32_USE_ETHERNET
-            pucEthernetBuffer += ipBUFFER_PADDING;
-        #endif /* #ifndef PIC32_USE_ETHERNET */
-    }
+	if( pucEthernetBuffer != NULL )
+	{
+		/* Enough space is left at the start of the buffer to place a pointer to
+		 * the network buffer structure that references this Ethernet buffer.
+		 * Return a pointer to the start of the Ethernet buffer itself. */
+	#ifndef PIC32_USE_ETHERNET
+		pucEthernetBuffer += ipBUFFER_PADDING;
+	#endif /* #ifndef PIC32_USE_ETHERNET */
+	}
 
-    return pucEthernetBuffer;
+	return pucEthernetBuffer;
 }
 /*-----------------------------------------------------------*/
 
 void vReleaseNetworkBuffer( uint8_t * pucEthernetBuffer )
 {
-    /* There is space before the Ethernet buffer in which a pointer to the
-     * network buffer that references this Ethernet buffer is stored.  Remove the
-     * space before freeing the buffer. */
+	/* There is space before the Ethernet buffer in which a pointer to the
+	 * network buffer that references this Ethernet buffer is stored.  Remove the
+	 * space before freeing the buffer. */
     #ifdef PIC32_USE_ETHERNET
-        NetworkBufferFree( pucEthernetBuffer );
+	NetworkBufferFree( pucEthernetBuffer );
     #else
-        if( pucEthernetBuffer != NULL )
-        {
-            pucEthernetBuffer -= ipBUFFER_PADDING;
-            vPortFree( ( void * ) pucEthernetBuffer );
-        }
+	if( pucEthernetBuffer != NULL )
+	{
+		pucEthernetBuffer -= ipBUFFER_PADDING;
+		vPortFree( ( void * ) pucEthernetBuffer );
+	}
     #endif /* #ifdef PIC32_USE_ETHERNET */
 }
 /*-----------------------------------------------------------*/
@@ -379,187 +379,187 @@ void vReleaseNetworkBuffer( uint8_t * pucEthernetBuffer )
 NetworkBufferDescriptor_t * pxGetNetworkBufferWithDescriptor( size_t xRequestedSizeBytes,
                                                               TickType_t xBlockTimeTicks )
 {
-    NetworkBufferDescriptor_t * pxReturn = NULL;
-    size_t uxCount;
-    size_t xBytesRequiredForAlignment, xAllocatedBytes;
-    BaseType_t xIntegerOverflowed = pdFALSE;
+	NetworkBufferDescriptor_t * pxReturn = NULL;
+	size_t uxCount;
+	size_t xBytesRequiredForAlignment, xAllocatedBytes;
+	BaseType_t xIntegerOverflowed = pdFALSE;
 
-    if( ( xRequestedSizeBytes != 0u ) && ( xRequestedSizeBytes < ( size_t ) baMINIMAL_BUFFER_SIZE ) )
-    {
-        /* ARP packets can replace application packets, so the storage must be
-         * at least large enough to hold an ARP. */
-        xRequestedSizeBytes = baMINIMAL_BUFFER_SIZE;
-    }
+	if( ( xRequestedSizeBytes != 0u ) && ( xRequestedSizeBytes < ( size_t ) baMINIMAL_BUFFER_SIZE ) )
+	{
+		/* ARP packets can replace application packets, so the storage must be
+		 * at least large enough to hold an ARP. */
+		xRequestedSizeBytes = baMINIMAL_BUFFER_SIZE;
+	}
 
     #ifdef PIC32_USE_ETHERNET
-        if( xRequestedSizeBytes != 0u )
-        {
+	if( xRequestedSizeBytes != 0u )
+	{
     #endif /* #ifdef PIC32_USE_ETHERNET */
 
-    if( baADD_WILL_OVERFLOW( xRequestedSizeBytes, 2 ) == 0 )
-    {
-        xRequestedSizeBytes += 2U;
-    }
-    else
-    {
-        xIntegerOverflowed = pdTRUE;
-    }
+	if( baADD_WILL_OVERFLOW( xRequestedSizeBytes, 2 ) == 0 )
+	{
+		xRequestedSizeBytes += 2U;
+	}
+	else
+	{
+		xIntegerOverflowed = pdTRUE;
+	}
 
-    if( ( xRequestedSizeBytes & baALIGNMENT_MASK ) != 0U )
-    {
-        xBytesRequiredForAlignment = baALIGNMENT_BYTES - ( xRequestedSizeBytes & baALIGNMENT_MASK );
+	if( ( xRequestedSizeBytes & baALIGNMENT_MASK ) != 0U )
+	{
+		xBytesRequiredForAlignment = baALIGNMENT_BYTES - ( xRequestedSizeBytes & baALIGNMENT_MASK );
 
-        if( baADD_WILL_OVERFLOW( xRequestedSizeBytes, xBytesRequiredForAlignment ) == 0 )
-        {
-            xRequestedSizeBytes += xBytesRequiredForAlignment;
-        }
-        else
-        {
-            xIntegerOverflowed = pdTRUE;
-        }
-    }
+		if( baADD_WILL_OVERFLOW( xRequestedSizeBytes, xBytesRequiredForAlignment ) == 0 )
+		{
+			xRequestedSizeBytes += xBytesRequiredForAlignment;
+		}
+		else
+		{
+			xIntegerOverflowed = pdTRUE;
+		}
+	}
 
     #ifdef PIC32_USE_ETHERNET
-        ( void ) xAllocatedBytes;
+	( void ) xAllocatedBytes;
     #else
-        if( baADD_WILL_OVERFLOW( xRequestedSizeBytes, ipBUFFER_PADDING ) == 0 )
-        {
-            xAllocatedBytes = xRequestedSizeBytes + ipBUFFER_PADDING;
-        }
-        else
-        {
-            xIntegerOverflowed = pdTRUE;
-        }
+	if( baADD_WILL_OVERFLOW( xRequestedSizeBytes, ipBUFFER_PADDING ) == 0 )
+	{
+		xAllocatedBytes = xRequestedSizeBytes + ipBUFFER_PADDING;
+	}
+	else
+	{
+		xIntegerOverflowed = pdTRUE;
+	}
     #endif /* #ifndef PIC32_USE_ETHERNET */
 
     #ifdef PIC32_USE_ETHERNET
 }
     #endif /* #ifdef PIC32_USE_ETHERNET */
 
-    /* If there is a semaphore available, there is a network buffer available. */
-    if( ( xIntegerOverflowed == pdFALSE ) && ( xSemaphoreTake( xNetworkBufferSemaphore, xBlockTimeTicks ) == pdPASS ) )
-    {
-        /* Protect the structure as it is accessed from tasks and interrupts. */
-        taskENTER_CRITICAL();
-        {
-            pxReturn = ( NetworkBufferDescriptor_t * ) listGET_OWNER_OF_HEAD_ENTRY( &xFreeBuffersList );
-            uxListRemove( &( pxReturn->xBufferListItem ) );
-        }
-        taskEXIT_CRITICAL();
+	/* If there is a semaphore available, there is a network buffer available. */
+	if( ( xIntegerOverflowed == pdFALSE ) && ( xSemaphoreTake( xNetworkBufferSemaphore, xBlockTimeTicks ) == pdPASS ) )
+	{
+		/* Protect the structure as it is accessed from tasks and interrupts. */
+		taskENTER_CRITICAL();
+		{
+			pxReturn = ( NetworkBufferDescriptor_t * ) listGET_OWNER_OF_HEAD_ENTRY( &xFreeBuffersList );
+			uxListRemove( &( pxReturn->xBufferListItem ) );
+		}
+		taskEXIT_CRITICAL();
 
-        /* Reading UBaseType_t, no critical section needed. */
-        uxCount = listCURRENT_LIST_LENGTH( &xFreeBuffersList );
+		/* Reading UBaseType_t, no critical section needed. */
+		uxCount = listCURRENT_LIST_LENGTH( &xFreeBuffersList );
 
-        if( uxMinimumFreeNetworkBuffers > uxCount )
-        {
-            uxMinimumFreeNetworkBuffers = uxCount;
-        }
+		if( uxMinimumFreeNetworkBuffers > uxCount )
+		{
+			uxMinimumFreeNetworkBuffers = uxCount;
+		}
 
-        /* Allocate storage of exactly the requested size to the buffer. */
-        configASSERT( pxReturn->pucEthernetBuffer == NULL );
+		/* Allocate storage of exactly the requested size to the buffer. */
+		configASSERT( pxReturn->pucEthernetBuffer == NULL );
 
-        if( xRequestedSizeBytes > 0 )
-        {
-            /* Extra space is obtained so a pointer to the network buffer can
-             * be stored at the beginning of the buffer. */
+		if( xRequestedSizeBytes > 0 )
+		{
+			/* Extra space is obtained so a pointer to the network buffer can
+			 * be stored at the beginning of the buffer. */
 
-            #ifdef PIC32_USE_ETHERNET
-                pxReturn->pucEthernetBuffer = NetworkBufferAllocate( xRequestedSizeBytes - sizeof( TCPIP_MAC_ETHERNET_HEADER ) );
-            #else
-                pxReturn->pucEthernetBuffer = ( uint8_t * ) pvPortMalloc( xAllocatedBytes );
-            #endif /* #ifdef PIC32_USE_ETHERNET */
+	    #ifdef PIC32_USE_ETHERNET
+			pxReturn->pucEthernetBuffer = NetworkBufferAllocate( xRequestedSizeBytes - sizeof( TCPIP_MAC_ETHERNET_HEADER ) );
+	    #else
+			pxReturn->pucEthernetBuffer = ( uint8_t * ) pvPortMalloc( xAllocatedBytes );
+	    #endif /* #ifdef PIC32_USE_ETHERNET */
 
-            if( pxReturn->pucEthernetBuffer == NULL )
-            {
-                /* The attempt to allocate storage for the buffer payload failed,
-                 * so the network buffer structure cannot be used and must be
-                 * released. */
-                vReleaseNetworkBufferAndDescriptor( pxReturn );
-                pxReturn = NULL;
-            }
-            else
-            {
-                /* Store a pointer to the network buffer structure in the
-                 * buffer storage area, then move the buffer pointer on past the
-                 * stored pointer so the pointer value is not overwritten by the
-                 * application when the buffer is used. */
-                #ifdef PIC32_USE_ETHERNET
-                    *( ( NetworkBufferDescriptor_t ** ) ( pxReturn->pucEthernetBuffer - ipBUFFER_PADDING ) ) = pxReturn;
-                #else
-                    *( ( NetworkBufferDescriptor_t ** ) ( pxReturn->pucEthernetBuffer ) ) = pxReturn;
-                    pxReturn->pucEthernetBuffer += ipBUFFER_PADDING;
-                #endif /* #ifdef PIC32_USE_ETHERNET */
+			if( pxReturn->pucEthernetBuffer == NULL )
+			{
+				/* The attempt to allocate storage for the buffer payload failed,
+				 * so the network buffer structure cannot be used and must be
+				 * released. */
+				vReleaseNetworkBufferAndDescriptor( pxReturn );
+				pxReturn = NULL;
+			}
+			else
+			{
+				/* Store a pointer to the network buffer structure in the
+				 * buffer storage area, then move the buffer pointer on past the
+				 * stored pointer so the pointer value is not overwritten by the
+				 * application when the buffer is used. */
+		#ifdef PIC32_USE_ETHERNET
+				*( ( NetworkBufferDescriptor_t ** ) ( pxReturn->pucEthernetBuffer - ipBUFFER_PADDING ) ) = pxReturn;
+		#else
+				*( ( NetworkBufferDescriptor_t ** ) ( pxReturn->pucEthernetBuffer ) ) = pxReturn;
+				pxReturn->pucEthernetBuffer += ipBUFFER_PADDING;
+		#endif /* #ifdef PIC32_USE_ETHERNET */
 
-                /* Store the actual size of the allocated buffer, which may be
-                 * greater than the original requested size. */
-                pxReturn->xDataLength = xRequestedSizeBytes;
+				/* Store the actual size of the allocated buffer, which may be
+				 * greater than the original requested size. */
+				pxReturn->xDataLength = xRequestedSizeBytes;
 
-                #if ( ipconfigUSE_LINKED_RX_MESSAGES != 0 )
-                {
-                    /* make sure the buffer is not linked */
-                    pxReturn->pxNextBuffer = NULL;
-                }
-                #endif /* ipconfigUSE_LINKED_RX_MESSAGES */
-            }
-        }
-        else
-        {
-            /* A descriptor is being returned without an associated buffer being
-             * allocated. */
-        }
-    }
+		#if ( ipconfigUSE_LINKED_RX_MESSAGES != 0 )
+				{
+					/* make sure the buffer is not linked */
+					pxReturn->pxNextBuffer = NULL;
+				}
+		#endif /* ipconfigUSE_LINKED_RX_MESSAGES */
+			}
+		}
+		else
+		{
+			/* A descriptor is being returned without an associated buffer being
+			 * allocated. */
+		}
+	}
 
-    if( pxReturn == NULL )
-    {
-        iptraceFAILED_TO_OBTAIN_NETWORK_BUFFER();
-    }
-    else
-    {
-        iptraceNETWORK_BUFFER_OBTAINED( pxReturn );
-    }
+	if( pxReturn == NULL )
+	{
+		iptraceFAILED_TO_OBTAIN_NETWORK_BUFFER();
+	}
+	else
+	{
+		iptraceNETWORK_BUFFER_OBTAINED( pxReturn );
+	}
 
-    return pxReturn;
+	return pxReturn;
 }
 /*-----------------------------------------------------------*/
 
 void vReleaseNetworkBufferAndDescriptor( NetworkBufferDescriptor_t * const pxNetworkBuffer )
 {
-    BaseType_t xListItemAlreadyInFreeList;
+	BaseType_t xListItemAlreadyInFreeList;
 
-    /* Ensure the buffer is returned to the list of free buffers before the
-    * counting semaphore is 'given' to say a buffer is available.  Release the
-    * storage allocated to the buffer payload.  THIS FILE SHOULD NOT BE USED
-    * IF THE PROJECT INCLUDES A MEMORY ALLOCATOR THAT WILL FRAGMENT THE HEAP
-    * MEMORY.  For example, heap_2 must not be used, heap_4 can be used. */
-    vReleaseNetworkBuffer( pxNetworkBuffer->pucEthernetBuffer );
-    pxNetworkBuffer->pucEthernetBuffer = NULL;
+	/* Ensure the buffer is returned to the list of free buffers before the
+	* counting semaphore is 'given' to say a buffer is available.  Release the
+	* storage allocated to the buffer payload.  THIS FILE SHOULD NOT BE USED
+	* IF THE PROJECT INCLUDES A MEMORY ALLOCATOR THAT WILL FRAGMENT THE HEAP
+	* MEMORY.  For example, heap_2 must not be used, heap_4 can be used. */
+	vReleaseNetworkBuffer( pxNetworkBuffer->pucEthernetBuffer );
+	pxNetworkBuffer->pucEthernetBuffer = NULL;
 
-    taskENTER_CRITICAL();
-    {
-        xListItemAlreadyInFreeList = listIS_CONTAINED_WITHIN( &xFreeBuffersList, &( pxNetworkBuffer->xBufferListItem ) );
+	taskENTER_CRITICAL();
+	{
+		xListItemAlreadyInFreeList = listIS_CONTAINED_WITHIN( &xFreeBuffersList, &( pxNetworkBuffer->xBufferListItem ) );
 
-        if( xListItemAlreadyInFreeList == pdFALSE )
-        {
-            vListInsertEnd( &xFreeBuffersList, &( pxNetworkBuffer->xBufferListItem ) );
-        }
-    }
-    taskEXIT_CRITICAL();
+		if( xListItemAlreadyInFreeList == pdFALSE )
+		{
+			vListInsertEnd( &xFreeBuffersList, &( pxNetworkBuffer->xBufferListItem ) );
+		}
+	}
+	taskEXIT_CRITICAL();
 
-    /*
-     * Update the network state machine, unless the program fails to release its 'xNetworkBufferSemaphore'.
-     * The program should only try to release its semaphore if 'xListItemAlreadyInFreeList' is false.
-     */
-    if( xListItemAlreadyInFreeList == pdFALSE )
-    {
-        if( xSemaphoreGive( xNetworkBufferSemaphore ) == pdTRUE )
-        {
-            iptraceNETWORK_BUFFER_RELEASED( pxNetworkBuffer );
-        }
-    }
-    else
-    {
-        iptraceNETWORK_BUFFER_RELEASED( pxNetworkBuffer );
-    }
+	/*
+	 * Update the network state machine, unless the program fails to release its 'xNetworkBufferSemaphore'.
+	 * The program should only try to release its semaphore if 'xListItemAlreadyInFreeList' is false.
+	 */
+	if( xListItemAlreadyInFreeList == pdFALSE )
+	{
+		if( xSemaphoreGive( xNetworkBufferSemaphore ) == pdTRUE )
+		{
+			iptraceNETWORK_BUFFER_RELEASED( pxNetworkBuffer );
+		}
+	}
+	else
+	{
+		iptraceNETWORK_BUFFER_RELEASED( pxNetworkBuffer );
+	}
 }
 /*-----------------------------------------------------------*/
 
@@ -568,67 +568,67 @@ void vReleaseNetworkBufferAndDescriptor( NetworkBufferDescriptor_t * const pxNet
  */
 UBaseType_t uxGetNumberOfFreeNetworkBuffers( void )
 {
-    return listCURRENT_LIST_LENGTH( &xFreeBuffersList );
+	return listCURRENT_LIST_LENGTH( &xFreeBuffersList );
 }
 /*-----------------------------------------------------------*/
 
 UBaseType_t uxGetMinimumFreeNetworkBuffers( void )
 {
-    return uxMinimumFreeNetworkBuffers;
+	return uxMinimumFreeNetworkBuffers;
 }
 /*-----------------------------------------------------------*/
 
 NetworkBufferDescriptor_t * pxResizeNetworkBufferWithDescriptor( NetworkBufferDescriptor_t * pxNetworkBuffer,
                                                                  size_t xNewSizeBytes )
 {
-    size_t xOriginalLength;
-    uint8_t * pucBuffer = NULL;
-    BaseType_t xIntegerOverflowed = pdFALSE;
+	size_t xOriginalLength;
+	uint8_t * pucBuffer = NULL;
+	BaseType_t xIntegerOverflowed = pdFALSE;
 
     #ifdef PIC32_USE_ETHERNET
-        xOriginalLength = pxNetworkBuffer->xDataLength;
+	xOriginalLength = pxNetworkBuffer->xDataLength;
     #else
-        xOriginalLength = pxNetworkBuffer->xDataLength + ipBUFFER_PADDING;
+	xOriginalLength = pxNetworkBuffer->xDataLength + ipBUFFER_PADDING;
 
-        if( baADD_WILL_OVERFLOW( xNewSizeBytes, ipBUFFER_PADDING ) == 0 )
-        {
-            xNewSizeBytes = xNewSizeBytes + ipBUFFER_PADDING;
-        }
-        else
-        {
-            xIntegerOverflowed = pdTRUE;
-        }
+	if( baADD_WILL_OVERFLOW( xNewSizeBytes, ipBUFFER_PADDING ) == 0 )
+	{
+		xNewSizeBytes = xNewSizeBytes + ipBUFFER_PADDING;
+	}
+	else
+	{
+		xIntegerOverflowed = pdTRUE;
+	}
     #endif /* #ifdef PIC32_USE_ETHERNET */
 
-    if( xIntegerOverflowed == pdFALSE )
-    {
-        pucBuffer = pucGetNetworkBuffer( &( xNewSizeBytes ) );
-    }
+	if( xIntegerOverflowed == pdFALSE )
+	{
+		pucBuffer = pucGetNetworkBuffer( &( xNewSizeBytes ) );
+	}
 
-    if( pucBuffer == NULL )
-    {
-        /* In case the allocation fails, return NULL. */
-        pxNetworkBuffer = NULL;
-    }
-    else
-    {
-        pxNetworkBuffer->xDataLength = xNewSizeBytes;
+	if( pucBuffer == NULL )
+	{
+		/* In case the allocation fails, return NULL. */
+		pxNetworkBuffer = NULL;
+	}
+	else
+	{
+		pxNetworkBuffer->xDataLength = xNewSizeBytes;
 
-        if( xNewSizeBytes > xOriginalLength )
-        {
-            xNewSizeBytes = xOriginalLength;
-        }
+		if( xNewSizeBytes > xOriginalLength )
+		{
+			xNewSizeBytes = xOriginalLength;
+		}
 
-        #ifdef PIC32_USE_ETHERNET
-            memcpy( pucBuffer, pxNetworkBuffer->pucEthernetBuffer, xNewSizeBytes );
-            *( ( NetworkBufferDescriptor_t ** ) ( pucBuffer - ipBUFFER_PADDING ) ) = pxNetworkBuffer;
-        #else
-            memcpy( pucBuffer - ipBUFFER_PADDING, pxNetworkBuffer->pucEthernetBuffer - ipBUFFER_PADDING, xNewSizeBytes );
-        #endif /* #ifdef PIC32_USE_ETHERNET */
+	#ifdef PIC32_USE_ETHERNET
+		memcpy( pucBuffer, pxNetworkBuffer->pucEthernetBuffer, xNewSizeBytes );
+		*( ( NetworkBufferDescriptor_t ** ) ( pucBuffer - ipBUFFER_PADDING ) ) = pxNetworkBuffer;
+	#else
+		memcpy( pucBuffer - ipBUFFER_PADDING, pxNetworkBuffer->pucEthernetBuffer - ipBUFFER_PADDING, xNewSizeBytes );
+	#endif /* #ifdef PIC32_USE_ETHERNET */
 
-        vReleaseNetworkBuffer( pxNetworkBuffer->pucEthernetBuffer );
-        pxNetworkBuffer->pucEthernetBuffer = pucBuffer;
-    }
+		vReleaseNetworkBuffer( pxNetworkBuffer->pucEthernetBuffer );
+		pxNetworkBuffer->pucEthernetBuffer = pucBuffer;
+	}
 
-    return pxNetworkBuffer;
+	return pxNetworkBuffer;
 }

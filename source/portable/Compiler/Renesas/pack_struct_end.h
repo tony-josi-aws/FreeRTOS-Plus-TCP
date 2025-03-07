@@ -35,13 +35,13 @@
 
 #ifdef _SH
     #ifdef __RENESAS__
-        ;
-        #pragma unpack
+;
+	#pragma unpack
     #endif
 #endif
 #ifdef __RX
     #ifdef __CCRX__
-        ;
-        #pragma packoption
+;
+	#pragma packoption
     #endif
 #endif

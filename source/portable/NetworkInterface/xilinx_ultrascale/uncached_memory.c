@@ -72,15 +72,15 @@
 
 #if defined( __aarch64__ ) || defined( ARMA53_32 )
     #ifndef uncMEMORY_SIZE
-        /* Reserve 2 MB of memory. */
-        #define uncMEMORY_SIZE     0x200000U
+/* Reserve 2 MB of memory. */
+	#define uncMEMORY_SIZE     0x200000U
     #endif
     #define DDR_MEMORY_END         ( XPAR_PSU_DDR_0_S_AXI_HIGHADDR )
     #define uncMEMORY_ATTRIBUTE    NORM_NONCACHE | INNER_SHAREABLE
 #elif defined( ARMR5 )
     #ifndef uncMEMORY_SIZE
-        /* Reserve 1 MB of memory. */
-        #define uncMEMORY_SIZE     0x100000U
+/* Reserve 1 MB of memory. */
+	#define uncMEMORY_SIZE     0x100000U
     #endif
     #define uncMEMORY_SIZE         0x100000U
     #define DDR_MEMORY_END         ( XPAR_PSU_R5_DDR_0_S_AXI_HIGHADDR )
@@ -107,70 +107,70 @@ extern u8 _end;
 
 uint8_t ucIsCachedMemory( const uint8_t * pucBuffer )
 {
-    uint8_t ucReturn;
+	uint8_t ucReturn;
 
-    if( ( pucStartOfMemory != NULL ) &&
-        ( pucBuffer >= pucStartOfMemory ) &&
-        ( pucBuffer < ( pucStartOfMemory + uncMEMORY_SIZE ) ) )
-    {
-        ucReturn = pdFALSE;
-    }
-    else
-    {
-        ucReturn = pdTRUE;
-    }
+	if( ( pucStartOfMemory != NULL ) &&
+	    ( pucBuffer >= pucStartOfMemory ) &&
+	    ( pucBuffer < ( pucStartOfMemory + uncMEMORY_SIZE ) ) )
+	{
+		ucReturn = pdFALSE;
+	}
+	else
+	{
+		ucReturn = pdTRUE;
+	}
 
-    return ucReturn;
+	return ucReturn;
 }
 /*-----------------------------------------------------------*/
 
 uint8_t * pucGetUncachedMemory( uint32_t ulSize )
 {
-    uint8_t * pucReturn;
-    uint32_t ulSkipSize;
+	uint8_t * pucReturn;
+	uint32_t ulSkipSize;
 
-    if( pucStartOfMemory == NULL )
-    {
-        vInitialiseUncachedMemory();
-    }
+	if( pucStartOfMemory == NULL )
+	{
+		vInitialiseUncachedMemory();
+	}
 
-    if( ( pucStartOfMemory == NULL ) || ( ulSize > ulMemorySize ) )
-    {
-        pucReturn = NULL;
-    }
-    else
-    {
-        pucReturn = pucHeadOfMemory;
-        /* Make sure that the next pointer return will have a good alignment. */
-        ulSkipSize = ( ulSize + uncALIGNMENT_SIZE ) & ~( uncALIGNMENT_SIZE - 1uL );
-        pucHeadOfMemory += ulSkipSize;
-        ulMemorySize -= ulSkipSize;
-    }
+	if( ( pucStartOfMemory == NULL ) || ( ulSize > ulMemorySize ) )
+	{
+		pucReturn = NULL;
+	}
+	else
+	{
+		pucReturn = pucHeadOfMemory;
+		/* Make sure that the next pointer return will have a good alignment. */
+		ulSkipSize = ( ulSize + uncALIGNMENT_SIZE ) & ~( uncALIGNMENT_SIZE - 1uL );
+		pucHeadOfMemory += ulSkipSize;
+		ulMemorySize -= ulSkipSize;
+	}
 
-    return pucReturn;
+	return pucReturn;
 }
 /*-----------------------------------------------------------*/
 
 static void vInitialiseUncachedMemory()
 {
-    /* At the end of program's space... */
-    pucStartOfMemory = pucUncachedMemory;
+	/* At the end of program's space... */
+	pucStartOfMemory = pucUncachedMemory;
 
-    if( ( ( uintptr_t ) pucStartOfMemory ) + uncMEMORY_SIZE > DDR_MEMORY_END )
-    {
-        FreeRTOS_printf( ( "vInitialiseUncachedMemory: Can not allocate uncached memory\n" ) );
-    }
-    else
-    {
-        /* Some objects want to be stored in uncached memory. Hence the 1 MB
-         * address range that starts after "_end" is made uncached by setting
-         * appropriate attributes in the translation table. */
-        Xil_SetTlbAttributes( ( uintptr_t ) pucStartOfMemory, uncMEMORY_ATTRIBUTE );
+	if( ( ( uintptr_t ) pucStartOfMemory ) + uncMEMORY_SIZE > DDR_MEMORY_END )
+	{
+		FreeRTOS_printf( ( "vInitialiseUncachedMemory: Can not allocate uncached memory\n" ) );
+	}
+	else
+	{
+		/* Some objects want to be stored in uncached memory. Hence the 1 MB
+		 * address range that starts after "_end" is made uncached by setting
+		 * appropriate attributes in the translation table. */
+		Xil_SetTlbAttributes( ( uintptr_t ) pucStartOfMemory, uncMEMORY_ATTRIBUTE );
 
-        /* For experiments in the SDIO driver, make the remaining uncached memory
-         * public */
-        pucHeadOfMemory = pucStartOfMemory;
-        ulMemorySize = uncMEMORY_SIZE;
-        memset( pucStartOfMemory, '\0', uncMEMORY_SIZE );
-    }
+		/* For experiments in the SDIO driver, make the remaining uncached memory
+		 * public */
+		pucHeadOfMemory = pucStartOfMemory;
+		ulMemorySize = uncMEMORY_SIZE;
+		memset( pucStartOfMemory, '\0', uncMEMORY_SIZE );
+	}
 }

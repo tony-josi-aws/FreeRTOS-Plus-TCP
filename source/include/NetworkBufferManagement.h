@@ -76,8 +76,8 @@ NetworkBufferDescriptor_t * pxResizeNetworkBufferWithDescriptor( NetworkBufferDe
  * Check if an address is a valid pointer to a network descriptor
  * by looking it up in the array of network descriptors
  */
-    UBaseType_t bIsValidNetworkDescriptor( const NetworkBufferDescriptor_t * pxDesc );
-    BaseType_t prvIsFreeBuffer( const NetworkBufferDescriptor_t * pxDescr );
+UBaseType_t bIsValidNetworkDescriptor( const NetworkBufferDescriptor_t * pxDesc );
+BaseType_t prvIsFreeBuffer( const NetworkBufferDescriptor_t * pxDescr );
 #endif
 
 /* *INDENT-OFF* */

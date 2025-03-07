@@ -53,24 +53,24 @@
 
 BaseType_t xNetworkInterfaceInitialise( void )
 {
-    /* FIX ME. */
-    return pdFALSE;
+	/* FIX ME. */
+	return pdFALSE;
 }
 
 BaseType_t xNetworkInterfaceOutput( NetworkBufferDescriptor_t * const pxNetworkBuffer,
                                     BaseType_t xReleaseAfterSend )
 {
-    /* FIX ME. */
-    return pdFALSE;
+	/* FIX ME. */
+	return pdFALSE;
 }
 
 void vNetworkInterfaceAllocateRAMToBuffers( NetworkBufferDescriptor_t pxNetworkBuffers[ ipconfigNUM_NETWORK_BUFFER_DESCRIPTORS ] )
 {
-    /* FIX ME. */
+	/* FIX ME. */
 }
 
 BaseType_t xGetPhyLinkStatus( void )
 {
-    /* FIX ME. */
-    return pdFALSE;
+	/* FIX ME. */
+	return pdFALSE;
 }

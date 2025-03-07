@@ -63,32 +63,32 @@ static void prvNetworkResetTask( void * pvParameters );
  *  The function can only be called once to set up the tasks. */
 void vPublicSetupFreeRTOSTasks( const struct InternalNetworkMiddlewareData data )
 {
-    /* setup a device name */
-    vPublicSetupDeviceName( data.deviceName );
+	/* setup a device name */
+	vPublicSetupDeviceName( data.deviceName );
 
-    /* get the MAC address from the driver code (assuming this is also set up) */
-    uint8_t uc8MACAddr[ ipMAC_ADDRESS_LENGTH_BYTES ];
-    vPublicGetMACAddr( uc8MACAddr );
+	/* get the MAC address from the driver code (assuming this is also set up) */
+	uint8_t uc8MACAddr[ ipMAC_ADDRESS_LENGTH_BYTES ];
+	vPublicGetMACAddr( uc8MACAddr );
 
-    /* set up the task to reset the network every so often */
-    if( data.resetNetworkTaskRunning == pdTRUE )
-    {
-        xDelay = data.resetNetworkTaskEveryXSeconds;
-        xSemaphore = xSemaphoreCreateMutex();
-        xTaskCreate( prvNetworkResetTask,
-                     "resetNet",
-                     NETWORK_TASK_MIDDLEWARE_STACK,
-                     NULL,
-                     tskIDLE_PRIORITY,
-                     &xTaskToNotifyReset );
-    }
+	/* set up the task to reset the network every so often */
+	if( data.resetNetworkTaskRunning == pdTRUE )
+	{
+		xDelay = data.resetNetworkTaskEveryXSeconds;
+		xSemaphore = xSemaphoreCreateMutex();
+		xTaskCreate( prvNetworkResetTask,
+		             "resetNet",
+		             NETWORK_TASK_MIDDLEWARE_STACK,
+		             NULL,
+		             tskIDLE_PRIORITY,
+		             &xTaskToNotifyReset );
+	}
 
-    /* init the network stack */
-    FreeRTOS_IPInit( data.ucIPAddress,
-                     data.ucNetMask,
-                     data.ucGatewayAddress,
-                     data.ucDNSServerAddress,
-                     uc8MACAddr );
+	/* init the network stack */
+	FreeRTOS_IPInit( data.ucIPAddress,
+	                 data.ucNetMask,
+	                 data.ucGatewayAddress,
+	                 data.ucDNSServerAddress,
+	                 uc8MACAddr );
 }
 
 
@@ -99,36 +99,36 @@ void vConvertOctetsToAddr( uint8_t arr[ ipIP_ADDRESS_LENGTH_BYTES ],
                            uint8_t b2,
                            uint8_t b3 )
 {
-    arr[ 0 ] = b0;
-    arr[ 1 ] = b1;
-    arr[ 2 ] = b2;
-    arr[ 3 ] = b3;
+	arr[ 0 ] = b0;
+	arr[ 1 ] = b1;
+	arr[ 2 ] = b2;
+	arr[ 3 ] = b3;
 } /* end */
 
 
 /* Task that resets the network every so often */
 void prvNetworkResetTask( void * pvParameters )
 {
-    uint32_t cnt;
+	uint32_t cnt;
 
-    cnt = 0;
+	cnt = 0;
 
-    for( ; ; )
-    {
-        vTaskDelay( pdMS_TO_TICKS( 1000 ) );
-        cnt++;
+	for( ; ; )
+	{
+		vTaskDelay( pdMS_TO_TICKS( 1000 ) );
+		cnt++;
 
-        if( cnt > xDelay )
-        {
-            cnt = 0;
+		if( cnt > xDelay )
+		{
+			cnt = 0;
 
-            if( xSemaphoreTake( xSemaphore, 0 ) == pdTRUE )
-            {
-                FreeRTOS_NetworkDown();
-                xSemaphoreGive( xSemaphore );
-            }
-        }
-    }
+			if( xSemaphoreTake( xSemaphore, 0 ) == pdTRUE )
+			{
+				FreeRTOS_NetworkDown();
+				xSemaphoreGive( xSemaphore );
+			}
+		}
+	}
 }
 
 
@@ -136,23 +136,23 @@ void prvNetworkResetTask( void * pvParameters )
 BaseType_t publicPreventNetworkReset( const BaseType_t preventReset,
                                       const uint32_t waitTime )
 {
-    if( preventReset == pdTRUE )
-    {
-        if( xSemaphoreTake( xSemaphore, pdMS_TO_TICKS( waitTime ) ) == pdTRUE )
-        {
-            return pdTRUE;
-        }
-        else
-        {
-            return pdFALSE;
-        }
-    }
-    else /* do not prevent reset */
-    {
-        xSemaphoreGive( xSemaphore );
-    }
+	if( preventReset == pdTRUE )
+	{
+		if( xSemaphoreTake( xSemaphore, pdMS_TO_TICKS( waitTime ) ) == pdTRUE )
+		{
+			return pdTRUE;
+		}
+		else
+		{
+			return pdFALSE;
+		}
+	}
+	else /* do not prevent reset */
+	{
+		xSemaphoreGive( xSemaphore );
+	}
 
-    return pdTRUE;
+	return pdTRUE;
 }
 
 
@@ -161,16 +161,16 @@ BaseType_t publicPreventNetworkReset( const BaseType_t preventReset,
  *  If the random number could not be obtained, then the function will return pdFALSE. */
 BaseType_t xApplicationGetRandomNumber( uint32_t * pulNumber )
 {
-    *pulNumber = 0;
-    uint32_t num = obtain_rand32();
+	*pulNumber = 0;
+	uint32_t num = obtain_rand32();
 
-    if( num == 0 )
-    {
-        return pdFALSE;
-    }
+	if( num == 0 )
+	{
+		return pdFALSE;
+	}
 
-    *pulNumber = num;
-    return pdTRUE;
+	*pulNumber = num;
+	return pdTRUE;
 }
 
 /*  CALLED BY FREERTOS
@@ -180,10 +180,10 @@ uint32_t ulApplicationGetNextSequenceNumber( uint32_t ulSourceAddress,
                                              uint32_t ulDestinationAddress,
                                              uint16_t usDestinationPort )
 {
-    uint32_t pulNumber = 0;
+	uint32_t pulNumber = 0;
 
-    xApplicationGetRandomNumber( &pulNumber );
-    return pulNumber;
+	xApplicationGetRandomNumber( &pulNumber );
+	return pulNumber;
 }
 
 
@@ -191,9 +191,9 @@ uint32_t ulApplicationGetNextSequenceNumber( uint32_t ulSourceAddress,
  *  Function to obtain random number */
 UBaseType_t uxRand()
 {
-    uint32_t num = obtain_rand32();
+	uint32_t num = obtain_rand32();
 
-    return num;
+	return num;
 }
 
 
@@ -201,41 +201,41 @@ UBaseType_t uxRand()
  *   Function called when the network connects or disconnects */
 void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent )
 {
-    uint32_t ulIPAddress, ulNetMask, ulGatewayAddress, ulDNSServerAddress;
-    static BaseType_t xNetworkTasksAlreadyCreated = pdFALSE;
-    char cBuffer[ 16 ];
+	uint32_t ulIPAddress, ulNetMask, ulGatewayAddress, ulDNSServerAddress;
+	static BaseType_t xNetworkTasksAlreadyCreated = pdFALSE;
+	char cBuffer[ 16 ];
 
-    if( eNetworkEvent == eNetworkUp )
-    {
-        if( xNetworkTasksAlreadyCreated == pdFALSE )
-        {
-            /*  Unblock any necessary tasks here when the network is up
-             *  Set a flag to indicate that the tasks do not need to be created again */
-            xNetworkTasksAlreadyCreated = pdTRUE;
-        }
+	if( eNetworkEvent == eNetworkUp )
+	{
+		if( xNetworkTasksAlreadyCreated == pdFALSE )
+		{
+			/*  Unblock any necessary tasks here when the network is up
+			 *  Set a flag to indicate that the tasks do not need to be created again */
+			xNetworkTasksAlreadyCreated = pdTRUE;
+		}
 
-        FreeRTOS_GetAddressConfiguration( &ulIPAddress,
-                                          &ulNetMask,
-                                          &ulGatewayAddress,
-                                          &ulDNSServerAddress );
+		FreeRTOS_GetAddressConfiguration( &ulIPAddress,
+		                                  &ulNetMask,
+		                                  &ulGatewayAddress,
+		                                  &ulDNSServerAddress );
 
-        FreeRTOS_inet_ntoa( ulIPAddress, cBuffer );
-        vLoggingPrintf( "IP Address: %s\r\n", cBuffer );
+		FreeRTOS_inet_ntoa( ulIPAddress, cBuffer );
+		vLoggingPrintf( "IP Address: %s\r\n", cBuffer );
 
-        FreeRTOS_inet_ntoa( ulNetMask, cBuffer );
-        vLoggingPrintf( "Subnet Mask: %s\r\n", cBuffer );
+		FreeRTOS_inet_ntoa( ulNetMask, cBuffer );
+		vLoggingPrintf( "Subnet Mask: %s\r\n", cBuffer );
 
-        FreeRTOS_inet_ntoa( ulGatewayAddress, cBuffer );
-        vLoggingPrintf( "Gateway IP Address: %s\r\n", cBuffer );
+		FreeRTOS_inet_ntoa( ulGatewayAddress, cBuffer );
+		vLoggingPrintf( "Gateway IP Address: %s\r\n", cBuffer );
 
-        FreeRTOS_inet_ntoa( ulDNSServerAddress, cBuffer );
-        vLoggingPrintf( "DNS server IP Address: %s\r\n", cBuffer );
-    } /* end if */
-    else if( eNetworkEvent == eNetworkDown )
-    {
-        xNetworkTasksAlreadyCreated = pdFALSE; /* clear a flag to indicate that the tasks needs to be created again */
-        /* Stop or block any running tasks here */
-    } /* end if */
+		FreeRTOS_inet_ntoa( ulDNSServerAddress, cBuffer );
+		vLoggingPrintf( "DNS server IP Address: %s\r\n", cBuffer );
+	} /* end if */
+	else if( eNetworkEvent == eNetworkDown )
+	{
+		xNetworkTasksAlreadyCreated = pdFALSE; /* clear a flag to indicate that the tasks needs to be created again */
+		/* Stop or block any running tasks here */
+	} /* end if */
 } /* end */
 
 
@@ -254,9 +254,9 @@ void vApplicationIPNetworkEventHook( eIPCallbackEvent_t eNetworkEvent )
 void pingReply( uint32_t ulIPAddress )
 {
     #ifdef SEND_PING_PRINT_REPLY
-        char cBuffer[ 16 ];
-        FreeRTOS_inet_ntoa( ulIPAddress, cBuffer );
-        vLoggingPrintf( "Ping response to: %s\r\n", cBuffer );
+	char cBuffer[ 16 ];
+	FreeRTOS_inet_ntoa( ulIPAddress, cBuffer );
+	vLoggingPrintf( "Ping response to: %s\r\n", cBuffer );
     #endif
 }
 
@@ -265,12 +265,12 @@ void pingReply( uint32_t ulIPAddress )
  *  Function that returns pdTRUE if the pcName matches the LLMNR node name */
 BaseType_t xApplicationDNSQueryHook( const char * pcName )
 {
-    if( strcmp( pcName, DEV_NAME ) )
-    {
-        return pdTRUE;
-    }
+	if( strcmp( pcName, DEV_NAME ) )
+	{
+		return pdTRUE;
+	}
 
-    return pdFALSE;
+	return pdFALSE;
 }
 
 
@@ -278,16 +278,16 @@ BaseType_t xApplicationDNSQueryHook( const char * pcName )
  *  Hook to return a human-readable name */
 const char * pcApplicationHostnameHook( void )
 {
-    const char * name;
+	const char * name;
 
-    name = DEV_NAME;
-    return name;
+	name = DEV_NAME;
+	return name;
 }
 
 
 /* Call this function to assign a device name before the stack is up */
 void vPublicSetupDeviceName( const char * deviceName )
 {
-    memset( DEV_NAME, 0, sizeof( DEV_NAME ) );
-    strncpy( DEV_NAME, deviceName, MAX_NAME_LLMNR - 1 );
+	memset( DEV_NAME, 0, sizeof( DEV_NAME ) );
+	strncpy( DEV_NAME, deviceName, MAX_NAME_LLMNR - 1 );
 }
