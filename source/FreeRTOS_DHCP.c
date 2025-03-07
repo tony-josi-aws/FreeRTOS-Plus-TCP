@@ -492,7 +492,13 @@
                 {
                     EP_DHCPData.xDHCPTxTime = xTaskGetTickCount();
 
-                    if( prvSendDHCPRequest( pxEndPoint ) == pdPASS )
+                    /* If we are renewing the lease retry so that ARP cache miss
+                     * of DHCP server address might have caused initial attempt to fail */
+                    if((EP_DHCPData.ulOfferedIPAddress != 0) && ( prvSendDHCPRequestExtendLease( pxEndPoint ) == pdPASS ))
+                    {
+                        /* The message is sent. Stay in state 'eWaitingAcknowledge'. */
+                    }
+                    else if( prvSendDHCPRequest( pxEndPoint ) == pdPASS )
                     {
                         /* The message is sent. Stay in state 'eWaitingAcknowledge'. */
                     }
@@ -1477,9 +1483,14 @@
 
             if((xOpcode == dhcpREQUEST_OPCODE ) && (xIsExtendLease == pdTRUE))
             {
+                /* While lease is renewed, 'ciaddr' MUST be filled in with
+                 * client's IP address.
+                 * Refer: https://datatracker.ietf.org/doc/html/rfc2131#autoid-25 
+                 *  - DHCPREQUEST generated during RENEWING state */
                 pvCopySource = &EP_DHCPData.ulOfferedIPAddress;
                 pvCopyDest = &(pxDHCPMessage->ulClientIPAddress_ciaddr);
                 ( void ) memcpy( pvCopyDest, pvCopySource, sizeof( EP_DHCPData.ulOfferedIPAddress ) );
+                /* This message will be unicast*/
                 pxDHCPMessage->usFlags = 0U;
             }
 
@@ -1524,7 +1535,11 @@
             /* Set the addressing. */
             if((xOpcode == dhcpREQUEST_OPCODE ) && (xIsExtendLease == pdTRUE))
             {
-                pxAddress->sin_address.ulIP_IPv4 = EP_DHCPData.ulOfferedIPAddress;
+                /* While lease is renewed, the DHCP request must be a unicast packet
+                 * to the DHCP server that initially provided the IP.
+                 * Refer: https://datatracker.ietf.org/doc/html/rfc2131#autoid-25 
+                 *  - DHCPREQUEST generated during RENEWING state */
+                pxAddress->sin_address.ulIP_IPv4 = EP_DHCPData.ulDHCPServerAddress;
             }
             else
             {
@@ -1629,13 +1644,10 @@ static BaseType_t prvSendDHCPRequestExtendLease( NetworkEndPoint_t * pxEndPoint 
          * dhcpCLIENT_IDENTIFIER_OFFSET, dhcpREQUESTED_IP_ADDRESS_OFFSET and
          * dhcpDHCP_SERVER_IP_ADDRESS_OFFSET. */
         dhcpIPv4_MESSAGE_TYPE_OPTION_CODE,       1, dhcpMESSAGE_TYPE_REQUEST, /* Message type option. */
-        dhcpIPv4_CLIENT_IDENTIFIER_OPTION_CODE,  5, 4, 0, 0, 0, 0,      /* Client identifier. */
+        dhcpIPv4_CLIENT_IDENTIFIER_OPTION_CODE,  7, 1, 0, 0, 0, 0, 0, 0,      /* Client identifier. */
         dhcpOPTION_END_BYTE
     };
     size_t uxOptionsLength = sizeof( ucDHCPRequestOptions );
-    /* memcpy() helper variables for MISRA Rule 21.15 compliance*/
-    const void * pvCopySource;
-    void * pvCopyDest;
 
     /* MISRA doesn't like uninitialised structs. */
     ( void ) memset( &( xAddress ), 0, sizeof( xAddress ) );
@@ -1648,17 +1660,6 @@ static BaseType_t prvSendDHCPRequestExtendLease( NetworkEndPoint_t * pxEndPoint 
 
     if( ( xSocketValid( EP_DHCPData.xDHCPSocket ) == pdTRUE ) && ( pucUDPPayloadBuffer != NULL ) )
     {
-        /* Copy in the IP address being requested. */
-
-        /*
-         * Use helper variables for memcpy() source & dest to remain
-         * compliant with MISRA Rule 21.15.  These should be
-         * optimized away.
-         */
-        pvCopySource = &EP_DHCPData.ulOfferedIPAddress;
-        pvCopyDest = &pucUDPPayloadBuffer[ dhcpFIRST_OPTION_BYTE_OFFSET + dhcpCLIENT_IDENTIFIER_OFFSET ];
-        ( void ) memcpy( pvCopyDest, pvCopySource, sizeof( EP_DHCPData.ulOfferedIPAddress ) );
-
         FreeRTOS_debug_printf( ( "vDHCPProcess: reply %xip\n", ( unsigned ) FreeRTOS_ntohl( EP_DHCPData.ulOfferedIPAddress ) ) );
         iptraceSENDING_DHCP_REQUEST();
 
