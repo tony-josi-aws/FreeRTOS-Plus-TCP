@@ -113,7 +113,8 @@
                                                BaseType_t xOpcode,
                                                const uint8_t * const pucOptionsArray,
                                                size_t * pxOptionsArraySize,
-                                               const NetworkEndPoint_t * pxEndPoint );
+                                               const NetworkEndPoint_t * pxEndPoint,
+                                               BaseType_t xIsExtendLease );
 
 /*
  * Create the DHCP socket, if it has not been created already.
@@ -138,6 +139,8 @@
     static BaseType_t xHandleWaitingFirstDiscover( NetworkEndPoint_t * pxEndPoint );
 
     static void prvHandleWaitingeLeasedAddress( NetworkEndPoint_t * pxEndPoint );
+
+    static BaseType_t prvSendDHCPRequestExtendLease( NetworkEndPoint_t * pxEndPoint );
 
     static void vProcessHandleOption( NetworkEndPoint_t * pxEndPoint,
                                       ProcessSet_t * pxSet,
@@ -650,7 +653,7 @@
                 EP_DHCPData.xDHCPTxTime = xTaskGetTickCount();
                 EP_DHCPData.xDHCPTxPeriod = dhcpINITIAL_DHCP_TX_PERIOD;
 
-                if( prvSendDHCPRequest( pxEndPoint ) == pdPASS )
+                if( prvSendDHCPRequestExtendLease( pxEndPoint ) == pdPASS )
                 {
                     /* The packet was sent successfully, wait for an acknowledgement. */
                     EP_DHCPData.eDHCPState = eWaitingAcknowledge;
@@ -1403,7 +1406,8 @@
                                                BaseType_t xOpcode,
                                                const uint8_t * const pucOptionsArray,
                                                size_t * pxOptionsArraySize,
-                                               const NetworkEndPoint_t * pxEndPoint )
+                                               const NetworkEndPoint_t * pxEndPoint,
+                                               BaseType_t xIsExtendLease )
     {
         DHCPMessage_IPv4_t * pxDHCPMessage;
         size_t uxRequiredBufferSize = sizeof( DHCPMessage_IPv4_t ) + *pxOptionsArraySize;
@@ -1430,6 +1434,8 @@
         if( pxNetworkBuffer != NULL )
         {
             uint8_t * pucIPType;
+            const void * pvCopySource;
+            void * pvCopyDest;
 
             /* Leave space for the UDP header. */
             pucUDPPayloadBuffer = &( pxNetworkBuffer->pucEthernetBuffer[ ipUDP_PAYLOAD_OFFSET_IPv4 ] );
@@ -1466,6 +1472,14 @@
             }
             else
             {
+                pxDHCPMessage->usFlags = 0U;
+            }
+
+            if((xOpcode == dhcpREQUEST_OPCODE ) && (xIsExtendLease == pdTRUE))
+            {
+                pvCopySource = &EP_DHCPData.ulOfferedIPAddress;
+                pvCopyDest = &(pxDHCPMessage->ulClientIPAddress_ciaddr);
+                ( void ) memcpy( pvCopyDest, pvCopySource, sizeof( EP_DHCPData.ulOfferedIPAddress ) );
                 pxDHCPMessage->usFlags = 0U;
             }
 
@@ -1508,7 +1522,14 @@
                              pxEndPoint->xMACAddress.ucBytes, sizeof( MACAddress_t ) );
 
             /* Set the addressing. */
-            pxAddress->sin_address.ulIP_IPv4 = FREERTOS_INADDR_BROADCAST;
+            if((xOpcode == dhcpREQUEST_OPCODE ) && (xIsExtendLease == pdTRUE))
+            {
+                pxAddress->sin_address.ulIP_IPv4 = EP_DHCPData.ulOfferedIPAddress;
+            }
+            else
+            {
+                pxAddress->sin_address.ulIP_IPv4 = FREERTOS_INADDR_BROADCAST;
+            }
             pxAddress->sin_port = ( uint16_t ) dhcpSERVER_PORT_IPv4;
             pxAddress->sin_family = FREERTOS_AF_INET4;
         }
@@ -1549,7 +1570,8 @@
                                                         ( BaseType_t ) dhcpREQUEST_OPCODE,
                                                         ucDHCPRequestOptions,
                                                         &( uxOptionsLength ),
-                                                        pxEndPoint );
+                                                        pxEndPoint,
+                                                        pdFALSE );
 
         if( ( xSocketValid( EP_DHCPData.xDHCPSocket ) == pdTRUE ) && ( pucUDPPayloadBuffer != NULL ) )
         {
@@ -1591,6 +1613,74 @@
     /*-----------------------------------------------------------*/
 
 /**
+ * @brief Create and send a DHCP request message to extend the current 
+ * IP address lease through the DHCP socket.
+ *
+ * @param[in] pxEndPoint The end-point for which the request will be sent.
+ */
+static BaseType_t prvSendDHCPRequestExtendLease( NetworkEndPoint_t * pxEndPoint )
+{
+    BaseType_t xResult = pdFAIL;
+    uint8_t * pucUDPPayloadBuffer;
+    struct freertos_sockaddr xAddress;
+    static const uint8_t ucDHCPRequestOptions[] =
+    {
+        /* Do not change the ordering without also changing
+         * dhcpCLIENT_IDENTIFIER_OFFSET, dhcpREQUESTED_IP_ADDRESS_OFFSET and
+         * dhcpDHCP_SERVER_IP_ADDRESS_OFFSET. */
+        dhcpIPv4_MESSAGE_TYPE_OPTION_CODE,       1, dhcpMESSAGE_TYPE_REQUEST, /* Message type option. */
+        dhcpIPv4_CLIENT_IDENTIFIER_OPTION_CODE,  5, 4, 0, 0, 0, 0,      /* Client identifier. */
+        dhcpOPTION_END_BYTE
+    };
+    size_t uxOptionsLength = sizeof( ucDHCPRequestOptions );
+    /* memcpy() helper variables for MISRA Rule 21.15 compliance*/
+    const void * pvCopySource;
+    void * pvCopyDest;
+
+    /* MISRA doesn't like uninitialised structs. */
+    ( void ) memset( &( xAddress ), 0, sizeof( xAddress ) );
+    pucUDPPayloadBuffer = prvCreatePartDHCPMessage( &xAddress,
+                                                    ( BaseType_t ) dhcpREQUEST_OPCODE,
+                                                    ucDHCPRequestOptions,
+                                                    &( uxOptionsLength ),
+                                                    pxEndPoint,
+                                                    pdTRUE );
+
+    if( ( xSocketValid( EP_DHCPData.xDHCPSocket ) == pdTRUE ) && ( pucUDPPayloadBuffer != NULL ) )
+    {
+        /* Copy in the IP address being requested. */
+
+        /*
+         * Use helper variables for memcpy() source & dest to remain
+         * compliant with MISRA Rule 21.15.  These should be
+         * optimized away.
+         */
+        pvCopySource = &EP_DHCPData.ulOfferedIPAddress;
+        pvCopyDest = &pucUDPPayloadBuffer[ dhcpFIRST_OPTION_BYTE_OFFSET + dhcpCLIENT_IDENTIFIER_OFFSET ];
+        ( void ) memcpy( pvCopyDest, pvCopySource, sizeof( EP_DHCPData.ulOfferedIPAddress ) );
+
+        FreeRTOS_debug_printf( ( "vDHCPProcess: reply %xip\n", ( unsigned ) FreeRTOS_ntohl( EP_DHCPData.ulOfferedIPAddress ) ) );
+        iptraceSENDING_DHCP_REQUEST();
+
+        EP_DHCPData.xDHCPSocket->pxEndPoint = pxEndPoint;
+
+        if( FreeRTOS_sendto( EP_DHCPData.xDHCPSocket, pucUDPPayloadBuffer, sizeof( DHCPMessage_IPv4_t ) + uxOptionsLength, FREERTOS_ZERO_COPY, &xAddress, ( socklen_t ) sizeof( xAddress ) ) == 0 )
+        {
+            /* The packet was not successfully queued for sending and must be
+             * returned to the stack. */
+            FreeRTOS_ReleaseUDPPayloadBuffer( pucUDPPayloadBuffer );
+        }
+        else
+        {
+            xResult = pdPASS;
+        }
+    }
+
+    return xResult;
+}
+/*-----------------------------------------------------------*/
+
+/**
  * @brief Create and send a DHCP discover packet through the DHCP socket.
  *
  * @param[in] pxEndPoint the end-point for which the discover message will be sent.
@@ -1618,7 +1708,8 @@
                                                         ( BaseType_t ) dhcpREQUEST_OPCODE,
                                                         ucDHCPDiscoverOptions,
                                                         &( uxOptionsLength ),
-                                                        pxEndPoint );
+                                                        pxEndPoint,
+                                                        pdFALSE );
 
         /* MISRA Ref 11.4.1 [Socket error and integer to pointer conversion] */
         /* More details at: https://github.com/FreeRTOS/FreeRTOS-Plus-TCP/blob/main/MISRA.md#rule-114 */
