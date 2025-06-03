@@ -6354,4 +6354,5 @@ BaseType_t FreeRTOS_GetIPType( ConstSocket_t xSocket )
         }
 
     #endif /* ipconfigSUPPORT_SELECT_FUNCTION */
+    
 #endif /* 0 */
